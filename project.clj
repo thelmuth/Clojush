@@ -3,5 +3,6 @@
                 See http://hampshire.edu/lspector/push.html"
   :dependencies [[org.clojure/clojure "1.2.1"]
                  [org.clojure/clojure-contrib "1.2.0"]
-                 [local-file "0.0.4"]]
+                 [local-file "0.0.4"]
+		 [sqlitejdbc "0.5.6"]]
   :main clojush)

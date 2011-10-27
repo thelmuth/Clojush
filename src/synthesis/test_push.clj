@@ -7,7 +7,7 @@
   (:require [clojush] [clojure.contrib.math])
   (:use [clojush] [clojure.contrib.math]))
 
-
+; Test string-rand
 (println (run-push '(string-rand string-rand string-rand) (make-push-state)  false false))
 
 
@@ -16,10 +16,10 @@
 ;; trivial geography chapter) with minimal integer instructions and an 
 ;; input instruction that uses the auxiliary stack.
 
-(define-registered in 
+#_(define-registered in 
   (fn [state] (push-item (stack-ref :auxiliary 0 state) :integer state)))
 
-(pushgp 
+#_(pushgp 
   :error-function (fn [program]
                     (doall
                       (for [input (range 10)]
@@ -40,5 +40,3 @@
                      'integer_add
                      'integer_sub)
 	 :tournament-size 3)
-
-

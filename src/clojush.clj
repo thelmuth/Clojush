@@ -686,8 +686,7 @@ integer to indicate how deep."
         (pop-item :integer state))
       state)))
 
-;trh
-(define-registered string-rand
+(define-registered string_rand
                    (fn [state]
                      (push-item (apply str (repeatedly (+ min-random-string-length
                                                           (lrand-int (- max-random-string-length min-random-string-length)))
@@ -948,6 +947,36 @@ boolean stack."
         :boolean
         (pop-item :float state))
       state)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; instructions for strings
+
+(define-registered string_concat
+                   (fn [state]
+                     (if (not (empty? (rest (:string state))))
+                       (push-item (str (stack-ref :string 1 state)
+                                       (stack-ref :string 0 state))
+                                  :string
+                                  (pop-item :string (pop-item :string state)))
+                       state)))
+
+(define-registered string_take
+                   (fn [state]
+                     (if (and (not (empty? (:string state)))
+                              (not (empty? (:integer state))))
+                       (push-item (apply str (take (stack-ref :integer 0 state)
+                                                   (stack-ref :string 0 state)))
+                                  :string
+                                  (pop-item :string (pop-item :integer state)))
+                       state)))
+
+(define-registered string_length
+                   (fn [state]
+                     (if (not (empty? (:string state)))
+                       (push-item (count (stack-ref :string 0 state))
+                                  :integer
+                                  (pop-item :string state))
+                       state)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; code and exec instructions
@@ -1666,6 +1695,7 @@ not run as-is."
   [thing]
   (cond (integer? thing) :integer
     (number? thing) :float
+    (string? thing) :string
     (or (= thing true) (= thing false)) :boolean
     true false))
 

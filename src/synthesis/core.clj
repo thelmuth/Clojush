@@ -21,11 +21,6 @@
   (str "SELECT " (apply str (interpose ", " (get swf-map :select))) \newline
        "FROM " (apply str (interpose ", " (get swf-map :from))) \newline
        "WHERE " (apply str (interpose " " (get swf-map :where)))))
-  
-(println (sfw-map-to-query-string {:select '("firstname" "lastname" "salary")
-                          :from '("adult")
-                          :where '("salary > 50" AND "firstname < \"ben\"")}))
-
 
 (clojush/pushgp :error-function (fn [program]
                                   (list
@@ -50,3 +45,11 @@
 (db/run-db-function db/synthesis-db db/db-query "SELECT *
                                         FROM adult
                                         WHERE age < 23 AND education = 'Masters'")
+
+;; Test sfw-map-to-query-string
+(def ex-query
+  (sfw-map-to-query-string {:select '("age" "education" "hours_per_week")
+                          :from '("adult")
+                          :where '("age > 50" AND "workclass = \"State-gov\"")}))
+
+(db/run-db-function db/synthesis-db db/db-query ex-query)

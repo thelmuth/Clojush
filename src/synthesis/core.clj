@@ -11,14 +11,21 @@
 ;; Query creation.
 ;;
 ;; SFW maps are of the following form:
-;; :select ["column1" "column2" "column3" ... "columnN"]
-;; :from ["table1" "table2" ... "tableM"]
-;; :where ["clause1" 'and/'or "clause2" 'and/'or ... "clauseZ"]
+;; :select ("column1" "column2" "column3" ... "columnN")
+;; :from ("table1" "table2" ... "tableM")
+;; :where '("clause1" AND/OR "clause2" AND/OR ... "clauseZ")
 
 (defn sfw-map-to-query-string
   "Takes a map of a SFW query and returns a string representation of that query."
   [swf-map]
-  (str "SELECT " (apply str (interpose ", " (get swf-map :select)))))
+  (str "SELECT " (apply str (interpose ", " (get swf-map :select))) \newline
+       "FROM " (apply str (interpose ", " (get swf-map :from))) \newline
+       "WHERE " (apply str (interpose " " (get swf-map :where)))))
+  
+(println (sfw-map-to-query-string {:select '("firstname" "lastname" "salary")
+                          :from '("adult")
+                          :where '("salary > 50" AND "firstname < \"ben\"")}))
+
 
 (clojush/pushgp :error-function (fn [program]
                                   (list

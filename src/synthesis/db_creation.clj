@@ -108,27 +108,33 @@
                    :subname "/Users/tomhelmuth/Documents/Clojure/Clojush/db/synthesis.sqlite3"
                    :create true})
 
+(def synthesis-db-columns
+  [[:age :int]
+   [:workclass "varchar(32)"]
+   [:fnlwgt :int]
+   [:education "varchar(32)"]
+   [:education_num :int]
+   [:marital_status "varchar(32)"]
+   [:occupation "varchar(32)"]
+   [:relationship "varchar(32)"]
+   [:race "varchar(32)"]
+   [:sex "varchar(8)"]
+   [:capital_gain :int]
+   [:capital_loss :int]
+   [:hours_per_week :int]
+   [:native_country "varchar(32)"]
+   [:greater_50k "varchar(8)"]])
+
+(def synthesis-db-columns-map
+  (apply hash-map (flatten synthesis-db-columns)))
+
 ;Drop table adult
 #_(run-db-function synthesis-db db-drop-table :adult)
 
 ;Create table people
 #_(run-db-function synthesis-db db-create-table
                  :adult
-                 [[:age :int]
-                  [:workclass "varchar(32)"]
-                  [:fnlwgt :int]
-                  [:education "varchar(32)"]
-                  [:education_num :int]
-                  [:marital_status "varchar(32)"]
-                  [:occupation "varchar(32)"]
-                  [:relationship "varchar(32)"]
-                  [:race "varchar(32)"]
-                  [:sex "varchar(8)"]
-                  [:capital_gain :int]
-                  [:capital_loss :int]
-                  [:hours_per_week :int]
-                  [:native_country "varchar(32)"]
-                  [:greater_50k "varchar(8)"]])
+                 synthesis-db-columns)
 
 ; List people who are older than 75 and marital status is Never-married and education is Masters
 (run-db-function synthesis-db db-query "SELECT *

@@ -9,12 +9,29 @@
 
 
 ;;;;;;;;;;
-;; Vectors for creating constraints
+;; Globals for creating constraints
 
 (def comparators ["=" "<" ">" "<=" ">=" "<>"])
+(def cols-map db/synthesis-db-columns-map)
 
 ;;;;;;;;;;
 ;; Instructions for Query from Examples
+
+(defn select-column
+  "Returns column name based on index. Index is constrained within bounds of vector length by modulus."
+  [index]
+  (first (nth db/synthesis-db-columns (mod index (count db/synthesis-db-columns)))))
+
+(defn get-column-type
+  "Retrieves the column type for column."
+  [column]
+  (let [type (get cols-map column)]
+    (cond
+      (= type :int) :integer
+      (string? type) (if (= "varchar" (subs type 0 7))
+                       :string
+                       nil)
+      true nil)))
 
 (defn add-constraint
   "Adds constraint to where clause of query."
@@ -27,23 +44,32 @@
                (conj where logical-operator)
                constraint)))))
   
-  
+; Off integer stack we get (from top (0) to bottom (n)):
+; 0. col-num
+; 1. comparator number
+; 2. (maybe) a constant to compare with
 (clojush/define-registered and_constraint
                            (fn [state]
-                             (if (not (empty? (rest (:integer state))))
+                             (if (>= (count (:integer state)) 3) ;this won't be right
                                (let [query (clojush/stack-ref :auxiliary 0 state)
-                                     constraint (str "age" ;trh should actually get a column here
-                                                     " "
-                                                     (nth comparators
-                                                          (mod (clojush/stack-ref :integer 0 state)
-                                                               (count comparators)))
-                                                     " "
-                                                     (clojush/stack-ref :integer 1 state))]
-                                 (clojush/push-item (add-constraint query constraint 'AND)
-                                                    :auxiliary
-                                                    (clojush/pop-item :auxiliary state))) ;trh need to pop integer
-                               state)))
+                                     column (select-column (clojush/stack-ref :integer 0 state))
+                                     column-type (get-column-type column)]
+                                 (if (not (empty? (get state column-type))) ;is this right? yes for stacks besides :integer
+                                   (let [constraint (str (name column)
+                                                         " "
+                                                         (nth comparators
+                                                              (mod (clojush/stack-ref :integer 1 state)
+                                                                   (count comparators)))
+                                                         " "
+                                                         (clojush/stack-ref :integer 2 state))]
+                                     (clojush/push-item (add-constraint query constraint 'AND)
+                                                        :auxiliary
+                                                        (clojush/pop-item :auxiliary state)));trh need to pop integer or other stack
+                                   state) 
+                                 state))))
 
+
+                           
 
 
 
@@ -103,5 +129,7 @@
 
 
 ;; Test and_constraint
-(println (clojush/run-push '(2999 16 and_constraint)
-                           (clojush/push-item {:select [] :from [] :where ["age > 50"]} :auxiliary (clojush/make-push-state))))
+(println (clojush/run-push '(2999 16 71 and_constraint)
+                           (clojush/push-item {:select [] :from [] :where ["age > 50"]}
+                                              :auxiliary
+                                              (clojush/make-push-state))))

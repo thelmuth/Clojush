@@ -5,7 +5,7 @@
 (ns synthesis.core
   (:require [clojure.contrib.sql :as sql]
             [clojush]
-            [synthesis.db_creation :as db]))
+            [synthesis.db :as db]))
 
 
 ;;;;;;;;;;

@@ -33,7 +33,7 @@
 ; Other possibilities: pop, flush, eq, stackdepth, yank, yankdup, shove
 
 ;;;;;;;;;;
-;; Instructions for :where stack manipulation
+;; Helper functions for :where stack manipulation
 
 (defn select-column
   "Returns column name based on index. Index is constrained within bounds of vector length by modulus."
@@ -51,22 +51,25 @@
                        nil)
       true nil)))
 
+(defn get-constant-from-column
+  "Gets a constant from column from row index. Optional argument distinct is a boolean that defines whether
+   or not the values in the column should be distinct. Index is taken mod the number of options to always
+   give a legal index."
+  [column index distinct]
+    (let [query (str "SELECT "
+                     (if distinct
+                       "DISTINCT "
+                       "")
+                     (name column)
+                     " FROM adult")
+          results (db/run-db-function db/synthesis-db db/db-query query)]
+      (get (nth results
+                (mod index (count results)))
+           column)))
 
+;;;;;;;;;;
+;; Instructions for :where stack manipulation
 
-;; Here, we could just use a random value (integer indexed) from all possible
-;; values in column. Then, we wouldn't need anything off of column-type
-;; In fact, it's probably best to have two where_constraint functions:
-;;  1. Takes the constraint value off of a stack
-;;  2. Uses a value from the column
-;; Neither way is random, if you select a value from the column using an integer index.
-
-;; Start over with where_constraint.
-;; This instruction is option 1 above.
-;-----------------------
-; Off integer stack we get (from top (0) to bottom (n)):
-; 0. col-num
-; 1. comparator number
-; 2. (maybe) a constant to compare with
 (clojush/define-registered where_constraint_from_stack
                            (fn [state]
                              (if (not (>= (count (get state :integer)) 2)) ; We will need at least 2 integers
@@ -91,57 +94,49 @@
                                                                                               (clojush/pop-item column-type
                                                                                                                 state)))))))))))
 
-
-(defn get-constant-from-column
-  "Gets a constant from column from row index. Optional argument distinct is a boolean that defines whether
-   or not the values in the column should be distinct."
-  ([column index]
-    (get-constant-from-column column index false))
-  ([column index distinct]
-    (let [query (str "SELECT "
-                     (if distinct
-                       "DISTINCT "
-                       "")
-                     (name column)
-                     " FROM adult")
-          results (db/run-db-function db/synthesis-db db/db-query query)]
-      (get (nth results
-                (mod index (count results)))
-           column))))
-
-(get-constant-from-column :education 17 true)
-
-
 ; Uses a constant taken from the selected column, where options are not distinct.
 ; This makes probability of choosing constant C proportional to the frequency of C in the column.
 (clojush/define-registered where_constraint_from_index
                            (fn [state]
-                             (if (not (>= (count (get state :integer)) 2)) ; We will need at least 2 integers
+                             (if (not (>= (count (get state :integer)) 3)) ; We will need 3 integers
                                state
                                (let [column (select-column (clojush/stack-ref :integer 0 state))
                                      column-type (get-column-type column)]
                                  (if (nil? column-type) ; Check for legit column-type
                                    state
-                                   (if (or (empty? (get state column-type)) ; Make sure column type isn't empty
-                                           (and (= column-type :integer)
-                                                (not (>= (count (get state :integer)) 3))))
-                                     state
-                                     (let [comparator (nth comparators (mod (clojush/stack-ref :integer 1 state)
-                                                                            (count comparators)))
-                                           constant (if (= column-type :integer)
-                                                      (clojush/stack-ref :integer 2 state)
-                                                      (clojush/stack-ref column-type 0 state))
-                                           constraint (str (name column) " " comparator " " constant)]
-                                       (clojush/push-item constraint :where
-                                                          (clojush/pop-item :integer
-                                                                            (clojush/pop-item :integer
-                                                                                              (clojush/pop-item column-type
-                                                                                                                state)))))))))))
+                                   (let [comparator (nth comparators (mod (clojush/stack-ref :integer 1 state)
+                                                                          (count comparators)))
+                                         constant (get-constant-from-column column
+                                                                            (clojush/stack-ref :integer 2 state)
+                                                                            false)
+                                         constraint (str (name column) " " comparator " " constant)]
+                                     (clojush/push-item constraint :where
+                                                        (clojush/pop-item :integer
+                                                                          (clojush/pop-item :integer
+                                                                                            (clojush/pop-item :integer
+                                                                                                              state))))))))))
 
 ; Uses a constant taken from the selected column, where options are distinct.
 ; This makes each distinct option equally likely.
-;(clojush/define-registered where_constraint_distinct_from_index
-
+(clojush/define-registered where_constraint_distinct_from_index
+                           (fn [state]
+                             (if (not (>= (count (get state :integer)) 3)) ; We will need 3 integers
+                               state
+                               (let [column (select-column (clojush/stack-ref :integer 0 state))
+                                     column-type (get-column-type column)]
+                                 (if (nil? column-type) ; Check for legit column-type
+                                   state
+                                   (let [comparator (nth comparators (mod (clojush/stack-ref :integer 1 state)
+                                                                          (count comparators)))
+                                         constant (get-constant-from-column column
+                                                                            (clojush/stack-ref :integer 2 state)
+                                                                            true)
+                                         constraint (str (name column) " " comparator " " constant)]
+                                     (clojush/push-item constraint :where
+                                                        (clojush/pop-item :integer
+                                                                          (clojush/pop-item :integer
+                                                                                            (clojush/pop-item :integer
+                                                                                                              state))))))))))
 
 ;;;;;;;;;;
 ;; Query from Examples
@@ -200,5 +195,11 @@
                                                            WHERE 0=0") 24212)
 
 ;; Test and_constraint
-(println (clojush/run-push '(2999 "Masters" 16 3 where_constraint_from_stack)
+(println (clojush/run-push '(24 "thomas" 2 1 where_constraint_from_stack)
+                           (clojush/make-push-state)))
+
+(println (clojush/run-push '(4 "thomas" 2 0 where_constraint_from_index)
+                           (clojush/make-push-state)))
+
+(println (clojush/run-push '(7 "thomas" 2 0 where_constraint_distinct_from_index)
                            (clojush/make-push-state)))

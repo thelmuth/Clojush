@@ -7,6 +7,17 @@
             [clojush]
             [synthesis.db :as db]))
 
+;;;;;;;;;;;;
+;; A few things must be done in the clojush namespace.
+(in-ns 'clojush)
+
+;; Redefine push-types to include :select, :from, and :where, and then redefine the push state structure.
+(def push-types '(:exec :integer :float :code :boolean :auxiliary :tag :zip :string :select :from :where))
+(define-push-state-structure)
+
+;;;;;;;;;;;;
+;; Return to core namespace
+(in-ns 'synthesis.core)
 
 ;;;;;;;;;;
 ;; Globals for creating constraints
@@ -88,7 +99,7 @@
        "FROM " (apply str (interpose ", " (get swf-map :from))) \newline
        "WHERE " (apply str (interpose " " (get swf-map :where)))))
 
-(clojush/pushgp :error-function (fn [program]
+#_(clojush/pushgp :error-function (fn [program]
                                   (list
                                     (let [embryo-query {:select []
                                                         :from []
@@ -110,7 +121,7 @@
                 :tournament-size 7)
 
 ;;note: try using db_creation things - see if they work
-(db/run-db-function db/synthesis-db db/db-query "SELECT *
+#_(db/run-db-function db/synthesis-db db/db-query "SELECT *
                                                  FROM adult
                                                  WHERE age < 23 AND education = 'Masters'")
 
@@ -120,16 +131,16 @@
                             :from ["adult"]
                             :where ["age > 50" 'AND "workclass = \"State-gov\""]}))
 
-(db/run-db-function db/synthesis-db db/db-query ex-query)
+#_(db/run-db-function db/synthesis-db db/db-query ex-query)
 
-(add-constraint {:select ["age" "education" "hours_per_week"]
+#_(add-constraint {:select ["age" "education" "hours_per_week"]
                  :from ["adult"]
                  :where ["age > 50" 'AND "workclass = \"State-gov\""]}
                 "age < 25" 'AND)
 
 
 ;; Test and_constraint
-(println (clojush/run-push '(2999 16 71 and_constraint)
+#_(println (clojush/run-push '(2999 16 71 and_constraint)
                            (clojush/push-item {:select [] :from [] :where ["age > 50"]}
                                               :auxiliary
                                               (clojush/make-push-state))))

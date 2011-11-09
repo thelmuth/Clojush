@@ -26,7 +26,14 @@
 (def cols-map db/synthesis-db-columns-map)
 
 ;;;;;;;;;;
-;; Instructions for Query from Examples
+;; Normal stack instructions for SFW
+(define-registered where_dup (duper :where))
+(define-registered where_swap (swapper :where))
+(define-registered where_rot (rotter :where))
+; Other possibilities: pop, flush, eq, stackdepth, yank, yankdup, shove
+
+;;;;;;;;;;
+;; Instructions for :where stack manipulation
 
 (defn select-column
   "Returns column name based on index. Index is constrained within bounds of vector length by modulus."

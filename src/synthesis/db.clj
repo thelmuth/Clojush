@@ -142,4 +142,9 @@
                                         WHERE age < 23 AND education = 'Masters'
                                         ORDER BY age")
 
+; Select a random row
+#_(run-db-function synthesis-db db-query "SELECT *
+                                        FROM adult
+                                        ORDER BY RANDOM()
+                                        LIMIT 1")
 

@@ -688,9 +688,15 @@ integer to indicate how deep."
 
 (define-registered string_rand
                    (fn [state]
-                     (push-item (apply str (repeatedly (+ min-random-string-length
-                                                          (lrand-int (- max-random-string-length min-random-string-length)))
-                                                       #(rand-nth "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890")))
+                     (push-item (let [chars (str "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                                                 "abcdefghijklmnopqrstuvwxyz"
+                                                 "0123456789")
+                                      chars-count (count chars)]
+                                  (apply str
+                                         (repeatedly (+ min-random-string-length
+                                                        (lrand-int (- max-random-string-length
+                                                                      min-random-string-length)))
+                                                     #(nth chars (clojush/lrand-int chars-count)))))
                                 :string
                                 state)))
 

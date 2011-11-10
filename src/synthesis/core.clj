@@ -174,18 +174,14 @@
 
 ;;;;;;;;;;
 ;; Query from Examples
-;;
-;; SFW maps are of the following form:
-;; :select ["column1" "column2" "column3" ... "columnN"]
-;; :from ["table1" "table2" ... "tableM"]
-;; :where ["clause1" 'AND/'OR "clause2" 'AND/'OR ... "clauseZ"]
 
-(defn sfw-map-to-query-string
-  "Takes a map of a SFW query and returns a string representation of that query."
-  [swf-map]
-  (str "SELECT " (apply str (interpose ", " (get swf-map :select))) \newline
-       "FROM " (apply str (interpose ", " (get swf-map :from))) \newline
-       "WHERE " (apply str (interpose " " (get swf-map :where)))))
+(defn stacks-to-query-string
+  "Takes a Push state including the :select, :from, and :where stacks, and returns a
+   string representation of that query."
+  [push-state]
+  (str "SELECT " (clojush/top-item :select push-state) \newline
+       "FROM " (clojush/top-item :from push-state) \newline
+       "WHERE " (clojush/top-item :where push-state)))
 
 #_(clojush/pushgp :error-function (fn [program]
                                     (list
@@ -243,10 +239,14 @@
 (println (clojush/run-push '(4 "thomas" 2 1 where_constraint_from_index where_not)
                            (clojush/make-push-state)))
 
-(clojush/run-push '("thomas" 7 2 1 where_constraint_distinct_from_index
-                             539 2 10 where_constraint_distinct_from_index
-                             14 90 3 where_constraint_from_index
-                             where_and
-                             4 13 214 where_constraint_from_stack
-                             where_or)
-                  (clojush/make-push-state))
+(stacks-to-query-string (clojush/run-push '("thomas" 7 2 1 where_constraint_distinct_from_index
+                                                     539 2 10 where_constraint_distinct_from_index
+                                                     14 90 3 where_constraint_from_index
+                                                     where_and
+                                                     4 13 214 where_constraint_from_stack
+                                                     where_or)
+                                          (clojush/push-item "adult"
+                                                             :from
+                                                             (clojush/push-item "*"
+                                                                                :select
+                                                                                (clojush/make-push-state)))))

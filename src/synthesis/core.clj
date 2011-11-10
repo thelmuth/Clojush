@@ -27,9 +27,9 @@
 
 ;;;;;;;;;;
 ;; Normal stack instructions for SFW
-(clojush/define-registered where_dup (duper :where))
-(clojush/define-registered where_swap (swapper :where))
-(clojush/define-registered where_rot (rotter :where))
+(clojush/define-registered where_dup (clojush/duper :where))
+(clojush/define-registered where_swap (clojush/swapper :where))
+(clojush/define-registered where_rot (clojush/rotter :where))
 ; Other possibilities: pop, flush, eq, stackdepth, yank, yankdup, shove
 
 ;;;;;;;;;;
@@ -179,9 +179,12 @@
   "Takes a Push state including the :select, :from, and :where stacks, and returns a
    string representation of that query."
   [push-state]
-  (str "SELECT " (clojush/top-item :select push-state) \newline
-       "FROM " (clojush/top-item :from push-state) \newline
-       "WHERE " (clojush/top-item :where push-state)))
+  (let [select (clojush/top-item :select push-state)
+        from (clojush/top-item :from push-state)
+        where (clojush/top-item :where push-state)]
+    (str "SELECT " select \newline
+         "FROM " from \newline
+         (when (not (= where :no-stack-item)) (str "WHERE " where)))))
 
 (clojush/pushgp
   :error-function (fn [program]
@@ -197,7 +200,16 @@
                         ;Now, need to create a SFW string, and use it on the database to find the fitness.
                         ;----for now, just return a random integer
                         (clojush/lrand-int 1000))))
-  :atom-generators (concat (clojush/registered-for-type :where)
+  :atom-generators (concat #_(clojush/registered-for-type :where)
+                           (list 'where_dup
+                                 'where_swap
+                                 'where_rot
+                                 'where_constraint_distinct_from_index
+                                 'where_constraint_from_index
+                                 'where_constraint_from_stack
+                                 'where_and
+                                 'where_or
+                                 'where_not)
                            (list 'string_length
                                  'string_take
                                  'string_concat
@@ -226,7 +238,7 @@
                                           (apply str (repeatedly (+ 1 (clojush/lrand-int 9))
                                                                  #(nth chars (clojush/lrand-int chars-count))))))))
   :population-size 100
-  :max-generations 50
+  :max-generations 2
   :tournament-size 7)
   
 
@@ -241,10 +253,10 @@
 
 ;; Test a query
 #_(time (db/run-db-function db/synthesis-db
-                          db/db-query
-                          "SELECT DISTINCT workclass
-                           FROM adult
-                           WHERE (NOT workclass > 'Private')"))
+                            db/db-query
+                            "SELECT DISTINCT workclass
+                             FROM adult
+                             WHERE (NOT workclass > 'Private')"))
 
 ;; To get an indexed thing from the distinct things
 #_(nth (db/run-db-function db/synthesis-db db/db-query "SELECT DISTINCT education
@@ -258,24 +270,24 @@
 
 ;; Test and_constraint
 #_(println (clojush/run-push '(24 "thomas" 2 1 where_constraint_from_stack)
-                           (clojush/make-push-state)))
+                             (clojush/make-push-state)))
 
 #_(println (clojush/run-push '(4 "thomas" 2 1 where_constraint_from_index where_not)
-                           (clojush/make-push-state)))
+                             (clojush/make-push-state)))
 
 
 #_(stacks-to-query-string (clojush/run-push '("thomas" 7 2 1 where_constraint_distinct_from_index
-                                                     539 2 10 where_constraint_distinct_from_index
-                                                     14 90 3 where_constraint_from_index
-                                                     where_and
-                                                     4 13 214 where_constraint_from_stack
-                                                     where_or)
-                                          (clojush/push-item "adult"
-                                                             :from
-                                                             (clojush/push-item "*"
-                                                                                :select
-                                                                                (clojush/make-push-state)))))
+                                                       539 2 10 where_constraint_distinct_from_index
+                                                       14 90 3 where_constraint_from_index
+                                                       where_and
+                                                       4 13 214 where_constraint_from_stack
+                                                       where_or)
+                                            (clojush/push-item "adult"
+                                                               :from
+                                                               (clojush/push-item "*"
+                                                                                  :select
+                                                                                  (clojush/make-push-state)))))
 
 #_(clojush/registered-for-type :where)
 
-(clojush/registered-for-type :integer)
+#_(clojush/registered-for-type :integer)

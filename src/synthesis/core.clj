@@ -219,14 +219,16 @@
                                        2 (clojush/lrand-int 1000)
                                        3 (clojush/lrand-int 10000)
                                        4 (clojush/lrand-int 100000))))
-                                 (fn [] (apply str (repeatedly (+ 1 (clojush/lrand-int 9))
-                                                               #(rand-nth (str "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-                                                                               "abcdefghijklmnopqrstuvwxyz"
-                                                                               "0123456789")))))))
+                                 (fn [] (let [chars (str "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                                                         "abcdefghijklmnopqrstuvwxyz"
+                                                         "0123456789")
+                                              chars-count (count chars)]
+                                          (apply str (repeatedly (+ 1 (clojush/lrand-int 9))
+                                                                 #(nth chars (clojush/lrand-int chars-count))))))))
   :population-size 100
   :max-generations 50
   :tournament-size 7)
-
+  
 
 
 ;; Test sfw-map-to-query-string

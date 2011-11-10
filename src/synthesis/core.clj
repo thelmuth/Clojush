@@ -27,9 +27,9 @@
 
 ;;;;;;;;;;
 ;; Normal stack instructions for SFW
-(define-registered where_dup (duper :where))
-(define-registered where_swap (swapper :where))
-(define-registered where_rot (rotter :where))
+(clojush/define-registered where_dup (duper :where))
+(clojush/define-registered where_swap (swapper :where))
+(clojush/define-registered where_rot (rotter :where))
 ; Other possibilities: pop, flush, eq, stackdepth, yank, yankdup, shove
 
 ;;;;;;;;;;
@@ -183,27 +183,49 @@
        "FROM " (clojush/top-item :from push-state) \newline
        "WHERE " (clojush/top-item :where push-state)))
 
-#_(clojush/pushgp :error-function (fn [program]
-                                    (list
-                                      (let [embryo-query {:select []
-                                                          :from []
-                                                          :where []}
-                                            final-state (clojush/run-push
-                                                          program
-                                                          (clojush/push-item embryo-query
-                                                                             :auxiliary
-                                                                             (clojush/make-push-state)))
-                                            result-query (clojush/top-item :auxiliary final-state)]
-                                        ;Now, need to create a SFW string, and use it on the database to find the fitness.
-                                        ;----for now, just return a random integer
-                                        (rand-int 1000))))
-                  :atom-generators (list 'string_length
-                                         'string_take
-                                         'string_concat
-                                         'and_constraint)
-                  :population-size 100
-                  :max-generations 50
-                  :tournament-size 7)
+(clojush/pushgp
+  :error-function (fn [program]
+                    (list
+                      (let [final-state (clojush/run-push
+                                          program
+                                          (clojush/push-item "adult"
+                                                             :from
+                                                             (clojush/push-item "*"
+                                                                                :select
+                                                                                (clojush/make-push-state))))
+                            result-query (stacks-to-query-string final-state)]
+                        ;Now, need to create a SFW string, and use it on the database to find the fitness.
+                        ;----for now, just return a random integer
+                        (clojush/lrand-int 1000))))
+  :atom-generators (concat (clojush/registered-for-type :where)
+                           (list 'string_length
+                                 'string_take
+                                 'string_concat
+                                 'string_stackdepth)
+                           (list 'integer_add
+                                 'integer_sub
+                                 'integer_mult
+                                 'integer_div
+                                 'integer_mod
+                                 'integer_stackdepth
+                                 'integer_dup
+                                 'integer_swap
+                                 'integer_rot)
+                           (list (fn [] 
+                                   (let [choice (clojush/lrand-int 5)]
+                                     (case choice
+                                       0 (clojush/lrand-int 10)
+                                       1 (clojush/lrand-int 100)
+                                       2 (clojush/lrand-int 1000)
+                                       3 (clojush/lrand-int 10000)
+                                       4 (clojush/lrand-int 100000))))
+                                 (fn [] (apply str (repeatedly (+ 1 (clojush/lrand-int 9))
+                                                               #(rand-nth (str "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                                                                               "abcdefghijklmnopqrstuvwxyz"
+                                                                               "0123456789")))))))
+  :population-size 100
+  :max-generations 50
+  :tournament-size 7)
 
 
 
@@ -216,7 +238,7 @@
 #_(db/run-db-function db/synthesis-db db/db-query ex-query)
 
 ;; Test a query
-(time (db/run-db-function db/synthesis-db
+#_(time (db/run-db-function db/synthesis-db
                           db/db-query
                           "SELECT DISTINCT workclass
                            FROM adult
@@ -233,13 +255,14 @@
                                                         WHERE 0=0") 24212)
 
 ;; Test and_constraint
-(println (clojush/run-push '(24 "thomas" 2 1 where_constraint_from_stack)
+#_(println (clojush/run-push '(24 "thomas" 2 1 where_constraint_from_stack)
                            (clojush/make-push-state)))
 
-(println (clojush/run-push '(4 "thomas" 2 1 where_constraint_from_index where_not)
+#_(println (clojush/run-push '(4 "thomas" 2 1 where_constraint_from_index where_not)
                            (clojush/make-push-state)))
 
-(stacks-to-query-string (clojush/run-push '("thomas" 7 2 1 where_constraint_distinct_from_index
+
+#_(stacks-to-query-string (clojush/run-push '("thomas" 7 2 1 where_constraint_distinct_from_index
                                                      539 2 10 where_constraint_distinct_from_index
                                                      14 90 3 where_constraint_from_index
                                                      where_and
@@ -250,3 +273,7 @@
                                                              (clojush/push-item "*"
                                                                                 :select
                                                                                 (clojush/make-push-state)))))
+
+#_(clojush/registered-for-type :where)
+
+(clojush/registered-for-type :integer)

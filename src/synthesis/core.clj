@@ -56,16 +56,19 @@
    or not the values in the column should be distinct. Index is taken mod the number of options to always
    give a legal index."
   [column index distinct]
-    (let [query (str "SELECT "
-                     (if distinct
-                       "DISTINCT "
-                       "")
-                     (name column)
-                     " FROM adult")
-          results (db/run-db-function db/synthesis-db db/db-query query)]
-      (get (nth results
-                (mod index (count results)))
-           column)))
+  (let [query (str "SELECT "
+                   (if distinct
+                     "DISTINCT "
+                     "")
+                   (name column)
+                   " FROM adult")
+        results (db/run-db-function db/synthesis-db db/db-query query)
+        return (get (nth results
+                         (mod index (count results)))
+                    column)]
+    (if (string? return)
+      (str "'" return "'")
+      return)))
 
 ;;;;;;;;;;
 ;; Instructions for :where stack manipulation
@@ -84,9 +87,12 @@
                                      state
                                      (let [comparator (nth comparators (mod (clojush/stack-ref :integer 1 state)
                                                                             (count comparators)))
-                                           constant (if (= column-type :integer)
-                                                      (clojush/stack-ref :integer 2 state)
-                                                      (clojush/stack-ref column-type 0 state))
+                                           constant (cond
+                                                      (= column-type :integer) (clojush/stack-ref :integer 2 state)
+                                                      (= column-type :string) (str "'"
+                                                                                   (clojush/stack-ref :string 0 state)
+                                                                                   "'")
+                                                      true (clojush/stack-ref column-type 0 state))
                                            constraint (str (name column) " " comparator " " constant)]
                                        (clojush/push-item constraint :where
                                                           (clojush/pop-item :integer
@@ -138,6 +144,22 @@
                                                                                             (clojush/pop-item :integer
                                                                                                               state))))))))))
 
+(defn where-conjoiner
+  [conjunction]
+  (fn [state]
+    (if (not (>= (count (get state :where)) 2))
+      state
+      (let [first-item (clojush/stack-ref :where 0 state)
+            second-item (clojush/stack-ref :where 1 state)]
+        (clojush/push-item (str "(" second-item " " conjunction " " first-item ")")
+                           :where
+                           (clojush/pop-item :where
+                                             (clojush/pop-item :where state)))))))
+            
+(clojush/define-registered where_and (where-conjoiner "AND"))
+(clojush/define-registered where_or (where-conjoiner "OR"))
+
+
 ;;;;;;;;;;
 ;; Query from Examples
 ;;
@@ -154,52 +176,64 @@
        "WHERE " (apply str (interpose " " (get swf-map :where)))))
 
 #_(clojush/pushgp :error-function (fn [program]
-                                  (list
-                                    (let [embryo-query {:select []
-                                                        :from []
-                                                        :where []}
-                                          final-state (clojush/run-push program
-                                                                        (clojush/push-item embryo-query
-                                                                                           :auxiliary
-                                                                                           (clojush/make-push-state)))
-                                          result-query (clojush/top-item :auxiliary final-state)]
-                                      ;Now, need to create a SFW string, and use it on the database to find the fitness.
-                                      ;----for now, just return a random integer
-                                      (rand-int 1000))))
-                :atom-generators (list 'string_length
-                                       'string_take
-                                       'string_concat
-                                       'and_constraint)
-                :population-size 100
-                :max-generations 50
-                :tournament-size 7)
+                                    (list
+                                      (let [embryo-query {:select []
+                                                          :from []
+                                                          :where []}
+                                            final-state (clojush/run-push program
+                                                                          (clojush/push-item embryo-query
+                                                                                             :auxiliary
+                                                                                             (clojush/make-push-state)))
+                                            result-query (clojush/top-item :auxiliary final-state)]
+                                        ;Now, need to create a SFW string, and use it on the database to find the fitness.
+                                        ;----for now, just return a random integer
+                                        (rand-int 1000))))
+                  :atom-generators (list 'string_length
+                                         'string_take
+                                         'string_concat
+                                         'and_constraint)
+                  :population-size 100
+                  :max-generations 50
+                  :tournament-size 7)
 
 
 
 ;; Test sfw-map-to-query-string
 #_(def ex-query
-  (sfw-map-to-query-string {:select ["age" "education" "hours_per_week"]
-                            :from ["adult"]
-                            :where ["age > 50" 'AND "workclass = \"State-gov\""]}))
+    (sfw-map-to-query-string {:select ["age" "education" "hours_per_week"]
+                              :from ["adult"]
+                              :where ["age > 50" 'AND "workclass = \"State-gov\""]}))
 
 #_(db/run-db-function db/synthesis-db db/db-query ex-query)
 
+;; Test a query
+(nth (time (db/run-db-function db/synthesis-db
+                    db/db-query
+                    "SELECT DISTINCT *
+                     FROM adult
+                     WHERE ((capital_gain > 3887 AND education = 'Assoc-voc') OR education_num < 420)")) 4)
+
 ;; To get an indexed thing from the distinct things
 #_(nth (db/run-db-function db/synthesis-db db/db-query "SELECT DISTINCT education
-                                                           FROM adult
-                                                           WHERE 0=0") 8)
+                                                        FROM adult
+                                                        WHERE 0=0") 8)
 
 ;; To get an indexed thing from non-distinct things
 #_(nth (db/run-db-function db/synthesis-db db/db-query "SELECT education
-                                                           FROM adult
-                                                           WHERE 0=0") 24212)
+                                                        FROM adult
+                                                        WHERE 0=0") 24212)
 
 ;; Test and_constraint
 (println (clojush/run-push '(24 "thomas" 2 1 where_constraint_from_stack)
                            (clojush/make-push-state)))
 
-(println (clojush/run-push '(4 "thomas" 2 0 where_constraint_from_index)
+(println (clojush/run-push '(4 "thomas" 2 1 where_constraint_from_index)
                            (clojush/make-push-state)))
 
-(println (clojush/run-push '(7 "thomas" 2 0 where_constraint_distinct_from_index)
-                           (clojush/make-push-state)))
+(clojush/run-push '("thomas" 7 2 1 where_constraint_distinct_from_index
+                             539 2 10 where_constraint_distinct_from_index
+                             14 90 3 where_constraint_from_index
+                             where_and
+                             420 13 214 where_constraint_from_stack
+                             where_or)
+                  (clojush/make-push-state))

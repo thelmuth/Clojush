@@ -173,7 +173,7 @@
                            (clojush/pop-item :where state))))))
 
 ;;;;;;;;;;
-;; Query from Examples
+;; Helper functions for pushgp
 
 (defn stacks-to-query-string
   "Takes a Push state including the :select, :from, and :where stacks, and returns a
@@ -186,60 +186,97 @@
          "FROM " from \newline
          (when (not (= where :no-stack-item)) (str "WHERE " where)))))
 
+(defn run-query-for-agent
+  "Takes an agent's old return and a new query string, and runs the query on db/synthesis-db."
+  [old-return query-string]
+  (db/run-db-function db/synthesis-db
+                      db/db-query
+                      query-string))
+
+;;;;;;;;;;
+;; Query from Examples
+
+(def qfe-error-function
+  (fn [program]
+    (list
+      (let [final-state (clojush/run-push
+                          program
+                          (clojush/push-item "adult"
+                                             :from
+                                             (clojush/push-item "*"
+                                                                :select
+                                                                (clojush/make-push-state))))
+            result-query-string (stacks-to-query-string final-state)
+            query-agent (agent 0)]
+        (send query-agent run-query-for-agent result-query-string)
+        (println "\nQuery:")
+        (println result-query-string)
+        (if (time (await-for 10000 query-agent))
+          (do
+            (println (count @query-agent))
+            (- 10000 (count result-query-string))) ;;for now, return 1000 - length of query
+          10000)))) ;;penalty of 10000 for not returning
+  ;----for now, just return a random integer
+  ;(clojush/lrand-int 1000)))))
+  )
+
+(def qfe-atom-generators
+  (concat #_(clojush/registered-for-type :where)
+          (list 'where_dup
+                'where_swap
+                'where_rot
+                'where_constraint_distinct_from_index
+                'where_constraint_from_index
+                'where_constraint_from_stack
+                'where_and
+                'where_or
+                'where_not)
+          (list 'string_length
+                'string_take
+                'string_concat
+                'string_stackdepth
+                'string_dup
+                'string_swap
+                'string_rot)
+          (list 'integer_add
+                'integer_sub
+                'integer_mult
+                'integer_div
+                'integer_mod
+                'integer_stackdepth
+                'integer_dup
+                'integer_swap
+                'integer_rot)
+          (list (fn [] 
+                  (let [choice (clojush/lrand-int 5)]
+                    (case choice
+                      0 (clojush/lrand-int 10)
+                      1 (clojush/lrand-int 100)
+                      2 (clojush/lrand-int 1000)
+                      3 (clojush/lrand-int 10000)
+                      4 (clojush/lrand-int 100000))))
+                (fn [] (let [chars (str "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                                        "abcdefghijklmnopqrstuvwxyz"
+                                        "0123456789")
+                             chars-count (count chars)]
+                         (apply str (repeatedly (+ 1 (clojush/lrand-int 9))
+                                                #(nth chars (clojush/lrand-int chars-count)))))))))
+
 (clojush/pushgp
-  :error-function (fn [program]
-                    (list
-                      (let [final-state (clojush/run-push
-                                          program
-                                          (clojush/push-item "adult"
-                                                             :from
-                                                             (clojush/push-item "*"
-                                                                                :select
-                                                                                (clojush/make-push-state))))
-                            result-query (stacks-to-query-string final-state)]
-                        ;Now, need to create a SFW string, and use it on the database to find the fitness.
-                        ;----for now, just return a random integer
-                        (clojush/lrand-int 1000))))
-  :atom-generators (concat #_(clojush/registered-for-type :where)
-                           (list 'where_dup
-                                 'where_swap
-                                 'where_rot
-                                 'where_constraint_distinct_from_index
-                                 'where_constraint_from_index
-                                 'where_constraint_from_stack
-                                 'where_and
-                                 'where_or
-                                 'where_not)
-                           (list 'string_length
-                                 'string_take
-                                 'string_concat
-                                 'string_stackdepth)
-                           (list 'integer_add
-                                 'integer_sub
-                                 'integer_mult
-                                 'integer_div
-                                 'integer_mod
-                                 'integer_stackdepth
-                                 'integer_dup
-                                 'integer_swap
-                                 'integer_rot)
-                           (list (fn [] 
-                                   (let [choice (clojush/lrand-int 5)]
-                                     (case choice
-                                       0 (clojush/lrand-int 10)
-                                       1 (clojush/lrand-int 100)
-                                       2 (clojush/lrand-int 1000)
-                                       3 (clojush/lrand-int 10000)
-                                       4 (clojush/lrand-int 100000))))
-                                 (fn [] (let [chars (str "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-                                                         "abcdefghijklmnopqrstuvwxyz"
-                                                         "0123456789")
-                                              chars-count (count chars)]
-                                          (apply str (repeatedly (+ 1 (clojush/lrand-int 9))
-                                                                 #(nth chars (clojush/lrand-int chars-count))))))))
-  :population-size 100
-  :max-generations 2
-  :tournament-size 7)
+    :error-function qfe-error-function
+    :atom-generators qfe-atom-generators
+    :population-size 10
+    :max-generations 2
+    :tournament-size 7)
+
+
+
+
+
+;; Evaluate a random invidual
+#_(clojush/evaluate-individual (clojush/make-individual :program (clojush/random-code 150 qfe-atom-generators))
+                             qfe-error-function
+                             (new java.util.Random))
 
 
 
@@ -257,6 +294,7 @@
                             "SELECT DISTINCT workclass
                              FROM adult
                              WHERE (NOT workclass > 'Private')"))
+
 
 ;; To get an indexed thing from the distinct things
 #_(nth (db/run-db-function db/synthesis-db db/db-query "SELECT DISTINCT education

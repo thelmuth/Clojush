@@ -196,30 +196,6 @@
 ;;;;;;;;;;
 ;; Query from Examples
 
-(def qfe-error-function
-  (fn [program]
-    (list
-      (let [final-state (clojush/run-push
-                          program
-                          (clojush/push-item "adult"
-                                             :from
-                                             (clojush/push-item "*"
-                                                                :select
-                                                                (clojush/make-push-state))))
-            result-query-string (stacks-to-query-string final-state)
-            query-agent (agent 0)]
-        (send query-agent run-query-for-agent result-query-string)
-        (println "\nQuery:")
-        (println result-query-string)
-        (if (time (await-for 10000 query-agent))
-          (do
-            (println (count @query-agent))
-            (- 10000 (count result-query-string))) ;;for now, return 1000 - length of query
-          10000)))) ;;penalty of 10000 for not returning
-  ;----for now, just return a random integer
-  ;(clojush/lrand-int 1000)))))
-  )
-
 (def qfe-atom-generators
   (concat #_(clojush/registered-for-type :where)
           (list 'where_dup
@@ -262,14 +238,39 @@
                          (apply str (repeatedly (+ 1 (clojush/lrand-int 9))
                                                 #(nth chars (clojush/lrand-int chars-count)))))))))
 
+(def qfe-error-function
+  (fn [program]
+    (list
+      (let [final-state (clojush/run-push
+                          program
+                          (clojush/push-item "adult"
+                                             :from
+                                             (clojush/push-item "*"
+                                                                :select
+                                                                (clojush/make-push-state))))
+            result-query-string (stacks-to-query-string final-state)
+            query-agent (agent 0)]
+        ;(send query-agent run-query-for-agent result-query-string)
+        (println "\nQuery:")
+        (println result-query-string)
+        ;(if (time (await-for 10000 query-agent))
+        ;  (do
+        ;    (println (count @query-agent))
+        ;    (- 10000 (count result-query-string))) ;;for now, return 1000 - length of query
+        ;  10000)))) ;;penalty of 10000 for not returning
+        ;----for now, just return a random integer
+        (clojush/lrand-int 1000))))
+  )
+
 (clojush/pushgp
-    :error-function qfe-error-function
-    :atom-generators qfe-atom-generators
-    :population-size 10
-    :max-generations 2
-    :tournament-size 7)
-
-
+  :error-function qfe-error-function
+  :atom-generators qfe-atom-generators
+  :population-size 10
+  :max-generations 2
+  :tournament-size 7
+  :report-simplifications 0
+  :final-report-simplifications 0
+  :reproduction-simplifications 1)
 
 
 

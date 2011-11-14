@@ -249,18 +249,23 @@
                                                                 :select
                                                                 (clojush/make-push-state))))
             result-query-string (stacks-to-query-string final-state)
-            query-agent (agent 0)]
-        ;(send query-agent run-query-for-agent result-query-string)
+            query-future (future
+                           (db/run-db-function db/synthesis-db
+                                               db/db-query
+                                               result-query-string))]
         (println "\nQuery:")
         (println result-query-string)
-        ;(if (time (await-for 10000 query-agent))
-        ;  (do
-        ;    (println (count @query-agent))
-        ;    (- 10000 (count result-query-string))) ;;for now, return 1000 - length of query
-        ;  10000)))) ;;penalty of 10000 for not returning
-        ;----for now, just return a random integer
-        (clojush/lrand-int 1000))))
-  )
+        (try
+          (println "Rows returned:" (count (.get query-future 2000 (java.util.concurrent.TimeUnit/MILLISECONDS))))
+          (- 10000 (count result-query-string)) ;;for now, return 1000 - length of the string
+          (catch java.util.concurrent.TimeoutException e
+                 (if (future-cancel query-future)
+                   (println "future cancelled")
+                   (println "future could not be cancelled"))
+                 10000)))))) ;;penalty of 10000 for not returning
+
+
+
 
 (clojush/pushgp
   :error-function qfe-error-function

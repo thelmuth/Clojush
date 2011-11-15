@@ -253,9 +253,8 @@
                            (db/run-db-function db/synthesis-db
                                                db/db-query
                                                result-query-string))]
-            ;query-future (future (vec '({:education "Masters"} {:education "10th"})))]
         (try
-          (let [rows (count (.get query-future 2000 (java.util.concurrent.TimeUnit/MILLISECONDS)))]
+          (let [rows (count (.get query-future 1000 (java.util.concurrent.TimeUnit/MILLISECONDS)))]
             (println "---")
             (println "Query:")
             (println result-query-string)
@@ -281,7 +280,8 @@
   :tournament-size 7
   :report-simplifications 0
   :final-report-simplifications 0
-  :reproduction-simplifications 1)
+  :reproduction-simplifications 1
+  :use-single-thread true)
 
 
 

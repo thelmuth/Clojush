@@ -253,12 +253,18 @@
                            (db/run-db-function db/synthesis-db
                                                db/db-query
                                                result-query-string))]
-        (println "\nQuery:")
-        (println result-query-string)
+            ;query-future (future (vec '({:education "Masters"} {:education "10th"})))]
         (try
-          (println "Rows returned:" (count (.get query-future 2000 (java.util.concurrent.TimeUnit/MILLISECONDS))))
-          (- 10000 (count result-query-string)) ;;for now, return 1000 - length of the string
+          (let [rows (count (.get query-future 2000 (java.util.concurrent.TimeUnit/MILLISECONDS)))]
+            (println "---")
+            (println "Query:")
+            (println result-query-string)
+            (println "Rows returned:" rows)
+            (- 10000 (count result-query-string))) ;;for now, return 1000 - length of the string
           (catch java.util.concurrent.TimeoutException e
+                 (println "---")
+                 (println "Query:")
+                 (println result-query-string)
                  (if (future-cancel query-future)
                    (println "future cancelled")
                    (println "future could not be cancelled"))

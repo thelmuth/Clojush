@@ -1,5 +1,6 @@
 (ns synthesis.db
-  (:require [clojure.contrib.sql :as sql]))
+  (:require [clojure.contrib.sql :as sql]
+            [local-file]))
 
 #_(defn pnr [x]
   "Debugging function - prints and then returns x."
@@ -50,12 +51,13 @@
                           (into [] res)))
 
 
-; Small example database
+;;;;;;;;;;
+;; Small database example
 
 ; Database attributes
 #_(def synthesis-db {:classname "org.sqlite.JDBC"
                    :subprotocol "sqlite"
-                   :subname "/Users/tomhelmuth/Documents/Clojure/Clojush/db/synthesis.sqlite3"
+                   :subname (local-file/file* "db/synthesis.sqlite3")
                    :create true})
 
 ;Drop table people
@@ -99,13 +101,13 @@
                                         WHERE P1.lastname < P2.lastname")
                  
 
-
-; Adult database
+;;;;;;;;;;
+;; Adult database
 
 ; Database attributes
 (def synthesis-db {:classname "org.sqlite.JDBC"
                    :subprotocol "sqlite"
-                   :subname "/Users/tomhelmuth/Documents/Clojure/Clojush/db/synthesis.sqlite3"
+                   :subname (local-file/file* "db/synthesis.sqlite3")
                    :create true})
 
 (def synthesis-db-columns

@@ -259,7 +259,8 @@
             (println "Query:")
             (println result-query-string)
             (println "Rows returned:" rows)
-            (- 10000 (count result-query-string))) ;;for now, return 1000 - length of the string
+            (println "Error:" (Math/abs (- 16250 rows)))
+            (Math/abs (- 16250 rows))) ;;for now, return abs(16250 - rows returned)
           (catch java.util.concurrent.TimeoutException e
                  (println "---")
                  (println "Query:")
@@ -267,19 +268,19 @@
                  (if (future-cancel query-future)
                    (println "future cancelled")
                    (println "future could not be cancelled"))
-                 10000)))))) ;;penalty of 10000 for not returning
-
-
+                 100000)))))) ;;penalty of 100000 for not returning
 
 
 (clojush/pushgp
   :error-function qfe-error-function
   :atom-generators qfe-atom-generators
-  :population-size 10
-  :max-generations 2
+  :max-points 250
+  :evalpush-limit 300
+  :population-size 100
+  :max-generations 20
   :tournament-size 7
   :report-simplifications 0
-  :final-report-simplifications 0
+  :final-report-simplifications 10
   :reproduction-simplifications 1
   :use-single-thread true)
 

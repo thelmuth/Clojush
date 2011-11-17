@@ -270,6 +270,8 @@
                    (println "future could not be cancelled"))
                  100000)))))) ;;penalty of 100000 for not returning
 
+;;;;;;;;;;
+;; Main pushgp call
 
 (clojush/pushgp
   :error-function qfe-error-function
@@ -285,60 +287,9 @@
   :use-single-thread true)
 
 
-
+;;;;;;;;;;
 ;; Evaluate a random invidual
+
 #_(clojush/evaluate-individual (clojush/make-individual :program (clojush/random-code 150 qfe-atom-generators))
                              qfe-error-function
                              (new java.util.Random))
-
-
-
-;; Test sfw-map-to-query-string
-#_(def ex-query
-    (sfw-map-to-query-string {:select ["age" "education" "hours_per_week"]
-                              :from ["adult"]
-                              :where ["age > 50" 'AND "workclass = \"State-gov\""]}))
-
-#_(db/run-db-function db/synthesis-db db/db-query ex-query)
-
-;; Test a query
-#_(time (db/run-db-function db/synthesis-db
-                            db/db-query
-                            "SELECT DISTINCT workclass
-                             FROM adult
-                             WHERE (NOT workclass > 'Private')"))
-
-
-;; To get an indexed thing from the distinct things
-#_(nth (db/run-db-function db/synthesis-db db/db-query "SELECT DISTINCT education
-                                                        FROM adult
-                                                        WHERE 0=0") 8)
-
-;; To get an indexed thing from non-distinct things
-#_(nth (db/run-db-function db/synthesis-db db/db-query "SELECT education
-                                                        FROM adult
-                                                        WHERE 0=0") 24212)
-
-;; Test and_constraint
-#_(println (clojush/run-push '(24 "thomas" 2 1 where_constraint_from_stack)
-                             (clojush/make-push-state)))
-
-#_(println (clojush/run-push '(4 "thomas" 2 1 where_constraint_from_index where_not)
-                             (clojush/make-push-state)))
-
-
-#_(stacks-to-query-string (clojush/run-push '("thomas" 7 2 1 where_constraint_distinct_from_index
-                                                       539 2 10 where_constraint_distinct_from_index
-                                                       14 90 3 where_constraint_from_index
-                                                       where_and
-                                                       4 13 214 where_constraint_from_stack
-                                                       where_or)
-                                            (clojush/push-item "adult"
-                                                               :from
-                                                               (clojush/push-item "*"
-                                                                                  :select
-                                                                                  (clojush/make-push-state)))))
-
-#_(clojush/registered-for-type :where)
-
-#_(clojush/registered-for-type :integer)

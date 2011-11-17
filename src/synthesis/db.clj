@@ -2,11 +2,7 @@
   (:require [clojure.contrib.sql :as sql]
             [local-file]))
 
-#_(defn pnr [x]
-  "Debugging function - prints and then returns x."
-  (println x)
-  x)
-
+;;;;;;;;;;
 ;; Generic db functions
 
 (defn run-db-function
@@ -17,26 +13,26 @@
     (sql/transaction
       (apply db-function args))))
 
-(defn db-create-table
+(defn create-table
   "Creates the table."
   [table columns-vector]
   (apply sql/create-table
          (cons table columns-vector)))
 
-(defn db-drop-table
+(defn drop-table
   "Drop a table"
   [table]
   (try
     (sql/drop-table table)
     (catch Exception _)))
 
-(defn db-insert-rows
+(defn insert-rows
   "Inserts one or more rows into table."
   [table & rows]
   (apply sql/insert-rows
          (cons table rows)))
 
-(defn db-read-all
+(defn read-all
   "Read an entire table and return as a vector of maps."
   [table]
   (sql/with-query-results res
@@ -53,52 +49,52 @@
 
 ;;;;;;;;;;
 ;; Small database example
-
-; Database attributes
-#_(def synthesis-db {:classname "org.sqlite.JDBC"
-                   :subprotocol "sqlite"
-                   :subname (local-file/file* "db/synthesis.sqlite3")
-                   :create true})
-
-;Drop table people
-#_(run-db-function synthesis-db db-drop-table :people)
-
-;Create table people
-#_(run-db-function synthesis-db db-create-table
-                 :people
-                 [[:pid :int "PRIMARY KEY"]
-                  [:firstname "varchar(32)"]
-                  [:lastname "varchar(32)"]])
-
-;Insert rows into people
-#_(run-db-function synthesis-db db-insert-rows
-                 :people
-                 [11 "Tom" "Smith"]
-                 [19 "William" "Williams"]
-                 [203 "Gene" "Wirth"]
-                 [54 "Penelope" "Davies"]
-                 [32 "Zach" "Francis"]
-                 [179 "Allen" "Osborn"])
-
-;Read the whole people table
-#_(run-db-function synthesis-db db-read-all :people)
-
-;Query people table
-#_(run-db-function synthesis-db db-query "SELECT pid, firstname
-                                        FROM people
-                                        WHERE pid<100")
-
-;Find people whose last names are later in the alphabet than their first names
-#_(run-db-function synthesis-db db-query "SELECT firstname, lastname
-                                        FROM people
-                                        WHERE firstname<lastname")
-
-
-
-;List pairs of lastnames where the first last name is earlier in the alphabet than the second
-#_(run-db-function synthesis-db db-query "SELECT P1.lastname as Earlier, P2.lastname as Later
-                                        FROM people P1, people P2
-                                        WHERE P1.lastname < P2.lastname")
+;
+;; Database attributes
+;#_(def synthesis-db {:classname "org.sqlite.JDBC"
+;                   :subprotocol "sqlite"
+;                   :subname (local-file/file* "db/synthesis.sqlite3")
+;                   :create true})
+;
+;;Drop table people
+;#_(run-db-function synthesis-db drop-table :people)
+;
+;;Create table people
+;#_(run-db-function synthesis-db create-table
+;                 :people
+;                 [[:pid :int "PRIMARY KEY"]
+;                  [:firstname "varchar(32)"]
+;                  [:lastname "varchar(32)"]])
+;
+;;Insert rows into people
+;#_(run-db-function synthesis-db insert-rows
+;                 :people
+;                 [11 "Tom" "Smith"]
+;                 [19 "William" "Williams"]
+;                 [203 "Gene" "Wirth"]
+;                 [54 "Penelope" "Davies"]
+;                 [32 "Zach" "Francis"]
+;                 [179 "Allen" "Osborn"])
+;
+;;Read the whole people table
+;#_(run-db-function synthesis-db read-all :people)
+;
+;;Query people table
+;#_(run-db-function synthesis-db db-query "SELECT pid, firstname
+;                                        FROM people
+;                                        WHERE pid<100")
+;
+;;Find people whose last names are later in the alphabet than their first names
+;#_(run-db-function synthesis-db db-query "SELECT firstname, lastname
+;                                        FROM people
+;                                        WHERE firstname<lastname")
+;
+;
+;
+;;List pairs of lastnames where the first last name is earlier in the alphabet than the second
+;#_(run-db-function synthesis-db db-query "SELECT P1.lastname as Earlier, P2.lastname as Later
+;                                        FROM people P1, people P2
+;                                        WHERE P1.lastname < P2.lastname")
                  
 
 ;;;;;;;;;;
@@ -130,16 +126,19 @@
 (def synthesis-db-columns-map
   (apply hash-map (flatten synthesis-db-columns)))
 
+;;;;;;;;;;
+;; Example usages
+
 ;Drop table adult
-#_(run-db-function synthesis-db db-drop-table :adult)
+#_(run-db-function synthesis-db drop-table :adult)
 
 ;Create table people
-#_(run-db-function synthesis-db db-create-table
+#_(run-db-function synthesis-db create-table
                  :adult
                  synthesis-db-columns)
 
 ; List people who are older than 75 and marital status is Never-married and education is Masters
-(run-db-function synthesis-db db-query "SELECT *
+#_(run-db-function synthesis-db db-query "SELECT *
                                         FROM adult
                                         WHERE age < 23 AND education = 'Masters'
                                         ORDER BY age")

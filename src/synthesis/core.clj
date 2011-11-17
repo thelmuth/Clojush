@@ -3,8 +3,8 @@
 ;; Tom Hemuth, thelmuth@cs.umass.edu, 2011
 
 (ns synthesis.core
-  (:require [clojure.contrib.sql :as sql]
-            [clojush]
+  (:require [clojush]
+            [clojure.contrib.sql :as sql]
             [synthesis.db :as db]))
 
 ;;;;;;;;;;;;

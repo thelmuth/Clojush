@@ -4,6 +4,24 @@
             [synthesis.db :as db]))
 
 ;;;;;;;;;;
+;; Helper functions
+
+(defn precision
+  [true-positives false-positives]
+  (float (/ true-positives (+ true-positives false-positives))))
+
+(defn recall
+  [true-positives false-negatives]
+  (float (/ true-positives (+ true-positives false-negatives))))
+
+(defn f1-score
+  ([true-positives false-positives false-negatives]
+    (f1-score (precision true-positives false-positives)
+              (recall true-positives false-negatives)))
+  ([prec rec]
+    (/ (* 2 prec rec) (+ prec rec))))
+
+;;;;;;;;;;
 ;; Error function
 
 (defn qfe-error-function-creator

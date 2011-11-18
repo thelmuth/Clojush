@@ -6,7 +6,9 @@
 ;;;;;;;;;;
 ;; Error function
 
-(def qfe-error-function
+(defn qfe-error-function-creator
+  "Creates an error function based on vectors positive-examples and negative-examples."
+  [positive-examples negative-examples]
   (fn [program]
     (list
       (let [final-state (clojush/run-push
@@ -21,35 +23,81 @@
                            (db/run-db-function db/synthesis-db
                                                db/db-query
                                                result-query-string))]
+        (println "---")
+        (println "Query:")
+        (println result-query-string)
         (try
-          (let [rows (count (.get query-future 1000 (java.util.concurrent.TimeUnit/MILLISECONDS)))]
-            (println "---")
-            (println "Query:")
-            (println result-query-string)
-            (println "Rows returned:" rows)
-            (println "Error:" (Math/abs (- 16250 rows)))
-            (Math/abs (- 16250 rows))) ;;for now, return abs(16250 - rows returned)
+          (let [result-rows (.get query-future 1000 (java.util.concurrent.TimeUnit/MILLISECONDS))
+                true-positives (count (clojure.set/intersection (set positive-examples)
+                                                                (set result-rows)))
+                false-positives (count (clojure.set/intersection (set negative-examples)
+                                                                 (set result-rows)))]
+            (println "True positives:" true-positives)
+            (println "False positives:" false-positives)
+            (println "Error:" (+ false-positives (- (count positive-examples) true-positives)))
+            (+ false-positives (- (count positive-examples) true-positives)))
           (catch java.util.concurrent.TimeoutException e
-                 (println "---")
-                 (println "Query:")
-                 (println result-query-string)
                  (if (future-cancel query-future)
                    (println "future cancelled")
                    (println "future could not be cancelled"))
                  100000)))))) ;;penalty of 100000 for not returning
 
 ;;;;;;;;;;
-;; Main pushgp call
+;; Main pushgp calling function
 
-(clojush/pushgp
-  :error-function qfe-error-function
-  :atom-generators synth-core/qfe-atom-generators
-  :max-points 250
-  :evalpush-limit 300
-  :population-size 100
-  :max-generations 20
-  :tournament-size 7
-  :report-simplifications 0
-  :final-report-simplifications 10
-  :reproduction-simplifications 1
-  :use-single-thread true)
+(defn query-from-examples
+  "Takes vectors of positive and negative row examples and starts a pushgp run to find a query that
+   matches those examples."
+  [positive-examples negative-examples]
+  (clojush/pushgp
+    :error-function (qfe-error-function-creator positive-examples negative-examples)
+    :atom-generators synth-core/qfe-atom-generators
+    :max-points 250
+    :evalpush-limit 300
+    :population-size 100
+    :max-generations 40
+    :tournament-size 7
+    :report-simplifications 0
+    :final-report-simplifications 10
+    :reproduction-simplifications 1
+    :use-single-thread true))
+
+;;;;;;;;;;
+;; Create the examples.
+
+#_(vec (take 10 (db/run-db-function db/synthesis-db
+                                    db/db-query
+                                    "SELECT *
+                                     FROM adult
+                                     WHERE age > 55 AND education = 'Masters'")))
+
+(def pos-ex
+  (vec (take 30 (db/run-db-function db/synthesis-db
+                                    db/db-query
+                                    "SELECT *
+                                     FROM adult
+                                     WHERE age > 55 AND education = 'Masters'"))))
+
+#_(def neg-ex
+  (vec (take 30 (db/run-db-function db/synthesis-db
+                                    db/db-query
+                                    "SELECT *
+                                     FROM adult
+                                     WHERE NOT(age > 55 AND education = 'Masters')"))))
+
+(def neg-ex
+  (vec (concat (take 15 (db/run-db-function db/synthesis-db
+                                            db/db-query
+                                            "SELECT *
+                                             FROM adult
+                                             WHERE NOT(age > 55)"))
+               (take-last 15 (db/run-db-function db/synthesis-db
+                                            db/db-query
+                                            "SELECT *
+                                             FROM adult
+                                             WHERE NOT(education = 'Masters')")))))
+
+;;;;;;;;;;
+;; Example usage
+
+(query-from-examples pos-ex neg-ex)

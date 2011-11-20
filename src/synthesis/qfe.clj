@@ -8,18 +8,24 @@
 
 (defn precision
   [true-positives false-positives]
-  (float (/ true-positives (+ true-positives false-positives))))
+  (if (zero? true-positives)
+    0
+    (float (/ true-positives (+ true-positives false-positives)))))
 
 (defn recall
   [true-positives false-negatives]
-  (float (/ true-positives (+ true-positives false-negatives))))
+  (if (zero? true-positives)
+    0
+    (float (/ true-positives (+ true-positives false-negatives)))))
 
 (defn f1-score
   ([true-positives false-positives false-negatives]
     (f1-score (precision true-positives false-positives)
               (recall true-positives false-negatives)))
   ([prec rec]
-    (/ (* 2 prec rec) (+ prec rec))))
+    (if (zero? (+ prec rec))
+      0
+      (/ (* 2 prec rec) (+ prec rec)))))
 
 ;;;;;;;;;;
 ;; Error function
@@ -49,11 +55,14 @@
                 true-positives (count (clojure.set/intersection (set positive-examples)
                                                                 (set result-rows)))
                 false-positives (count (clojure.set/intersection (set negative-examples)
-                                                                 (set result-rows)))]
+                                                                 (set result-rows)))
+                error (- 1 (f1-score true-positives
+                                     false-positives
+                                     (- (count positive-examples) true-positives)))]
             (println "True positives:" true-positives)
             (println "False positives:" false-positives)
-            (println "Error:" (+ false-positives (- (count positive-examples) true-positives)))
-            (+ false-positives (- (count positive-examples) true-positives)))
+            (println "Error:" error)
+            error)
           (catch java.util.concurrent.TimeoutException e
                  (if (future-cancel query-future)
                    (println "future cancelled")
@@ -73,7 +82,7 @@
     :max-points 250
     :evalpush-limit 300
     :population-size 100
-    :max-generations 40
+    :max-generations 100
     :tournament-size 7
     :report-simplifications 0
     :final-report-simplifications 10

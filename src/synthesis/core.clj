@@ -273,7 +273,7 @@
 ;;;;;;;;;;
 ;; Main pushgp call
 
-(clojush/pushgp
+#_(clojush/pushgp
   :error-function qfe-error-function
   :atom-generators qfe-atom-generators
   :max-points 250

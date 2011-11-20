@@ -137,11 +137,13 @@
                  :adult
                  synthesis-db-columns)
 
-; List people who are older than 75 and marital status is Never-married and education is Masters
-#_(run-db-function synthesis-db db-query "SELECT *
-                                        FROM adult
-                                        WHERE age < 23 AND education = 'Masters'
-                                        ORDER BY age")
+
+; List people who are older than 55 and marital status is Never-married and education is Masters
+#_(run-db-function synthesis-db
+                 db-query
+                 "SELECT *
+                  FROM adult
+                  WHERE age > 55 AND marital_status = 'Never-married' AND education = 'Masters'")
 
 ; Select a random row
 #_(run-db-function synthesis-db db-query "SELECT *

@@ -28,7 +28,49 @@
       (/ (* 2 prec rec) (+ prec rec)))))
 
 ;;;;;;;;;;
-;; Error function
+;; Error function and atom generators
+
+(def qfe-atom-generators
+  (concat #_(clojush/registered-for-type :where)
+          (list ;'where_dup
+                'where_swap
+                'where_rot
+                'where_constraint_distinct_from_index
+                'where_constraint_from_index
+                'where_constraint_from_stack
+                'where_and
+                'where_or
+                'where_not)
+          (list 'string_length
+                'string_take
+                'string_concat
+                'string_stackdepth
+                'string_dup
+                'string_swap
+                'string_rot)
+          (list 'integer_add
+                'integer_sub
+                'integer_mult
+                'integer_div
+                'integer_mod
+                'integer_stackdepth
+                'integer_dup
+                'integer_swap
+                'integer_rot)
+          (list (fn []
+                  (let [choice (clojush/lrand-int 5)]
+                    (case choice
+                      0 (clojush/lrand-int 10)
+                      1 (clojush/lrand-int 100)
+                      2 (clojush/lrand-int 1000)
+                      3 (clojush/lrand-int 10000)
+                      4 (clojush/lrand-int 100000))))
+                (fn [] (let [chars (str "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                                        "abcdefghijklmnopqrstuvwxyz"
+                                        "0123456789")
+                             chars-count (count chars)]
+                         (apply str (repeatedly (+ 1 (clojush/lrand-int 9))
+                                                #(nth chars (clojush/lrand-int chars-count)))))))))
 
 (defn qfe-error-function-creator
   "Creates an error function based on vectors positive-examples and negative-examples."
@@ -78,12 +120,13 @@
   [positive-examples negative-examples]
   (clojush/pushgp
     :error-function (qfe-error-function-creator positive-examples negative-examples)
-    :atom-generators synth-core/qfe-atom-generators
+    :atom-generators qfe-atom-generators
     :max-points 250
     :evalpush-limit 300
     :population-size 100
     :max-generations 100
     :tournament-size 7
+    :trivial-geography-radius 10
     :report-simplifications 0
     :final-report-simplifications 10
     :reproduction-simplifications 1
@@ -96,33 +139,34 @@
                                     db/db-query
                                     "SELECT *
                                      FROM adult
-                                     WHERE age > 55 AND education = 'Masters'")))
+                                     WHERE age > 40 AND education = 'Masters'")))
 
 (def pos-ex
-  (vec (take 30 (db/run-db-function db/synthesis-db
+  (vec (take 50 (db/run-db-function db/synthesis-db
                                     db/db-query
                                     "SELECT *
                                      FROM adult
-                                     WHERE age > 55 AND education = 'Masters'"))))
+                                     WHERE age > 40 AND education = 'Masters'"))))
 
 #_(def neg-ex
   (vec (take 30 (db/run-db-function db/synthesis-db
                                     db/db-query
                                     "SELECT *
                                      FROM adult
-                                     WHERE NOT(age > 55 AND education = 'Masters')"))))
+                                     WHERE NOT(age > 40 AND education = 'Masters')"))))
 
 (def neg-ex
-  (vec (concat (take 15 (db/run-db-function db/synthesis-db
+  (vec (concat (take 25 (db/run-db-function db/synthesis-db
                                             db/db-query
                                             "SELECT *
                                              FROM adult
-                                             WHERE NOT(age > 55)"))
-               (take-last 15 (db/run-db-function db/synthesis-db
+                                             WHERE NOT(age > 40)"))
+               (take-last 25 (db/run-db-function db/synthesis-db
                                             db/db-query
                                             "SELECT *
                                              FROM adult
                                              WHERE NOT(education = 'Masters')")))))
+
 
 ;;;;;;;;;;
 ;; Example usage

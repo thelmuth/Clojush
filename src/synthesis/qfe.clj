@@ -84,32 +84,42 @@
                                              (clojush/push-item "*"
                                                                 :select
                                                                 (clojush/make-push-state))))
-            result-query-string (synth-core/stacks-to-query-string final-state)
-            query-future (future
-                           (db/run-db-function db/synthesis-db
-                                               db/db-query
-                                               result-query-string))]
-        (println "---")
-        (println "Query:")
-        (println result-query-string)
-        (try
-          (let [result-rows (.get query-future 1000 (java.util.concurrent.TimeUnit/MILLISECONDS))
-                true-positives (count (clojure.set/intersection (set positive-examples)
-                                                                (set result-rows)))
-                false-positives (count (clojure.set/intersection (set negative-examples)
-                                                                 (set result-rows)))
-                error (- 1 (f1-score true-positives
-                                     false-positives
-                                     (- (count positive-examples) true-positives)))]
-            (println "True positives:" true-positives)
-            (println "False positives:" false-positives)
-            (println "Error:" error)
-            error)
-          (catch java.util.concurrent.TimeoutException e
-                 (if (future-cancel query-future)
-                   (println "future cancelled")
-                   (println "future could not be cancelled"))
-                 100000)))))) ;;penalty of 100000 for not returning
+            result-query-string (synth-core/stacks-to-query-string final-state)]
+        (if (= (clojush/top-item :where final-state) :no-stack-item)
+          (do
+            (println "---")
+            (println "Query:")
+            (println result-query-string)
+            (println "True positives:" (count positive-examples))
+            (println "False positives:" (count negative-examples))
+            (println "Error:" 3.0)
+            3.0) ; Penalty of 2.0 for having an empty :where stack
+          (let [query-future (future
+                               (db/run-db-function db/synthesis-db
+                                                   db/db-query
+                                                   result-query-string))]
+            (println "---")
+            (println "Query:")
+            (println result-query-string)
+            (try
+              (let [result-rows (.get query-future 1000 (java.util.concurrent.TimeUnit/MILLISECONDS))
+                    true-positives (count (clojure.set/intersection (set positive-examples)
+                                                                    (set result-rows)))
+                    false-positives (count (clojure.set/intersection (set negative-examples)
+                                                                     (set result-rows)))
+                    error (- 1.0 (f1-score true-positives
+                                           false-positives
+                                           (- (count positive-examples) true-positives)))]
+                (println "True positives:" true-positives)
+                (println "False positives:" false-positives)
+                (println "Error:" error)
+                error)
+              (catch java.util.concurrent.TimeoutException e
+                     (if (future-cancel query-future)
+                       (println "future cancelled")
+                       (println "future could not be cancelled"))
+                     (println "Error:" 1.0)
+                     2.0)))))))) ; Penalty of 1.0 for not returning
 
 ;;;;;;;;;;
 ;; Main pushgp calling function
@@ -125,7 +135,7 @@
     :evalpush-limit 300
     :population-size 100
     :max-generations 100
-    :tournament-size 7
+    :tournament-size 5
     :trivial-geography-radius 10
     :report-simplifications 0
     :final-report-simplifications 10

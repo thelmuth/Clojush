@@ -129,22 +129,31 @@
   "Takes vectors of positive and negative row examples and starts a pushgp run to find a query that
    matches those examples."
   [positive-examples negative-examples]
-  (clojush/pushgp
-    :error-function (qfe-error-function-creator positive-examples negative-examples)
-    :atom-generators qfe-atom-generators
-    :max-points 250
-    :evalpush-limit 300
-    :population-size 100
-    :max-generations 100
-    :tournament-size 5
-    :trivial-geography-radius 10
-    :report-simplifications 0
-    :final-report-simplifications 10
-    :reproduction-simplifications 1
-    :use-single-thread true))
+  (et/drop-examples-tables)
+  (et/create-and-populate-examples-tables positive-examples negative-examples)
+  (try
+    (clojush/pushgp
+      :error-function (qfe-error-function-creator positive-examples negative-examples)
+      :atom-generators qfe-atom-generators
+      :max-points 250
+      :evalpush-limit 300
+      :population-size 100
+      :max-generations 100
+      :tournament-size 5
+      :trivial-geography-radius 10
+      :report-simplifications 0
+      :final-report-simplifications 10
+      :reproduction-simplifications 1
+      :use-single-thread true)
+    (finally
+      (et/drop-examples-tables))))
+    
 
 
 ;;;;;;;;;;
 ;; Example usage
 
 (query-from-examples et/pos-ex et/neg-ex)
+
+; Drops tables
+;(et/drop-examples-tables)

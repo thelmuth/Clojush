@@ -26,5 +26,27 @@
                                              WHERE NOT(education = 'Masters')")))))
 
 ;;;;;;;;;;
-;; Create small tables for positive and negative examples
+;; Create small tables for positive and negative examples.
+
+(defn create-and-populate-examples-tables
+  "Creates tables for positive and negative examples, and populates them with pos-ex and neg-ex."
+  [pos-ex neg-ex]
+  (db/run-db-function db/synthesis-db db/create-table
+                      :adult_pos_ex
+                      db/synthesis-db-columns)
+  (db/run-db-function db/synthesis-db db/create-table
+                      :adult_neg_ex
+                      db/synthesis-db-columns)
+  (db/run-db-function db/synthesis-db db/insert-records
+                      :adult_pos_ex
+                      pos-ex)
+  (db/run-db-function db/synthesis-db db/insert-records
+                      :adult_neg_ex
+                      neg-ex))
+
+(defn drop-examples-tables
+  "Drops examples tables."
+  []
+  (db/run-db-function db/synthesis-db db/drop-table :adult_pos_ex)
+  (db/run-db-function db/synthesis-db db/drop-table :adult_neg_ex))
 

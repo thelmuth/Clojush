@@ -32,6 +32,12 @@
   (apply sql/insert-rows
          (cons table rows)))
 
+(defn insert-records
+  "Inserts one or more records into table. Rows must be a list of the records."
+  [table rows]
+  (apply sql/insert-records
+         (cons table rows)))
+
 (defn read-all
   "Read an entire table and return as a vector of maps."
   [table]
@@ -132,7 +138,7 @@
 ;Drop table adult
 #_(run-db-function synthesis-db drop-table :adult)
 
-;Create table people
+;Create table adult
 #_(run-db-function synthesis-db create-table
                  :adult
                  synthesis-db-columns)

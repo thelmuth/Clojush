@@ -1,7 +1,8 @@
 (ns synthesis.qfe
   (:require [clojush]
             [synthesis.core :as synth-core]
-            [synthesis.db :as db]))
+            [synthesis.db :as db]
+            [synthesis.examples_tables :as et]))
 
 ;;;;;;;;;;
 ;; Helper functions
@@ -142,43 +143,8 @@
     :reproduction-simplifications 1
     :use-single-thread true))
 
-;;;;;;;;;;
-;; Create the examples.
-
-#_(vec (take 10 (db/run-db-function db/synthesis-db
-                                    db/db-query
-                                    "SELECT *
-                                     FROM adult
-                                     WHERE age > 40 AND education = 'Masters'")))
-
-(def pos-ex
-  (vec (take 50 (db/run-db-function db/synthesis-db
-                                    db/db-query
-                                    "SELECT *
-                                     FROM adult
-                                     WHERE age > 40 AND education = 'Masters'"))))
-
-#_(def neg-ex
-  (vec (take 30 (db/run-db-function db/synthesis-db
-                                    db/db-query
-                                    "SELECT *
-                                     FROM adult
-                                     WHERE NOT(age > 40 AND education = 'Masters')"))))
-
-(def neg-ex
-  (vec (concat (take 25 (db/run-db-function db/synthesis-db
-                                            db/db-query
-                                            "SELECT *
-                                             FROM adult
-                                             WHERE NOT(age > 40)"))
-               (take-last 25 (db/run-db-function db/synthesis-db
-                                            db/db-query
-                                            "SELECT *
-                                             FROM adult
-                                             WHERE NOT(education = 'Masters')")))))
-
 
 ;;;;;;;;;;
 ;; Example usage
 
-(query-from-examples pos-ex neg-ex)
+(query-from-examples et/pos-ex et/neg-ex)

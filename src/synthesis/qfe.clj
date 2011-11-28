@@ -80,7 +80,7 @@
     (list
       (let [final-state (clojush/run-push
                           program
-                          (clojush/push-item "adult"
+                          (clojush/push-item "adult_examples"
                                              :from
                                              (clojush/push-item "*"
                                                                 :select
@@ -88,22 +88,22 @@
             result-query-string (synth-core/stacks-to-query-string final-state)]
         (if (= (clojush/top-item :where final-state) :no-stack-item)
           (do
-            (println "---")
-            (println "Query:")
-            (println result-query-string)
-            (println "True positives:" (count positive-examples))
-            (println "False positives:" (count negative-examples))
-            (println "Error:" 3.0)
-            3.0) ; Penalty of 2.0 for having an empty :where stack
+            ;(println "---")
+            ;(println "Query:")
+            ;(println result-query-string)
+            ;(println "True positives:" (count positive-examples))
+            ;(println "False positives:" (count negative-examples))
+            ;(println "Error:" 3.0)
+            3.0) ; Penalty of 3.0 for having an empty :where stack
           (let [query-future (future
                                (db/run-db-function db/synthesis-db
                                                    db/db-query
                                                    result-query-string))]
-            (println "---")
-            (println "Query:")
-            (println result-query-string)
+            ;(println "---")
+            ;(println "Query:")
+            ;(println result-query-string)
             (try
-              (let [result-rows (.get query-future 1000 (java.util.concurrent.TimeUnit/MILLISECONDS))
+              (let [result-rows (.get query-future 100 (java.util.concurrent.TimeUnit/MILLISECONDS))
                     true-positives (count (clojure.set/intersection (set positive-examples)
                                                                     (set result-rows)))
                     false-positives (count (clojure.set/intersection (set negative-examples)
@@ -111,16 +111,18 @@
                     error (- 1.0 (f1-score true-positives
                                            false-positives
                                            (- (count positive-examples) true-positives)))]
-                (println "True positives:" true-positives)
-                (println "False positives:" false-positives)
-                (println "Error:" error)
+                ;(println "True positives:" true-positives)
+                ;(println "False positives:" false-positives)
+                ;(println "Error:" error)
                 error)
               (catch java.util.concurrent.TimeoutException e
                      (if (future-cancel query-future)
-                       (println "future cancelled")
-                       (println "future could not be cancelled"))
-                     (println "Error:" 1.0)
-                     2.0)))))))) ; Penalty of 1.0 for not returning
+                       nil
+                       nil)
+                     ;  (println "future cancelled")
+                     ;  (println "future could not be cancelled"))
+                     ;(println "Error:" 2.0)
+                     2.0)))))))) ; Penalty of 2.0 for not returning
 
 ;;;;;;;;;;
 ;; Main pushgp calling function
@@ -129,8 +131,8 @@
   "Takes vectors of positive and negative row examples and starts a pushgp run to find a query that
    matches those examples."
   [positive-examples negative-examples]
-  (et/drop-examples-tables)
-  (et/create-and-populate-examples-tables positive-examples negative-examples)
+  (et/drop-examples-table)
+  (et/create-and-populate-examples-table positive-examples negative-examples)
   (try
     (clojush/pushgp
       :error-function (qfe-error-function-creator positive-examples negative-examples)
@@ -146,14 +148,11 @@
       :reproduction-simplifications 1
       :use-single-thread true)
     (finally
-      (et/drop-examples-tables))))
+      (et/drop-examples-table))))
     
-
 
 ;;;;;;;;;;
 ;; Example usage
 
 (query-from-examples et/pos-ex et/neg-ex)
 
-; Drops tables
-;(et/drop-examples-tables)

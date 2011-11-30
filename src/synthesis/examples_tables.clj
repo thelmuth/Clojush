@@ -49,6 +49,6 @@
 ;;;;;;;;;;
 ;; Example uses
 
-(create-and-populate-examples-table pos-ex neg-ex)
+;(create-and-populate-examples-table pos-ex neg-ex)
 
-(drop-examples-table)
+;(drop-examples-table)

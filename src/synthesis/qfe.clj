@@ -5,6 +5,10 @@
             [synthesis.examples_tables :as et]))
 
 ;;;;;;;;;;
+;; Some globals for testing
+(def QUERY-FITNESSES (atom {}))
+
+;;;;;;;;;;
 ;; Helper functions
 
 (defn precision
@@ -88,41 +92,40 @@
                                                                 :select
                                                                 (clojush/make-push-state))))
             result-query-string (synth-core/stacks-to-query-string final-state)]
+;        (println "---")
+;        (println "Query:")
+;        (println result-query-string)
         (if (= (clojush/top-item :where final-state) :no-stack-item)
           (do
-            ;(println "---")
-            ;(println "Query:")
-            ;(println result-query-string)
-            ;(println "True positives:" (count positive-examples))
-            ;(println "False positives:" (count negative-examples))
-            ;(println "Error:" 3.0)
+;            (println "True positives:" (count positive-examples))
+;            (println "False positives:" (count negative-examples))
+;            (println "Error:" 3.0)
             3.0) ; Penalty of 3.0 for having an empty :where stack
-          (let [query-future (future
-                               (db/run-db-function db/synthesis-db
-                                                   db/db-query
-                                                   result-query-string))]
-            ;(println "---")
-            ;(println "Query:")
-            ;(println result-query-string)
-            (try
-              (let [result-rows (.get query-future 100 (java.util.concurrent.TimeUnit/MILLISECONDS))
-                    true-positives (count (clojure.set/intersection (set positive-examples)
-                                                                    (set result-rows)))
-                    false-positives (count (clojure.set/intersection (set negative-examples)
-                                                                     (set result-rows)))
-                    error (- 1.0 (f1-score true-positives
-                                           false-positives
-                                           (- (count positive-examples) true-positives)))]
-                ;(println "True positives:" true-positives)
-                ;(println "False positives:" false-positives)
-                ;(println "Error:" error)
-                error)
-              (catch java.util.concurrent.TimeoutException e
-                     (if (future-cancel query-future)
-                       (println "future cancelled")
-                       (println "future could not be cancelled"))
-                     ;(println "Error:" 2.0)
-                     2.0)))))))) ; Penalty of 2.0 for not returning
+          (if-let [fitness (get @QUERY-FITNESSES result-query-string)] ; See if we remember the fitness
+            fitness ; If we remember the fitness, just return it; else, calculate and store it
+            (let [query-future (future
+                                 (db/run-db-function db/synthesis-db
+                                                     db/db-query
+                                                     result-query-string))]
+              (try
+                (let [result-rows (.get query-future 100 (java.util.concurrent.TimeUnit/MILLISECONDS))
+                      true-positives (count (clojure.set/intersection (set positive-examples)
+                                                                      (set result-rows)))
+                      false-positives (count (clojure.set/intersection (set negative-examples)
+                                                                       (set result-rows)))
+                      error (- 1.0 (f1-score true-positives
+                                             false-positives
+                                             (- (count positive-examples) true-positives)))]
+;                  (println "True positives:" true-positives)
+;                  (println "False positives:" false-positives)
+;                  (println "Error:" error)
+                  (swap! QUERY-FITNESSES assoc result-query-string error)
+                  error)
+                (catch java.util.concurrent.TimeoutException e
+                       (when (not (future-cancel query-future))
+                         (println "future could not be cancelled"))
+;                       (println "Error:" 2.0)
+                       2.0))))))))) ; Penalty of 2.0 for not returning
 
 ;;;;;;;;;;
 ;; Main pushgp calling function
@@ -154,88 +157,8 @@
 ;;;;;;;;;;
 ;; Example usage
 
-;(query-from-examples et/pos-ex et/neg-ex)
+(query-from-examples et/pos-ex et/neg-ex)
 
-
-
-;;;;;;;;;;
-;; Junk
-
-#_(synth-core/stacks-to-query-string (clojush/run-push
-                                     '((where_rot
-                                         integer_dup
-                                         (where_swap
-                                           (((where_not))
-                                             where_constraint_distinct_from_index
-                                             integer_add
-                                             ((integer_dup) where_and where_or)
-                                             (where_not))
-                                           where_not
-                                           integer_stackdepth
-                                           "lPDACwD"
-                                           string_length
-                                           string_take
-                                           integer_rot
-                                           integer_sub
-                                           string_take
-                                           where_swap
-                                           string_dup
-                                           integer_swap
-                                           string_stackdepth
-                                           integer_dup
-                                           integer_swap
-                                           string_concat
-                                           string_swap
-                                           where_not
-                                           integer_sub
-                                           string_concat)
-                                         (integer_stackdepth
-                                           ((integer_rot)
-                                             string_take
-                                             (where_or
-                                               ((where_or) integer_rot)
-                                               (string_length integer_dup)
-                                               (integer_stackdepth))
-                                             integer_add
-                                             where_constraint_from_index
-                                             (integer_rot integer_dup)
-                                             (string_stackdepth (where_and)))
-                                           (where_constraint_from_index where_and)
-                                           (where_constraint_distinct_from_index))
-                                         (integer_mult)
-                                         integer_sub
-                                         (where_swap))
-                                        ((where_and (integer_swap) string_stackdepth)
-                                                    ((integer_dup (integer_mod) where_rot)
-                                                                  (56314
-                                                                    integer_add
-                                                                    (integer_rot
-                                                                      where_constraint_from_index
-                                                                      (integer_rot where_constraint_from_index (string_swap)))
-                                                                    (where_not integer_sub integer_stackdepth)
-                                                                    integer_stackdepth)
-                                                                  string_dup)
-                                                    (string_stackdepth)
-                                                    (where_and where_or)
-                                                    (integer_mult
-                                                      (string_rot
-                                                        (integer_stackdepth)
-                                                        integer_div
-                                                        (string_concat)
-                                                        ("dEYT")
-                                                        string_length)
-                                                      (integer_div string_take))
-                                                    ((string_concat (where_rot)) where_constraint_from_stack)
-                                                    where_rot)
-                                        ((integer_add where_swap) string_rot)
-                                        string_rot
-                                        string_rot
-                                        (integer_rot string_concat where_not where_or 56314))
-                                     (clojush/push-item "adult_examples"
-                                                        :from
-                                                        (clojush/push-item "*"
-                                                                           :select
-                                                                           (clojush/make-push-state)))))
-
-
-
+; Reset things
+(et/drop-examples-table)
+(reset! QUERY-FITNESSES {})

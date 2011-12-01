@@ -1,7 +1,12 @@
 (ns synthesis.qfe
   (:require [clojush]
             [synthesis.core :as synth-core]
-            [synthesis.db :as db]))
+            [synthesis.db :as db]
+            [synthesis.examples_tables :as et]))
+
+;;;;;;;;;;
+;; Some globals for testing
+(def QUERY-FITNESSES (atom {}))
 
 ;;;;;;;;;;
 ;; Helper functions
@@ -33,8 +38,8 @@
 (def qfe-atom-generators
   (concat #_(clojush/registered-for-type :where)
           (list ;'where_dup
-                'where_swap
-                'where_rot
+                ;'where_swap
+                ;'where_rot
                 'where_constraint_distinct_from_index
                 'where_constraint_from_index
                 'where_constraint_from_stack
@@ -42,12 +47,13 @@
                 'where_or
                 'where_not)
           (list 'string_length
-                'string_take
-                'string_concat
+                ;'string_take
+                ;'string_concat
                 'string_stackdepth
-                'string_dup
-                'string_swap
-                'string_rot)
+                ;'string_dup
+                ;'string_swap
+                ;'string_rot
+                )
           (list 'integer_add
                 'integer_sub
                 'integer_mult
@@ -65,6 +71,7 @@
                       2 (clojush/lrand-int 1000)
                       3 (clojush/lrand-int 10000)
                       4 (clojush/lrand-int 100000))))
+                (fn [] (clojush/lrand-int 100000))
                 (fn [] (let [chars (str "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
                                         "abcdefghijklmnopqrstuvwxyz"
                                         "0123456789")
@@ -79,47 +86,46 @@
     (list
       (let [final-state (clojush/run-push
                           program
-                          (clojush/push-item "adult"
+                          (clojush/push-item "adult_examples"
                                              :from
                                              (clojush/push-item "*"
                                                                 :select
                                                                 (clojush/make-push-state))))
             result-query-string (synth-core/stacks-to-query-string final-state)]
+;        (println "---")
+;        (println "Query:")
+;        (println result-query-string)
         (if (= (clojush/top-item :where final-state) :no-stack-item)
           (do
-            (println "---")
-            (println "Query:")
-            (println result-query-string)
-            (println "True positives:" (count positive-examples))
-            (println "False positives:" (count negative-examples))
-            (println "Error:" 3.0)
-            3.0) ; Penalty of 2.0 for having an empty :where stack
-          (let [query-future (future
-                               (db/run-db-function db/synthesis-db
-                                                   db/db-query
-                                                   result-query-string))]
-            (println "---")
-            (println "Query:")
-            (println result-query-string)
-            (try
-              (let [result-rows (.get query-future 1000 (java.util.concurrent.TimeUnit/MILLISECONDS))
-                    true-positives (count (clojure.set/intersection (set positive-examples)
-                                                                    (set result-rows)))
-                    false-positives (count (clojure.set/intersection (set negative-examples)
-                                                                     (set result-rows)))
-                    error (- 1.0 (f1-score true-positives
-                                           false-positives
-                                           (- (count positive-examples) true-positives)))]
-                (println "True positives:" true-positives)
-                (println "False positives:" false-positives)
-                (println "Error:" error)
-                error)
-              (catch java.util.concurrent.TimeoutException e
-                     (if (future-cancel query-future)
-                       (println "future cancelled")
-                       (println "future could not be cancelled"))
-                     (println "Error:" 1.0)
-                     2.0)))))))) ; Penalty of 1.0 for not returning
+;            (println "True positives:" (count positive-examples))
+;            (println "False positives:" (count negative-examples))
+;            (println "Error:" 3.0)
+            3.0) ; Penalty of 3.0 for having an empty :where stack
+          (if-let [fitness (get @QUERY-FITNESSES result-query-string)] ; See if we remember the fitness
+            fitness ; If we remember the fitness, just return it; else, calculate and store it
+            (let [query-future (future
+                                 (db/run-db-function db/synthesis-db
+                                                     db/db-query
+                                                     result-query-string))]
+              (try
+                (let [result-rows (.get query-future 100 (java.util.concurrent.TimeUnit/MILLISECONDS))
+                      true-positives (count (clojure.set/intersection (set positive-examples)
+                                                                      (set result-rows)))
+                      false-positives (count (clojure.set/intersection (set negative-examples)
+                                                                       (set result-rows)))
+                      error (- 1.0 (f1-score true-positives
+                                             false-positives
+                                             (- (count positive-examples) true-positives)))]
+;                  (println "True positives:" true-positives)
+;                  (println "False positives:" false-positives)
+;                  (println "Error:" error)
+                  (swap! QUERY-FITNESSES assoc result-query-string error)
+                  error)
+                (catch java.util.concurrent.TimeoutException e
+                       (when (not (future-cancel query-future))
+                         (println "future could not be cancelled"))
+;                       (println "Error:" 2.0)
+                       2.0))))))))) ; Penalty of 2.0 for not returning
 
 ;;;;;;;;;;
 ;; Main pushgp calling function
@@ -128,57 +134,31 @@
   "Takes vectors of positive and negative row examples and starts a pushgp run to find a query that
    matches those examples."
   [positive-examples negative-examples]
-  (clojush/pushgp
-    :error-function (qfe-error-function-creator positive-examples negative-examples)
-    :atom-generators qfe-atom-generators
-    :max-points 250
-    :evalpush-limit 300
-    :population-size 100
-    :max-generations 100
-    :tournament-size 5
-    :trivial-geography-radius 10
-    :report-simplifications 0
-    :final-report-simplifications 10
-    :reproduction-simplifications 1
-    :use-single-thread true))
-
-;;;;;;;;;;
-;; Create the examples.
-
-#_(vec (take 10 (db/run-db-function db/synthesis-db
-                                    db/db-query
-                                    "SELECT *
-                                     FROM adult
-                                     WHERE age > 40 AND education = 'Masters'")))
-
-(def pos-ex
-  (vec (take 50 (db/run-db-function db/synthesis-db
-                                    db/db-query
-                                    "SELECT *
-                                     FROM adult
-                                     WHERE age > 40 AND education = 'Masters'"))))
-
-#_(def neg-ex
-  (vec (take 30 (db/run-db-function db/synthesis-db
-                                    db/db-query
-                                    "SELECT *
-                                     FROM adult
-                                     WHERE NOT(age > 40 AND education = 'Masters')"))))
-
-(def neg-ex
-  (vec (concat (take 25 (db/run-db-function db/synthesis-db
-                                            db/db-query
-                                            "SELECT *
-                                             FROM adult
-                                             WHERE NOT(age > 40)"))
-               (take-last 25 (db/run-db-function db/synthesis-db
-                                            db/db-query
-                                            "SELECT *
-                                             FROM adult
-                                             WHERE NOT(education = 'Masters')")))))
-
+  (et/drop-examples-table)
+  (et/create-and-populate-examples-table positive-examples negative-examples)
+  (try
+    (clojush/pushgp
+      :error-function (qfe-error-function-creator positive-examples negative-examples)
+      :atom-generators qfe-atom-generators
+      :max-points 250
+      :evalpush-limit 300
+      :population-size 100
+      :max-generations 100
+      :tournament-size 5
+      :trivial-geography-radius 10
+      :report-simplifications 0
+      :final-report-simplifications 10
+      :reproduction-simplifications 1
+      :use-single-thread true)
+    (finally
+      (et/drop-examples-table))))
+    
 
 ;;;;;;;;;;
 ;; Example usage
 
-(query-from-examples pos-ex neg-ex)
+(query-from-examples et/pos-ex et/neg-ex)
+
+; Reset things
+(et/drop-examples-table)
+(reset! QUERY-FITNESSES {})

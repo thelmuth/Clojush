@@ -286,10 +286,3 @@
   :reproduction-simplifications 1
   :use-single-thread true)
 
-
-;;;;;;;;;;
-;; Evaluate a random invidual
-
-#_(clojush/evaluate-individual (clojush/make-individual :program (clojush/random-code 150 qfe-atom-generators))
-                             qfe-error-function
-                             (new java.util.Random))

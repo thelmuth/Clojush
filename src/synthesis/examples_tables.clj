@@ -6,24 +6,24 @@
 ;;;;;;;;;;
 ;; Create the examples.
 
+; Query to evolve
+; SELECT count(*)
+; FROM adult
+; WHERE (education_num < 8 AND hours_per_week > 40) OR (education_num > 12 AND hours_per_week < 40)
+
 (def pos-ex
   (vec (take 50 (db/run-db-function db/synthesis-db
                                     db/db-query
                                     "SELECT *
                                      FROM adult
-                                     WHERE age > 40 AND education = 'Masters'"))))
+                                     WHERE (education_num < 8 AND hours_per_week > 40) OR (education_num > 12 AND hours_per_week < 40)"))))
 
 (def neg-ex
-  (vec (concat (take 25 (db/run-db-function db/synthesis-db
+  (vec (take 50 (db/run-db-function db/synthesis-db
                                             db/db-query
                                             "SELECT *
                                              FROM adult
-                                             WHERE NOT(age > 40)"))
-               (take-last 25 (db/run-db-function db/synthesis-db
-                                            db/db-query
-                                            "SELECT *
-                                             FROM adult
-                                             WHERE NOT(education = 'Masters')")))))
+                                             WHERE NOT ((education_num < 8 AND hours_per_week > 40) OR (education_num > 12 AND hours_per_week < 40))"))))
 
 ;;;;;;;;;;
 ;; Create small table for positive and negative examples.
@@ -52,3 +52,8 @@
 ;(create-and-populate-examples-table pos-ex neg-ex)
 
 ;(drop-examples-table)
+
+; Displays the example table nicely
+#_(sort #(< (get %1 :hours_per_week) (get %2 :hours_per_week))
+      (map #(select-keys % '(:education_num :hours_per_week))
+           pos-ex))

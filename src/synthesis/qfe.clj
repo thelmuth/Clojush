@@ -160,5 +160,5 @@
 (query-from-examples et/pos-ex et/neg-ex)
 
 ; Reset things
-(et/drop-examples-table)
-(reset! QUERY-FITNESSES {})
+;(et/drop-examples-table)
+;(reset! QUERY-FITNESSES {})

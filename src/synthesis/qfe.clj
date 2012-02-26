@@ -112,15 +112,8 @@
                                                                 :select
                                                                 (clojush/make-push-state))))
             result-query-string (synth-core/stacks-to-query-string final-state)]
-;        (println "---")
-;        (println "Query:")
-;        (println result-query-string)
         (if (= (clojush/top-item :where final-state) :no-stack-item)
-          (do
-;            (println "True positives:" (count positive-examples))
-;            (println "False positives:" (count negative-examples))
-;            (println "Error:" 3.0)
-            3.0) ; Penalty of 3.0 for having an empty :where stack
+          (do 3.0) ; Penalty of 3.0 for having an empty :where stack
           (if-let [fitness (get @QUERY-FITNESSES result-query-string)] ; See if we remember the fitness
             fitness ; If we remember the fitness, just return it; else, calculate and store it
             (let [query-future (future
@@ -136,15 +129,11 @@
                       error (- 1.0 (f1-score true-positives
                                              false-positives
                                              (- (count positive-examples) true-positives)))]
-;                  (println "True positives:" true-positives)
-;                  (println "False positives:" false-positives)
-;                  (println "Error:" error)
                   (swap! QUERY-FITNESSES assoc result-query-string error)
                   error)
                 (catch java.util.concurrent.TimeoutException e
                        (when (not (future-cancel query-future))
                          (println "future could not be cancelled"))
-;                       (println "Error:" 2.0)
                        2.0))))))))) ; Penalty of 2.0 for not returning
 
 ;;;;;;;;;;

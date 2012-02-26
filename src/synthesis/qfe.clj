@@ -64,7 +64,8 @@
                 'where_constraint_from_stack
                 'where_and
                 'where_or
-                'where_not)
+                'where_not
+                )
           (list 'string_length
                 ;'string_take
                 ;'string_concat
@@ -159,9 +160,9 @@
     (clojush/pushgp
       :error-function (qfe-error-function-creator positive-examples negative-examples)
       :atom-generators qfe-atom-generators
-      :max-points 250
+      :max-points 300
       :evalpush-limit 300
-      :population-size 100
+      :population-size 200
       :max-generations 100
       :tournament-size 5
       :trivial-geography-radius 10

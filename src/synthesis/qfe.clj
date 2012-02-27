@@ -103,38 +103,45 @@
   "Creates an error function based on vectors positive-examples and negative-examples."
   [positive-examples negative-examples]
   (fn [program]
-    (list
-      (let [final-state (clojush/run-push
-                          program
-                          (clojush/push-item "adult_examples"
-                                             :from
-                                             (clojush/push-item "*"
-                                                                :select
-                                                                (clojush/make-push-state))))
-            result-query-string (synth-core/stacks-to-query-string final-state)]
-        (if (= (clojush/top-item :where final-state) :no-stack-item)
-          (do 3.0) ; Penalty of 3.0 for having an empty :where stack
-          (if-let [fitness (get @QUERY-FITNESSES result-query-string)] ; See if we remember the fitness
-            fitness ; If we remember the fitness, just return it; else, calculate and store it
-            (let [query-future (future
-                                 (db/run-db-function db/synthesis-db
-                                                     db/db-query
-                                                     result-query-string))]
-              (try
-                (let [result-rows (.get query-future 100 (java.util.concurrent.TimeUnit/MILLISECONDS))
-                      true-positives (count (clojure.set/intersection (set positive-examples)
-                                                                      (set result-rows)))
-                      false-positives (count (clojure.set/intersection (set negative-examples)
-                                                                       (set result-rows)))
-                      error (- 1.0 (f1-score true-positives
-                                             false-positives
-                                             (- (count positive-examples) true-positives)))]
-                  (swap! QUERY-FITNESSES assoc result-query-string error)
-                  error)
-                (catch java.util.concurrent.TimeoutException e
-                       (when (not (future-cancel query-future))
-                         (println "future could not be cancelled"))
-                       2.0))))))))) ; Penalty of 2.0 for not returning
+    (let [final-state (clojush/run-push
+                        program
+                        (clojush/push-item "adult_examples"
+                                           :from
+                                           (clojush/push-item "*"
+                                                              :select
+                                                              (clojush/make-push-state))))
+          result-query-string (synth-core/stacks-to-query-string final-state)]
+      (if (= (clojush/top-item :where final-state) :no-stack-item)
+        (repeat (+ (count positive-examples)
+                   (count negative-examples))
+                3) ; Penalty of 3.0 for having an empty :where stack
+        (if-let [fitness (get @QUERY-FITNESSES result-query-string)] ; See if we remember the fitness
+          fitness ; If we remember the fitness, just return it; else, calculate and store it
+          (let [query-future (future
+                               (db/run-db-function db/synthesis-db
+                                                   db/db-query
+                                                   result-query-string))]
+            (try
+              (let [result-rows (.get query-future 100
+                                      (java.util.concurrent.TimeUnit/MILLISECONDS))
+                    positive-errors (map #(if (some #{%} result-rows)
+                                            0
+                                            1)
+                                         positive-examples)
+                    negative-errors (map #(if (some #{%} result-rows)
+                                            1
+                                            0)
+                                         negative-examples)
+                    error (concat positive-errors negative-errors)]
+                (swap! QUERY-FITNESSES assoc result-query-string error)
+                error)
+              (catch java.util.concurrent.TimeoutException e
+                     (when (not (future-cancel query-future))
+                       (println "future could not be cancelled"))
+                     (repeat (+ (count positive-examples)
+                                (count negative-examples))
+                             2))))))))) ; Penalty of 2.0 for not returning
+
 
 ;;;;;;;;;;
 ;; Main pushgp calling function
@@ -170,5 +177,6 @@
 (query-from-examples et/pos-ex et/neg-ex)
 
 ; Reset things
-;(et/drop-examples-table)
-;(reset! QUERY-FITNESSES {})
+#_(do
+  (et/drop-examples-table)
+  (reset! QUERY-FITNESSES {}))

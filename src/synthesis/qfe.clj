@@ -166,7 +166,9 @@
       :final-report-simplifications 10
       :reproduction-simplifications 1
       :use-single-thread true
-      :problem-specific-report qfe-report)
+      :problem-specific-report qfe-report
+      :use-historically-assessed-hardness true
+      )
     (finally
       (et/drop-examples-table))))
     

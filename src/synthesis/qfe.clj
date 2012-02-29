@@ -64,7 +64,7 @@
                 'where_constraint_from_stack
                 'where_and
                 'where_or
-                'where_not
+                ;'where_not
                 )
           (list 'string_length
                 ;'string_take
@@ -160,7 +160,10 @@
       :evalpush-limit 300
       :population-size 200
       :max-generations 100
-      :tournament-size 5
+      :mutation-probability 0.12
+      :crossover-probability 0.8
+      :simplification-probability 0.05
+      :tournament-size 6
       :trivial-geography-radius 10
       :report-simplifications 0
       :final-report-simplifications 10

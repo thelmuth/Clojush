@@ -9,21 +9,21 @@
 ; Query to evolve
 ; SELECT count(*)
 ; FROM adult
-; WHERE (education_num < 8 AND hours_per_week > 40) OR (education_num > 12 AND hours_per_week < 40)
+; WHERE (education_num < 9 AND hours_per_week > 40) OR (occupation = 'Farming-fishing')
 
 (def pos-ex
   (vec (take 50 (db/run-db-function db/synthesis-db
                                     db/db-query
                                     "SELECT *
                                      FROM adult
-                                     WHERE (education_num < 8 AND hours_per_week > 40) OR (education_num > 12 AND hours_per_week < 40)"))))
+                                     WHERE (education_num < 9 AND hours_per_week > 40) OR (occupation = 'Farming-fishing')"))))
 
 (def neg-ex
   (vec (take 50 (db/run-db-function db/synthesis-db
-                                            db/db-query
-                                            "SELECT *
-                                             FROM adult
-                                             WHERE NOT ((education_num < 8 AND hours_per_week > 40) OR (education_num > 12 AND hours_per_week < 40))"))))
+                                    db/db-query
+                                    "SELECT *
+                                     FROM adult
+                                     WHERE NOT ((education_num < 9 AND hours_per_week > 40) OR (occupation = 'Farming-fishing'))"))))
 
 ;;;;;;;;;;
 ;; Create small table for positive and negative examples.
@@ -54,6 +54,21 @@
 ;(drop-examples-table)
 
 ; Displays the example table nicely
-#_(sort #(< (get %1 :hours_per_week) (get %2 :hours_per_week))
-      (map #(select-keys % '(:education_num :hours_per_week))
-           pos-ex))
+(sort #(compare (get %1 :occupation) (get %2 :occupation))
+      (map #(select-keys % '(:education_num :hours_per_week :occupation))
+           neg-ex))
+
+; Displays the count of each occupation
+#_(db/run-db-function db/synthesis-db
+                           db/db-query
+                           "SELECT occupation, count(*)
+                            FROM adult
+                            GROUP BY occupation"
+                           )
+
+#_(count (db/run-db-function db/synthesis-db
+                           db/db-query
+                           "SELECT *
+                            FROM adult
+                            WHERE (education_num < 9 AND hours_per_week > 40) OR occupation = 'Farming-fishing'"
+                           ))

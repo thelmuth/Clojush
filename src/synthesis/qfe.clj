@@ -158,7 +158,7 @@
       :atom-generators qfe-atom-generators
       :max-points 300
       :evalpush-limit 300
-      :population-size 200
+      :population-size 50
       :max-generations 100
       :mutation-probability 0.12
       :crossover-probability 0.8
@@ -171,6 +171,7 @@
       :use-single-thread true
       :problem-specific-report qfe-report
       :use-historically-assessed-hardness true
+      :use-historically-assessed-similarity true
       )
     (finally
       (et/drop-examples-table))))

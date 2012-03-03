@@ -70,6 +70,13 @@
 (def global-use-historically-assessed-hardness (atom false))
 (def solution-rates (atom (repeat 0)))
 
+;; Historically-assessed similarity (of test cases)
+;; Similar in idea to HAH, except it bases weights on how similar a test case is to the
+;; other test cases are. Similarity is measured over the results from the previous
+;; generation.
+(def global-use-historically-assessed-similarity (atom false))
+(def similarity-rates (atom (repeat 0)))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; random code generator
 
@@ -2167,7 +2174,7 @@ example."
              node-selection-tournament-size pop-when-tagging gaussian-mutation-probability 
              gaussian-mutation-per-number-mutation-probability gaussian-mutation-standard-deviation
              reuse-errors problem-specific-report use-single-thread random-seed 
-             use-historically-assessed-hardness]
+             use-historically-assessed-hardness use-historically-assessed-similarity]
       :or {error-function (fn [p] '(0)) ;; pgm -> list of errors (1 per case)
            error-threshold 0
            population-size 1000
@@ -2200,8 +2207,9 @@ example."
            reuse-errors true
            problem-specific-report default-problem-specific-report
            use-single-thread false
-           random-seed (System/nanoTime)   
-           use-historically-assessed-hardness false        
+           random-seed (System/nanoTime)
+           use-historically-assessed-hardness false
+           use-historically-assessed-similarity false
            }}]
   (binding [thread-local-random-generator (java.util.Random. random-seed)]
     ;; set globals from parameters
@@ -2215,6 +2223,7 @@ example."
     (reset! global-pop-when-tagging pop-when-tagging)
     (reset! global-reuse-errors reuse-errors)
     (reset! global-use-historically-assessed-hardness use-historically-assessed-hardness)
+    (reset! global-use-historically-assessed-similarity use-historically-assessed-similarity)
     (printf "\nStarting PushGP run.\n\n") (flush)
     (printf "Clojush version = ")
     (try
@@ -2247,7 +2256,7 @@ example."
              (printf "Hash of last Git commit = unavailable\n")
              (printf "GitHub link = unavailable\n")
              (flush)))
-    (print-params 
+    (print-params
       (error-function error-threshold population-size max-points atom-generators max-generations 
                       mutation-probability mutation-max-points crossover-probability
                       simplification-probability gaussian-mutation-probability 
@@ -2257,6 +2266,7 @@ example."
                       evalpush-time-limit node-selection-method node-selection-tournament-size
                       node-selection-leaf-probability pop-when-tagging reuse-errors
                       use-single-thread random-seed use-historically-assessed-hardness
+                      use-historically-assessed-similarity
                       ))
     (printf "\nGenerating initial population...\n") (flush)
     (let [pop-agents (vec (doall (for [_ (range population-size)] 
@@ -2285,6 +2295,13 @@ example."
                                 population-size)))))
           (printf "\nSolution rates: ")
           (println (doall (map float @solution-rates))))
+        ;; calculate similarity rates for historically-assessed similarity of test cases
+        (when use-historically-assessed-similarity
+          (reset! similarity-rates
+                  (let [error-seqs (map :errors (map deref pop-agents))]
+                    (printf "\nError seq(0):")
+                    (println (first error-seqs))
+                    )))
         ;; report and check for success
         (let [best (report (vec (doall (map deref pop-agents))) generation error-function 
                            report-simplifications problem-specific-report)]

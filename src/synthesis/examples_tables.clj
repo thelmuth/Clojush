@@ -7,7 +7,7 @@
 ;; Create the examples.
 
 ; Query to evolve
-; SELECT count(*)
+; SELECT *
 ; FROM adult
 ; WHERE (education_num < 9 AND hours_per_week > 40) OR (occupation = 'Farming-fishing')
 

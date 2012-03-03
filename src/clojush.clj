@@ -2298,9 +2298,10 @@ example."
         ;; calculate similarity rates for historically-assessed similarity of test cases
         (when use-historically-assessed-similarity
           (reset! similarity-rates
-                  (let [error-seqs (map :errors (map deref pop-agents))]
-                    (printf "\nError seq(0):")
-                    (println (first error-seqs))
+                  (let [error-seqs (map :errors (map deref pop-agents))
+                        test-case-errors (apply map list error-seqs)]
+                    (printf "\nTestCaseErrors(0):")
+                    (println (first test-case-errors))
                     )))
         ;; report and check for success
         (let [best (report (vec (doall (map deref pop-agents))) generation error-function 

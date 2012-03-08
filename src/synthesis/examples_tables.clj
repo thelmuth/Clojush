@@ -9,21 +9,21 @@
 ; Query to evolve
 ; SELECT *
 ; FROM adult
-; WHERE (education_num < 9 AND hours_per_week > 40) OR (occupation = 'Farming-fishing')
+; WHERE (greater_50k = '>50k')
 
 (def pos-ex
-  (vec (take 50 (db/run-db-function db/synthesis-db
+  (vec (take 200 (db/run-db-function db/synthesis-db
                                     db/db-query
                                     "SELECT *
                                      FROM adult
-                                     WHERE (education_num < 9 AND hours_per_week > 40) OR (occupation = 'Farming-fishing')"))))
+                                     WHERE (greater_50k = '>50K')"))))
 
 (def neg-ex
-  (vec (take 50 (db/run-db-function db/synthesis-db
+  (vec (take 200 (db/run-db-function db/synthesis-db
                                     db/db-query
                                     "SELECT *
                                      FROM adult
-                                     WHERE NOT ((education_num < 9 AND hours_per_week > 40) OR (occupation = 'Farming-fishing'))"))))
+                                     WHERE NOT (greater_50k = '>50K')"))))
 
 ;;;;;;;;;;
 ;; Create small table for positive and negative examples.
@@ -33,7 +33,7 @@
   [pos-ex neg-ex]
   (db/run-db-function db/synthesis-db db/create-table
                       :adult_examples
-                      db/synthesis-db-columns)
+                      (conj db/synthesis-db-columns [:greater_50k "varchar(8)"]))
   (db/run-db-function db/synthesis-db db/insert-records
                       :adult_examples
                       pos-ex)
@@ -54,7 +54,7 @@
 ;(drop-examples-table)
 
 ; Displays the example table nicely
-(sort #(compare (get %1 :occupation) (get %2 :occupation))
+#_(sort #(compare (get %1 :occupation) (get %2 :occupation))
       (map #(select-keys % '(:education_num :hours_per_week :occupation))
            neg-ex))
 

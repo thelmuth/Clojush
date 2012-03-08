@@ -8,29 +8,6 @@
 ;; Some globals for testing
 (def QUERY-FITNESSES (atom {}))
 
-;;;;;;;;;;
-;; Helper functions
-
-(defn precision
-  [true-positives false-positives]
-  (if (zero? true-positives)
-    0
-    (float (/ true-positives (+ true-positives false-positives)))))
-
-(defn recall
-  [true-positives false-negatives]
-  (if (zero? true-positives)
-    0
-    (float (/ true-positives (+ true-positives false-negatives)))))
-
-(defn f1-score
-  ([true-positives false-positives false-negatives]
-    (f1-score (precision true-positives false-positives)
-              (recall true-positives false-negatives)))
-  ([prec rec]
-    (if (zero? (+ prec rec))
-      0
-      (/ (* 2 prec rec) (+ prec rec)))))
 
 ;;;;;;;;;;
 ;; Report - Add printing of query
@@ -158,7 +135,7 @@
       :atom-generators qfe-atom-generators
       :max-points 300
       :evalpush-limit 300
-      :population-size 200
+      :population-size 400
       :max-generations 100
       :mutation-probability 0.12
       :crossover-probability 0.8

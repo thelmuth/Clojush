@@ -127,7 +127,8 @@
    [:capital_loss :int]
    [:hours_per_week :int]
    [:native_country "varchar(32)"]
-   [:greater_50k "varchar(8)"]])
+   ;[:greater_50k "varchar(8)"]
+   ])
 
 (def synthesis-db-columns-map
   (apply hash-map (flatten synthesis-db-columns)))

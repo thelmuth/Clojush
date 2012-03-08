@@ -9,21 +9,21 @@
 ; Query to evolve
 ; SELECT *
 ; FROM adult
-; WHERE (education_num < 9 AND hours_per_week > 40) OR (occupation = 'Farming-fishing')
+; WHERE (education_num < 8 AND hours_per_week < 35) OR (occupation = 'Farming-fishing' AND age < 42)
 
 (def pos-ex
   (vec (take 50 (db/run-db-function db/synthesis-db
                                     db/db-query
                                     "SELECT *
                                      FROM adult
-                                     WHERE (education_num < 9 AND hours_per_week > 40) OR (occupation = 'Farming-fishing')"))))
+                                     WHERE (education_num < 8 AND hours_per_week < 35) OR (occupation = 'Farming-fishing' AND age < 42)"))))
 
 (def neg-ex
   (vec (take 50 (db/run-db-function db/synthesis-db
                                     db/db-query
                                     "SELECT *
                                      FROM adult
-                                     WHERE NOT ((education_num < 9 AND hours_per_week > 40) OR (occupation = 'Farming-fishing'))"))))
+                                     WHERE NOT ((education_num < 8 AND hours_per_week < 35) OR (occupation = 'Farming-fishing' AND age < 42))"))))
 
 ;;;;;;;;;;
 ;; Create small table for positive and negative examples.
@@ -54,8 +54,8 @@
 ;(drop-examples-table)
 
 ; Displays the example table nicely
-(sort #(compare (get %1 :occupation) (get %2 :occupation))
-      (map #(select-keys % '(:education_num :hours_per_week :occupation))
+#_(sort #(compare (get %1 :education_num) (get %2 :education_num))
+      (map #(select-keys % '(:education_num :hours_per_week :occupation :age))
            neg-ex))
 
 ; Displays the count of each occupation
@@ -70,5 +70,6 @@
                            db/db-query
                            "SELECT *
                             FROM adult
-                            WHERE (education_num < 9 AND hours_per_week > 40) OR occupation = 'Farming-fishing'"
+                            WHERE (education_num < 8 AND hours_per_week < 35) OR (occupation = 'Farming-fishing' AND age < 42)"
                            ))
+

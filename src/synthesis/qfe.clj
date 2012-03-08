@@ -158,7 +158,7 @@
       :atom-generators qfe-atom-generators
       :max-points 300
       :evalpush-limit 300
-      :population-size 200
+      :population-size 300
       :max-generations 100
       :mutation-probability 0.12
       :crossover-probability 0.8

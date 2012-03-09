@@ -1837,7 +1837,7 @@ normal, or :abnormal otherwise."
   (let [sim-rates (if global-normalize-HAS-zero-one
                     (let [min-rate (apply min @similarity-rates)
                           max-rate (apply max @similarity-rates)
-                          rates (map #(/ (- x min-rate) (- max-rate min-rate))
+                          rates (map #(/ (- % min-rate) (- max-rate min-rate))
                                      @similarity-rates)]
                       (printf "\nNormalized Similarity Rates: ")
                       (println (doall (map float rates)))

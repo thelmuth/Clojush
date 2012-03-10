@@ -75,7 +75,7 @@
 ;; other test cases are. Similarity is measured over the results from the previous
 ;; generation.
 (def global-use-historically-assessed-similarity (atom false))
-(def global-normalize-HAS-zero-one (atom true))
+(def global-normalize-HAS-zero-one (atom false))
 (def similarity-rates (atom (repeat 10 0)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1834,32 +1834,21 @@ normal, or :abnormal otherwise."
 
 (defn compute-historically-scaled-error
   [errors]
-  (let [sim-rates (if @global-normalize-HAS-zero-one
-                    (let [min-rate (apply min @similarity-rates)
-                          max-rate (apply max @similarity-rates)
-                          rates (if (= min-rate max-rate)
-                                  @similarity-rates
-                                  (map #(/ (- % min-rate) (- max-rate min-rate))
-                                       @similarity-rates))]
-                      (printf "\nNormalized Similarity Rates: ")
-                      (println (doall (map float rates)))
-                      rates)
-                    @similarity-rates)]
-    (cond
-      (and @global-use-historically-assessed-hardness
-           @global-use-historically-assessed-similarity) (reduce + (doall (map (fn [h-rate s-rate e] (* (- 1.01 h-rate)
-                                                                                                        (- 1.01 s-rate)
-                                                                                                        e))
-                                                                               @solution-rates
-                                                                               sim-rates
-                                                                               errors)))
-      @global-use-historically-assessed-hardness (reduce + (doall (map (fn [rate e] (* (- 1.01 rate) e))
-                                                                       @solution-rates
+  (cond
+    (and @global-use-historically-assessed-hardness
+         @global-use-historically-assessed-similarity) (reduce + (doall (map (fn [h-rate s-rate e] (* (- 1.01 h-rate)
+                                                                                                      (- 1.01 s-rate)
+                                                                                                      e))
+                                                                             @solution-rates
+                                                                             @similarity-rates
+                                                                             errors)))
+    @global-use-historically-assessed-hardness (reduce + (doall (map (fn [rate e] (* (- 1.01 rate) e))
+                                                                     @solution-rates
+                                                                     errors)))
+    @global-use-historically-assessed-similarity (reduce + (doall (map (fn [rate e] (* (- 1.01 rate) e))
+                                                                       @similarity-rates
                                                                        errors)))
-      @global-use-historically-assessed-similarity (reduce + (doall (map (fn [rate e] (* (- 1.01 rate) e))
-                                                                         sim-rates
-                                                                         errors)))
-      true nil)))
+    true nil))
 
 (defn similarity
   "Takes two test case lists and returns their similarity, which is the count of the
@@ -2225,7 +2214,8 @@ example."
              node-selection-tournament-size pop-when-tagging gaussian-mutation-probability 
              gaussian-mutation-per-number-mutation-probability gaussian-mutation-standard-deviation
              reuse-errors problem-specific-report use-single-thread random-seed 
-             use-historically-assessed-hardness use-historically-assessed-similarity]
+             use-historically-assessed-hardness use-historically-assessed-similarity
+             use-historically-assessed-similarity-normalization]
       :or {error-function (fn [p] '(0)) ;; pgm -> list of errors (1 per case)
            error-threshold 0
            population-size 1000
@@ -2261,6 +2251,7 @@ example."
            random-seed (System/nanoTime)
            use-historically-assessed-hardness false
            use-historically-assessed-similarity false
+           use-historically-assessed-similarity-normalization false
            }}]
   (binding [thread-local-random-generator (java.util.Random. random-seed)]
     ;; set globals from parameters
@@ -2275,6 +2266,7 @@ example."
     (reset! global-reuse-errors reuse-errors)
     (reset! global-use-historically-assessed-hardness use-historically-assessed-hardness)
     (reset! global-use-historically-assessed-similarity use-historically-assessed-similarity)
+    (reset! global-normalize-HAS-zero-one use-historically-assessed-similarity-normalization)
     (printf "\nStarting PushGP run.\n\n") (flush)
     (printf "Clojush version = ")
     (try
@@ -2317,7 +2309,7 @@ example."
                       evalpush-time-limit node-selection-method node-selection-tournament-size
                       node-selection-leaf-probability pop-when-tagging reuse-errors
                       use-single-thread random-seed use-historically-assessed-hardness
-                      use-historically-assessed-similarity
+                      use-historically-assessed-similarity use-historically-assessed-similarity-normalization
                       ))
     (printf "\nGenerating initial population...\n") (flush)
     (let [pop-agents (vec (doall (for [_ (range population-size)] 
@@ -2350,14 +2342,28 @@ example."
         (when use-historically-assessed-similarity
           (reset! similarity-rates
                   (let [error-seqs (map :errors (map deref pop-agents))
-                        test-case-errors (apply map list error-seqs)]
-                    (doall (for [i (range (count test-case-errors))]
-                             (average-pairwise-similarity (nth test-case-errors i)
-                                                          (concat
-                                                            (take i test-case-errors)
-                                                            (drop (inc i) test-case-errors)))))))
-          (printf "\nSimilarity Rates: ")
-          (println (doall (map float @similarity-rates))))
+                        test-case-errors (apply map list error-seqs)
+                        sim-rates (doall (for [i (range (count test-case-errors))]
+                                           (average-pairwise-similarity (nth test-case-errors i)
+                                                                        (concat
+                                                                          (take i test-case-errors)
+                                                                          (drop (inc i) test-case-errors)))))]
+                    (if @global-normalize-HAS-zero-one
+                      (let [min-rate (apply min sim-rates)
+                            max-rate (apply max sim-rates)
+                            rates (if (= min-rate max-rate)
+                                    sim-rates
+                                    (map #(/ (- % min-rate) (- max-rate min-rate))
+                                         sim-rates))]
+                        (printf "\nSimilarity Rates: ")
+                        (println (doall (map float sim-rates)))
+                        (printf "\nNormalized Similarity Rates: ")
+                        (println (doall (map float rates)))
+                        rates)
+                      (do
+                        (printf "\nSimilarity Rates: ")
+                        (println (doall (map float sim-rates)))
+                        sim-rates)))))
         ;; report and check for success
         (let [best (report (vec (doall (map deref pop-agents))) generation error-function 
                            report-simplifications problem-specific-report)]

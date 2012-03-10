@@ -9,21 +9,21 @@
 ; Query to evolve
 ; SELECT *
 ; FROM adult
-; WHERE (education_num < 8 AND hours_per_week < 35) OR (occupation = 'Farming-fishing' AND age < 42)
+; WHERE (age < 28 OR age > 48) AND (hours_per_week < 35 OR hours_per_week > 46)
 
 (def pos-ex
   (vec (take 50 (db/run-db-function db/synthesis-db
                                     db/db-query
                                     "SELECT *
                                      FROM adult
-                                     WHERE (education_num < 8 AND hours_per_week < 35) OR (occupation = 'Farming-fishing' AND age < 42)"))))
+                                     WHERE (age < 28 OR age > 48) AND (hours_per_week < 35 OR hours_per_week > 46)"))))
 
 (def neg-ex
   (vec (take 50 (db/run-db-function db/synthesis-db
                                     db/db-query
                                     "SELECT *
                                      FROM adult
-                                     WHERE NOT ((education_num < 8 AND hours_per_week < 35) OR (occupation = 'Farming-fishing' AND age < 42))"))))
+                                     WHERE NOT (age < 28 OR age > 48) AND (hours_per_week < 35 OR hours_per_week > 46)"))))
 
 ;;;;;;;;;;
 ;; Create small table for positive and negative examples.
@@ -70,6 +70,6 @@
                            db/db-query
                            "SELECT *
                             FROM adult
-                            WHERE (education_num < 8 AND hours_per_week < 35) OR (occupation = 'Farming-fishing' AND age < 42)"
+                            WHERE (age < 28 OR age > 48) AND (hours_per_week < 35 OR hours_per_week > 46)"
                            ))
 

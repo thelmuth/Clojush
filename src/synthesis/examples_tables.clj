@@ -23,7 +23,7 @@
                                     db/db-query
                                     "SELECT *
                                      FROM adult
-                                     WHERE NOT (age < 28 OR age > 48) AND (hours_per_week < 35 OR hours_per_week > 46)"))))
+                                     WHERE NOT ((age < 28 OR age > 48) AND (hours_per_week < 35 OR hours_per_week > 46))"))))
 
 ;;;;;;;;;;
 ;; Create small table for positive and negative examples.
@@ -57,6 +57,16 @@
 #_(sort #(compare (get %1 :education_num) (get %2 :education_num))
       (map #(select-keys % '(:education_num :hours_per_week :occupation :age))
            neg-ex))
+
+#_(count (filter #(and (> (:age %) 48)
+                     (< (:hours_per_week %) 35))
+        pos-ex))
+
+#_(do
+  (println "Negative,Examples")
+  (println "Age,Hours_Per_Week")
+  (println (apply str (interpose "\n" (map #(str (:age %) "," (:hours_per_week %)) neg-ex))))
+  )
 
 ; Displays the count of each occupation
 #_(db/run-db-function db/synthesis-db

@@ -172,7 +172,7 @@
       :problem-specific-report qfe-report
       :use-historically-assessed-hardness true
       :use-historically-assessed-similarity true
-      :use-historically-assessed-similarity-normalization true
+      :use-historically-assessed-similarity-normalization false
       )
     (finally
       (et/drop-examples-table))))

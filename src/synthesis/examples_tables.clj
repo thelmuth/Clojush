@@ -18,12 +18,30 @@
                                      FROM adult
                                      WHERE (age < 28 OR age > 48) AND (hours_per_week < 35 OR hours_per_week > 46)"))))
 
-(def neg-ex
+#_(def neg-ex
   (vec (take 50 (db/run-db-function db/synthesis-db
                                     db/db-query
                                     "SELECT *
                                      FROM adult
                                      WHERE NOT ((age < 28 OR age > 48) AND (hours_per_week < 35 OR hours_per_week > 46))"))))
+
+
+(def neg-ex (vec (set (concat (take 30 (db/run-db-function db/synthesis-db
+                                    db/db-query
+                                    "SELECT *
+                                     FROM adult
+                                     WHERE NOT ((age < 28 OR age > 48) AND (hours_per_week < 35 OR hours_per_week > 46))"))
+                    (take 10 (db/run-db-function db/synthesis-db
+                                    db/db-query
+                                    "SELECT *
+                                     FROM adult
+                                     WHERE (NOT (age < 28 OR age > 48)) AND (hours_per_week < 35)"))
+                    (take 16 (db/run-db-function db/synthesis-db
+                                    db/db-query
+                                    "SELECT *
+                                     FROM adult
+                                     WHERE (NOT (age < 28 OR age > 48)) AND (hours_per_week > 46)"))))))
+
 
 ;;;;;;;;;;
 ;; Create small table for positive and negative examples.
@@ -82,4 +100,3 @@
                             FROM adult
                             WHERE (age < 28 OR age > 48) AND (hours_per_week < 35 OR hours_per_week > 46)"
                            ))
-

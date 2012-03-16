@@ -163,8 +163,8 @@
       :mutation-probability 0.12
       :crossover-probability 0.8
       :simplification-probability 0.05
-      :tournament-size 6
-      :trivial-geography-radius 10
+      :tournament-size 7
+      :trivial-geography-radius 40
       :report-simplifications 0
       :final-report-simplifications 10
       :reproduction-simplifications 1

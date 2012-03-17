@@ -5,7 +5,8 @@
 (ns synthesis.core
   (:require [clojush]
             [clojure.contrib.sql :as sql]
-            [synthesis.db :as db]))
+            [synthesis.db :as db]
+            [synthesis.examples_tables :as et]))
 
 ;;;;;;;;;;;;
 ;; A few things must be done in the clojush namespace.
@@ -146,6 +147,33 @@
                                                  (clojush/pop-item :integer
                                                                    (clojush/pop-item :integer
                                                                                      state))))))))))
+
+; Uses a constant taken from either the positive examples table or the negative
+; examples table.
+(defn where-constraint-from-examples
+  [examples]
+  (fn [state]
+    (if (not (>= (count (get state :integer)) 3)) ; We will need 3 integers
+      state
+      (let [column (select-column (clojush/stack-ref :integer 0 state))
+            column-type (get-column-type column)]
+        (if (nil? column-type) ; Check for legit column-type
+          state
+          (let [comparator (nth comparators (mod (clojush/stack-ref :integer 1 state)
+                                                 (count comparators)))
+                constant (get (nth examples (mod (clojush/stack-ref :integer 2 state)
+                                                 (count examples)))
+                              column)
+                constraint (str (name column) " " comparator " " constant)]
+            (clojush/push-item constraint :where
+                               (clojush/pop-item :integer
+                                                 (clojush/pop-item :integer
+                                                                   (clojush/pop-item :integer
+                                                                                     state))))))))))
+
+(clojush/define-registered where_constraint_from_pos_ex (where-constraint-from-examples et/pos-ex))
+(clojush/define-registered where_constraint_from_neg_ex (where-constraint-from-examples et/neg-ex))
+
 
 (defn where-conjoiner
   [conjunction]

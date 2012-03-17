@@ -66,6 +66,17 @@
                 'where_or
                 ;'where_not
                 )
+          (list 'exec_stackdepth
+                'exec_dup
+                'exec_swap
+                'exec_rot
+                'exec_y
+                'exec_s
+                'exec_k
+                'exec_do*times
+                'exec_do*count
+                'exec_do*range
+                )
           (list 'string_length
                 ;'string_take
                 ;'string_concat
@@ -82,7 +93,8 @@
                 'integer_stackdepth
                 'integer_dup
                 'integer_swap
-                'integer_rot)
+                'integer_rot
+                )
           (list (fn []
                   (let [choice (clojush/lrand-int 5)]
                     (case choice

@@ -156,14 +156,14 @@
     (clojush/pushgp
       :error-function (qfe-error-function-creator positive-examples negative-examples)
       :atom-generators qfe-atom-generators
-      :max-points 300
-      :evalpush-limit 300
+      :max-points 400
+      :evalpush-limit 400
       :population-size 500
       :max-generations 100
       :mutation-probability 0.12
       :crossover-probability 0.8
       :simplification-probability 0.05
-      :tournament-size 7
+      :tournament-size 5
       :trivial-geography-radius 40
       :report-simplifications 0
       :final-report-simplifications 10

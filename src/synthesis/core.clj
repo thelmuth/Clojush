@@ -161,9 +161,12 @@
           state
           (let [comparator (nth comparators (mod (clojush/stack-ref :integer 1 state)
                                                  (count comparators)))
-                constant (get (nth examples (mod (clojush/stack-ref :integer 2 state)
+                raw-constant (get (nth examples (mod (clojush/stack-ref :integer 2 state)
                                                  (count examples)))
                               column)
+                constant (if (string? raw-constant)
+                           (str "'" raw-constant "'")
+                           raw-constant)
                 constraint (str (name column) " " comparator " " constant)]
             (clojush/push-item constraint :where
                                (clojush/pop-item :integer

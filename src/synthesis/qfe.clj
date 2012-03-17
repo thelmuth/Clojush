@@ -62,6 +62,8 @@
                 'where_constraint_distinct_from_index
                 'where_constraint_from_index
                 'where_constraint_from_stack
+                'where_constraint_from_pos_ex
+                'where_constraint_from_neg_ex
                 'where_and
                 'where_or
                 'where_not)

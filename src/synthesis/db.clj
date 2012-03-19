@@ -157,3 +157,11 @@
                                         ORDER BY RANDOM()
                                         LIMIT 1")
 
+; Get the number of distinct values for each attribute of the database.
+#_(map #(first (let [attribute (name %)
+            query (str "SELECT count(DISTINCT "
+                       attribute
+                       ")
+                        FROM adult")]
+        (run-db-function synthesis-db db-query query)))
+     (map first synthesis-db-columns))

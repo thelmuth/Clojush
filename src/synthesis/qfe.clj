@@ -88,6 +88,8 @@
                                                               :select
                                                               (clojush/make-push-state))))
           result-query-string (synth-core/stacks-to-query-string final-state)]
+      (println "\nEvaluating query:")
+      (println result-query-string)
       (if (= (clojush/top-item :where final-state) :no-stack-item)
         (repeat (+ (count positive-examples)
                    (count negative-examples))

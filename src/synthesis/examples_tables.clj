@@ -12,18 +12,18 @@
 ; WHERE (greater_50k = '>50k')
 
 (def pos-ex
-  (vec (take 200 (db/run-db-function db/synthesis-db
+  (vec (db/run-db-function db/synthesis-db
                                     db/db-query
                                     "SELECT *
                                      FROM adult
-                                     WHERE (greater_50k = '>50K')"))))
+                                     WHERE (greater_50k = '>50K')")))
 
 (def neg-ex
-  (vec (take 200 (db/run-db-function db/synthesis-db
+  (vec (db/run-db-function db/synthesis-db
                                     db/db-query
                                     "SELECT *
                                      FROM adult
-                                     WHERE NOT (greater_50k = '>50K')"))))
+                                     WHERE NOT (greater_50k = '>50K')")))
 
 ;;;;;;;;;;
 ;; Create small table for positive and negative examples.

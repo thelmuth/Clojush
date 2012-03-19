@@ -99,7 +99,7 @@
                                                    db/db-query
                                                    result-query-string))]
             (try
-              (let [result-rows (.get query-future 100
+              (let [result-rows (.get query-future 500
                                       (java.util.concurrent.TimeUnit/MILLISECONDS))
                     positive-errors (map #(if (some #{%} result-rows)
                                             0
@@ -148,7 +148,7 @@
       :use-single-thread true
       :problem-specific-report qfe-report
       :use-historically-assessed-hardness true
-      :use-historically-assessed-similarity true
+      :use-historically-assessed-similarity false
       )
     (finally
       (et/drop-examples-table))))

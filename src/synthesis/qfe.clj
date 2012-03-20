@@ -6,7 +6,7 @@
 
 ;;;;;;;;;;
 ;; Some globals for testing
-(def QUERY-FITNESSES (atom {}))
+(def QUERY-FITNESSES (atom (hash-map)))
 
 ;;;;;;;;;;
 ;; Helper functions

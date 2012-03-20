@@ -8,6 +8,29 @@
 ;; Some globals for testing
 (def QUERY-FITNESSES (atom {}))
 
+;;;;;;;;;;
+;; Helper functions
+
+(defn precision
+  [true-positives false-positives]
+  (if (zero? true-positives)
+    0
+    (float (/ true-positives (+ true-positives false-positives)))))
+
+(defn recall
+  [true-positives false-negatives]
+  (if (zero? true-positives)
+    0
+    (float (/ true-positives (+ true-positives false-negatives)))))
+
+(defn f1-score
+  ([true-positives false-positives false-negatives]
+    (f1-score (precision true-positives false-positives)
+              (recall true-positives false-negatives)))
+  ([prec rec]
+    (if (zero? (+ prec rec))
+      0
+      (/ (* 2 prec rec) (+ prec rec)))))
 
 ;;;;;;;;;;
 ;; Report - Add printing of query
@@ -80,46 +103,41 @@
   "Creates an error function based on vectors positive-examples and negative-examples."
   [positive-examples negative-examples]
   (fn [program]
-    (let [final-state (clojush/run-push
-                        program
-                        (clojush/push-item "adult_examples"
-                                           :from
-                                           (clojush/push-item "*"
-                                                              :select
-                                                              (clojush/make-push-state))))
-          result-query-string (synth-core/stacks-to-query-string final-state)]
-      (println "\nEvaluating query:")
-      (println result-query-string)
-      (if (= (clojush/top-item :where final-state) :no-stack-item)
-        (repeat (+ (count positive-examples)
-                   (count negative-examples))
-                3) ; Penalty of 3.0 for having an empty :where stack
-        (if-let [fitness (get @QUERY-FITNESSES result-query-string)] ; See if we remember the fitness
-          fitness ; If we remember the fitness, just return it; else, calculate and store it
-          (let [query-future (future
-                               (db/run-db-function db/synthesis-db
-                                                   db/db-query
-                                                   result-query-string))]
-            (try
-              (let [result-rows (.get query-future 500
-                                      (java.util.concurrent.TimeUnit/MILLISECONDS))
-                    positive-errors (map #(if (some #{%} result-rows)
-                                            0
-                                            1)
-                                         positive-examples)
-                    negative-errors (map #(if (some #{%} result-rows)
-                                            1
-                                            0)
-                                         negative-examples)
-                    error (concat positive-errors negative-errors)]
-                (swap! QUERY-FITNESSES assoc result-query-string error)
-                error)
-              (catch java.util.concurrent.TimeoutException e
-                     (when (not (future-cancel query-future))
-                       (println "future could not be cancelled"))
-                     (repeat (+ (count positive-examples)
-                                (count negative-examples))
-                             2))))))))) ; Penalty of 2.0 for not returning
+    (list
+      (let [final-state (clojush/run-push
+                          program
+                          (clojush/push-item "adult_examples"
+                                             :from
+                                             (clojush/push-item "*"
+                                                                :select
+                                                                (clojush/make-push-state))))
+            result-query-string (synth-core/stacks-to-query-string final-state)]
+        (println "\nEvaluating query:")
+        (println result-query-string)
+        (if (= (clojush/top-item :where final-state) :no-stack-item)
+          (do 3) ; Penalty of 3.0 for having an empty :where stack
+          (if-let [fitness (get @QUERY-FITNESSES result-query-string)] ; See if we remember the fitness
+            fitness ; If we remember the fitness, just return it; else, calculate and store it
+            (let [query-future (future
+                                 (db/run-db-function db/synthesis-db
+                                                     db/db-query
+                                                     result-query-string))]
+              (try
+                (let [result-rows (.get query-future 500
+                                        (java.util.concurrent.TimeUnit/MILLISECONDS))
+                      true-positives (count (clojure.set/intersection (set positive-examples)
+                                                                      (set result-rows)))
+                      false-positives (count (clojure.set/intersection (set negative-examples)
+                                                                       (set result-rows)))
+                      error (- 1.0 (f1-score true-positives
+                                             false-positives
+                                             (- (count positive-examples) true-positives)))]
+                  (swap! QUERY-FITNESSES assoc result-query-string error)
+                  error)
+                (catch java.util.concurrent.TimeoutException e
+                       (when (not (future-cancel query-future))
+                         (println "future could not be cancelled"))
+                       2))))))))) ; Penalty of 2.0 for not returning
 
 
 ;;;;;;;;;;
@@ -149,7 +167,7 @@
       :reproduction-simplifications 1
       :use-single-thread true
       :problem-specific-report qfe-report
-      :use-historically-assessed-hardness true
+      :use-historically-assessed-hardness false
       :use-historically-assessed-similarity false
       )
     (finally

@@ -132,6 +132,13 @@
                       error (- 1.0 (f1-score true-positives
                                              false-positives
                                              (- (count positive-examples) true-positives)))]
+                  ;(println "True positives: " true-positives)
+                  ;(println "False positives: " false-positives)
+                  ;(println "True negatives: " (- (count negative-examples) false-positives))
+                  ;(println "False negatives: " (- (count positive-examples) true-positives))
+                  ;(println "Total Positives: " (count positive-examples))
+                  ;(println "Total Negatives: " (count negative-examples))
+                  ;(println "Total: " (+ (count negative-examples) (count positive-examples)))
                   (swap! QUERY-FITNESSES assoc result-query-string error)
                   error)
                 (catch java.util.concurrent.TimeoutException e
@@ -177,7 +184,7 @@
 ;;;;;;;;;;
 ;; Example usage
 
-(query-from-examples et/pos-ex et/neg-ex)
+;(query-from-examples et/pos-ex et/neg-ex)
 
 ; Reset things
 #_(do

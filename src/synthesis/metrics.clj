@@ -10,11 +10,11 @@
 
 ;; Desired query Q0 WHERE clause
 (def Q0-where
-  "WHERE (age < 28 OR age > 48) AND (hours_per_week < 35 OR hours_per_week > 46)")
+  "(age < 28 OR age > 48) AND (hours_per_week < 35 OR hours_per_week > 46)")
 
 ;; Evolved solution query Q WHERE clause
 (def Q-where
-  "WHERE (hours_per_week <> 40 AND (((age < 28 AND race > 'Black') AND workclass <= 'Self-emp-inc') OR age >= 49))")
+  "(((((((age < 28 AND (age = 36 OR hours_per_week <> 40)) OR (age > 47 OR age < 28)) AND (age = 36 OR hours_per_week <> 40)) AND (age <= 37 OR age > 48)) AND (workclass <> 'Self-emp-not-inc' OR relationship < 'I8pEzFMs')) OR sex < '9') OR age > 60)")
 
 ;; Precision, recall, and f1-score of query with where-clause over database-string
 

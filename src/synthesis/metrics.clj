@@ -10,11 +10,11 @@
 
 ;; Desired query Q0 WHERE clause
 (def Q0-where
-  "WHERE age > 40 AND education = 'Masters'")
+  "WHERE (age < 28 OR age > 48) AND (hours_per_week < 35 OR hours_per_week > 46)")
 
 ;; Evolved solution query Q WHERE clause
 (def Q-where
-  "WHERE ((NOT age < 39) AND education = 'Masters')")
+  "WHERE (hours_per_week <> 40 AND (((age < 28 AND race > 'Black') AND workclass <= 'Self-emp-inc') OR age >= 49))")
 
 
 ;; Precision, recall, and f1-score of Q-where on examples

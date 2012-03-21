@@ -16,43 +16,66 @@
 (def Q-where
   "WHERE (hours_per_week <> 40 AND (((age < 28 AND race > 'Black') AND workclass <= 'Self-emp-inc') OR age >= 49))")
 
+;; Precision, recall, and f1-score of query with where-clause over database-string
 
-;; Precision, recall, and f1-score of Q-where on examples
+(defn print-metrics
+  [database-string where-clause positive-examples negative-examples]
+  (let [result-query-string (str "SELECT *\nFROM "
+                                 database-string
+                                 "\nWHERE "
+                                 where-clause)
+        query-future (future
+                       (db/run-db-function db/synthesis-db
+                                           db/db-query
+                                           result-query-string))]
+    (println "\n\nQuery:")
+    (println result-query-string)
+    (try
+      (let [result-rows (.get query-future 2000
+                              (java.util.concurrent.TimeUnit/MILLISECONDS))
+            true-positives (count (clojure.set/intersection (set positive-examples)
+                                                            (set result-rows)))
+            false-positives (count (clojure.set/intersection (set negative-examples)
+                                                             (set result-rows)))
+            true-negatives (- (count negative-examples) false-positives)
+            false-negatives (- (count positive-examples) true-positives)
+            error (- 1.0 (qfe/f1-score true-positives
+                                       false-positives
+                                       (- (count positive-examples) true-positives)))]
+        (println "\nTotal Actual Positives: " (count positive-examples))
+        (println "Total Actual Negatives: " (count negative-examples))
+        (println "Total: " (+ (count negative-examples) (count positive-examples)))
+        (println "\nTrue positives: " true-positives)
+        (println "True negatives: " true-negatives)
+        (println "False negatives: " false-negatives)
+        (println "False positives: " false-positives)
+        (println "\nAccuracy: " (float (/ (+ true-positives true-negatives)
+                                          (+ (count negative-examples) (count positive-examples)))))
+        (println "Precision: " (qfe/precision true-positives false-positives))
+        (println "Recall: " (qfe/recall true-positives false-negatives))
+        (println "F1-Score: " (qfe/f1-score true-positives false-positives false-negatives) "\n")
+        nil)
+      (catch java.util.concurrent.TimeoutException e
+             (when (not (future-cancel query-future))
+               (println "future could not be cancelled"))
+             nil))))
 
-(let [positive-examples et/pos-ex
-      negative-examples et/neg-ex
-      result-query-string (str "SELECT *
-                                FROM adult_examples\n"
-                               Q-where)
-      query-future (future
-                     (db/run-db-function db/synthesis-db
-                                         db/db-query
-                                         result-query-string))]
-  (try
-    (let [result-rows (.get query-future 500
-                            (java.util.concurrent.TimeUnit/MILLISECONDS))
-          true-positives (count (clojure.set/intersection (set positive-examples)
-                                                          (set result-rows)))
-          false-positives (count (clojure.set/intersection (set negative-examples)
-                                                           (set result-rows)))
-          true-negatives (- (count negative-examples) false-positives)
-          false-negatives (- (count positive-examples) true-positives)
-          error (- 1.0 (qfe/f1-score true-positives
-                                 false-positives
-                                 (- (count positive-examples) true-positives)))]
-      (println "\n\nTrue positives: " true-positives)
-      (println "False positives: " false-positives)
-      (println "True negatives: " true-negatives)
-      (println "False negatives: " false-negatives)
-      (println "Total Positives: " (count positive-examples))
-      (println "Total Negatives: " (count negative-examples))
-      (println "Total: " (+ (count negative-examples) (count positive-examples)) "\n")
-      (println "Precision: " (qfe/precision true-positives false-positives))
-      (println "Recall: " (qfe/recall true-positives false-negatives))
-      (println "F1-Score: " (qfe/f1-score true-positives false-positives false-negatives) "\n")
-      error)
-    (catch java.util.concurrent.TimeoutException e
-           (when (not (future-cancel query-future))
-             (println "future could not be cancelled"))
-           2)))
+;; Print metrics over examples
+(print-metrics "adult_examples" Q-where et/pos-ex et/neg-ex)
 
+;; Print metrics over entire table
+(print-metrics "adult"
+               Q-where
+               (db/run-db-function db/synthesis-db
+                                   db/db-query
+                                   (str "SELECT *
+                                         FROM adult
+                                         WHERE "
+                                        Q0-where))
+               (db/run-db-function db/synthesis-db
+                                   db/db-query
+                                   (str "SELECT *
+                                         FROM adult
+                                         WHERE NOT("
+                                        Q0-where
+                                        ")")))

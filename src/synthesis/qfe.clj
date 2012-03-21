@@ -6,7 +6,7 @@
 
 ;;;;;;;;;;
 ;; Some globals for testing
-(def QUERY-FITNESSES (atom {}))
+(def QUERY-FITNESSES (atom (hash-map)))
 
 ;;;;;;;;;;
 ;; Helper functions
@@ -195,7 +195,7 @@
 ;;;;;;;;;;
 ;; Example usage
 
-(query-from-examples et/pos-ex et/neg-ex)
+;(query-from-examples et/pos-ex et/neg-ex)
 
 ; Reset things
 #_(do

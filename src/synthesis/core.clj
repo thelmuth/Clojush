@@ -223,3 +223,80 @@
   (db/run-db-function db/synthesis-db
                       db/db-query
                       query-string))
+
+;;;;;;;;;;
+;; Query from Examples
+
+(def qfe-atom-generators
+  (concat #_(clojush/registered-for-type :where)
+          (list 'where_dup
+                'where_swap
+                'where_rot
+                'where_constraint_distinct_from_index
+                'where_constraint_from_index
+                'where_constraint_from_stack
+                'where_and
+                'where_or
+                'where_not)
+          (list 'string_length
+                'string_take
+                'string_concat
+                'string_stackdepth
+                'string_dup
+                'string_swap
+                'string_rot)
+          (list 'integer_add
+                'integer_sub
+                'integer_mult
+                'integer_div
+                'integer_mod
+                'integer_stackdepth
+                'integer_dup
+                'integer_swap
+                'integer_rot)
+          (list (fn [] 
+                  (let [choice (clojush/lrand-int 5)]
+                    (case choice
+                      0 (clojush/lrand-int 10)
+                      1 (clojush/lrand-int 100)
+                      2 (clojush/lrand-int 1000)
+                      3 (clojush/lrand-int 10000)
+                      4 (clojush/lrand-int 100000))))
+                (fn [] (let [chars (str "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                                        "abcdefghijklmnopqrstuvwxyz"
+                                        "0123456789")
+                             chars-count (count chars)]
+                         (apply str (repeatedly (+ 1 (clojush/lrand-int 9))
+                                                #(nth chars (clojush/lrand-int chars-count)))))))))
+
+(def qfe-error-function
+  (fn [program]
+    (list
+      (let [final-state (clojush/run-push
+                          program
+                          (clojush/push-item "adult"
+                                             :from
+                                             (clojush/push-item "*"
+                                                                :select
+                                                                (clojush/make-push-state))))
+            result-query-string (stacks-to-query-string final-state)
+            query-future (future
+                           (db/run-db-function db/synthesis-db
+                                               db/db-query
+                                               result-query-string))]
+        (try
+          (let [rows (count (.get query-future 1000 (java.util.concurrent.TimeUnit/MILLISECONDS)))]
+            (println "---")
+            (println "Query:")
+            (println result-query-string)
+            (println "Rows returned:" rows)
+            (println "Error:" (Math/abs (- 16250 rows)))
+            (Math/abs (- 16250 rows))) ;;for now, return abs(16250 - rows returned)
+          (catch java.util.concurrent.TimeoutException e
+                 (println "---")
+                 (println "Query:")
+                 (println result-query-string)
+                 (if (future-cancel query-future)
+                   (println "future cancelled")
+                   (println "future could not be cancelled"))
+                 100000)))))) ;;penalty of 100000 for not returning

@@ -5,7 +5,8 @@
 (ns synthesis.core
   (:require [clojush]
             [clojure.contrib.sql :as sql]
-            [synthesis.db :as db]))
+            [synthesis.db :as db]
+            [synthesis.examples_tables :as et]))
 
 ;;;;;;;;;;;;
 ;; A few things must be done in the clojush namespace.
@@ -147,6 +148,36 @@
                                                                    (clojush/pop-item :integer
                                                                                      state))))))))))
 
+; Uses a constant taken from either the positive examples table or the negative
+; examples table.
+(defn where-constraint-from-examples
+  [examples]
+  (fn [state]
+    (if (not (>= (count (get state :integer)) 3)) ; We will need 3 integers
+      state
+      (let [column (select-column (clojush/stack-ref :integer 0 state))
+            column-type (get-column-type column)]
+        (if (nil? column-type) ; Check for legit column-type
+          state
+          (let [comparator (nth comparators (mod (clojush/stack-ref :integer 1 state)
+                                                 (count comparators)))
+                raw-constant (get (nth examples (mod (clojush/stack-ref :integer 2 state)
+                                                 (count examples)))
+                              column)
+                constant (if (string? raw-constant)
+                           (str "'" raw-constant "'")
+                           raw-constant)
+                constraint (str (name column) " " comparator " " constant)]
+            (clojush/push-item constraint :where
+                               (clojush/pop-item :integer
+                                                 (clojush/pop-item :integer
+                                                                   (clojush/pop-item :integer
+                                                                                     state))))))))))
+
+(clojush/define-registered where_constraint_from_pos_ex (where-constraint-from-examples et/pos-ex))
+(clojush/define-registered where_constraint_from_neg_ex (where-constraint-from-examples et/neg-ex))
+
+
 (defn where-conjoiner
   [conjunction]
   (fn [state]
@@ -192,3 +223,80 @@
   (db/run-db-function db/synthesis-db
                       db/db-query
                       query-string))
+
+;;;;;;;;;;
+;; Query from Examples
+
+(def qfe-atom-generators
+  (concat #_(clojush/registered-for-type :where)
+          (list 'where_dup
+                'where_swap
+                'where_rot
+                'where_constraint_distinct_from_index
+                'where_constraint_from_index
+                'where_constraint_from_stack
+                'where_and
+                'where_or
+                'where_not)
+          (list 'string_length
+                'string_take
+                'string_concat
+                'string_stackdepth
+                'string_dup
+                'string_swap
+                'string_rot)
+          (list 'integer_add
+                'integer_sub
+                'integer_mult
+                'integer_div
+                'integer_mod
+                'integer_stackdepth
+                'integer_dup
+                'integer_swap
+                'integer_rot)
+          (list (fn [] 
+                  (let [choice (clojush/lrand-int 5)]
+                    (case choice
+                      0 (clojush/lrand-int 10)
+                      1 (clojush/lrand-int 100)
+                      2 (clojush/lrand-int 1000)
+                      3 (clojush/lrand-int 10000)
+                      4 (clojush/lrand-int 100000))))
+                (fn [] (let [chars (str "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                                        "abcdefghijklmnopqrstuvwxyz"
+                                        "0123456789")
+                             chars-count (count chars)]
+                         (apply str (repeatedly (+ 1 (clojush/lrand-int 9))
+                                                #(nth chars (clojush/lrand-int chars-count)))))))))
+
+(def qfe-error-function
+  (fn [program]
+    (list
+      (let [final-state (clojush/run-push
+                          program
+                          (clojush/push-item "adult"
+                                             :from
+                                             (clojush/push-item "*"
+                                                                :select
+                                                                (clojush/make-push-state))))
+            result-query-string (stacks-to-query-string final-state)
+            query-future (future
+                           (db/run-db-function db/synthesis-db
+                                               db/db-query
+                                               result-query-string))]
+        (try
+          (let [rows (count (.get query-future 1000 (java.util.concurrent.TimeUnit/MILLISECONDS)))]
+            (println "---")
+            (println "Query:")
+            (println result-query-string)
+            (println "Rows returned:" rows)
+            (println "Error:" (Math/abs (- 16250 rows)))
+            (Math/abs (- 16250 rows))) ;;for now, return abs(16250 - rows returned)
+          (catch java.util.concurrent.TimeoutException e
+                 (println "---")
+                 (println "Query:")
+                 (println result-query-string)
+                 (if (future-cancel query-future)
+                   (println "future cancelled")
+                   (println "future could not be cancelled"))
+                 100000)))))) ;;penalty of 100000 for not returning

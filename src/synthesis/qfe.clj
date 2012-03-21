@@ -114,8 +114,8 @@
                                                                 :select
                                                                 (clojush/make-push-state))))
             result-query-string (synth-core/stacks-to-query-string final-state)]
-        (println "\nEvaluating query:")
-        (println result-query-string)
+        ;(println "\nEvaluating query:")
+        ;(println result-query-string)
         (if (= (clojush/top-item :where final-state) :no-stack-item)
           (do 3) ; Penalty of 3.0 for having an empty :where stack
           (if-let [fitness (get @QUERY-FITNESSES result-query-string)] ; See if we remember the fitness
@@ -186,7 +186,7 @@
 ;;;;;;;;;;
 ;; Example usage
 
-;(query-from-examples et/pos-ex et/neg-ex)
+(query-from-examples et/pos-ex et/neg-ex)
 
 ; Reset things
 #_(do

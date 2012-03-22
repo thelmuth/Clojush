@@ -10,11 +10,11 @@
 
 ;; Desired query Q0 WHERE clause
 (def Q0-where
-  "age > 40 AND education = 'Masters'")
+  "(greater_50k = '>50K')")
 
 ;; Evolved solution query Q WHERE clause
 (def Q-where
-  "((NOT age < 39) AND education = 'Masters')")
+  "((((education_num >= 10 AND marital_status = 'Married-civ-spouse') OR education_num >= 15) AND age >= 28) OR capital_gain > 4787)")
 
 
 ;; Precision, recall, and f1-score of Q-where 
@@ -77,6 +77,23 @@
                                    db/db-query
                                    (str "SELECT *
                                          FROM adult
+                                         WHERE NOT("
+                                        Q0-where
+                                        ")")))
+
+;; Print metrics over test data table
+(print-metrics "adult_test"
+               Q-where
+               (db/run-db-function db/synthesis-db
+                                   db/db-query
+                                   (str "SELECT *
+                                         FROM adult_test
+                                         WHERE "
+                                        Q0-where))
+               (db/run-db-function db/synthesis-db
+                                   db/db-query
+                                   (str "SELECT *
+                                         FROM adult_test
                                          WHERE NOT("
                                         Q0-where
                                         ")")))

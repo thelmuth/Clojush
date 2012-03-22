@@ -131,9 +131,9 @@
                                                                       (set result-rows)))
                       false-positives (count (clojure.set/intersection (set negative-examples)
                                                                        (set result-rows)))
-                      error (- 1.0 (f1-score true-positives
-                                             false-positives
-                                             (- (count positive-examples) true-positives)))]
+                      true-negatives (- (count negative-examples) false-positives)
+                      error (- 1.0 (float (/ (+ true-positives true-negatives)
+                                             (+ (count negative-examples) (count positive-examples)))))]
                   ;(println "True positives: " true-positives)
                   ;(println "False positives: " false-positives)
                   ;(println "True negatives: " (- (count negative-examples) false-positives))
@@ -162,8 +162,8 @@
     (clojush/pushgp
       :error-function (qfe-error-function-creator positive-examples negative-examples)
       :atom-generators qfe-atom-generators
-      :max-points 300
-      :evalpush-limit 300
+      :max-points 500
+      :evalpush-limit 500
       :population-size 1000
       :max-generations 150
       :mutation-probability 0.12
@@ -186,7 +186,7 @@
 ;;;;;;;;;;
 ;; Example usage
 
-;(query-from-examples et/pos-ex et/neg-ex)
+(query-from-examples et/pos-ex et/neg-ex)
 
 ; Reset things
 #_(do

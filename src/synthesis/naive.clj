@@ -28,10 +28,32 @@
 
 
 (defn naive-bounding-box
-  "Takes positive examples and negative examples and returns a query that
+  "Takes positive examples and negative examples and returns a WHERE clause that
    bounds the positive examples."
   [positive-examples negative-examples]
-  (let [attributes (map first db/synthesis-db-columns)]
-    (map #(attribute-bounds positive-examples %) attributes)))
+  (let [attributes (map first db/synthesis-db-columns)
+        bounds (map #(attribute-bounds positive-examples %) attributes)]
+    (str "("
+         (reduce #(str %1 " AND " %2)
+                 (map #(let [string-quote (if (string? (first %2))
+                                            "'"
+                                            "")]
+                         (str "("
+                              string-quote
+                              (first %2)
+                              string-quote
+                              " <= "
+                              (name %1)
+                              " AND "
+                              (name %1)
+                              " <= "
+                              string-quote
+                              (second %2)
+                              string-quote
+                              ")"))
+                      attributes
+                      bounds))
+         ")")))
+
 
 (naive-bounding-box et/pos-ex et/neg-ex)

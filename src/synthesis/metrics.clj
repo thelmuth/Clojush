@@ -14,7 +14,7 @@
 
 ;; Evolved solution query Q WHERE clause
 (def Q-where
-  "((((education_num >= 10 AND marital_status = 'Married-civ-spouse') OR education_num >= 15) AND age >= 28) OR capital_gain > 4787)")
+  "((19 <= age AND age <= 90) AND ('?' <= workclass AND workclass <= 'State-gov') AND (14878 <= fnlwgt AND fnlwgt <= 1226583) AND ('10th' <= education AND education <= 'Some-college') AND (2 <= education_num AND education_num <= 16) AND ('Divorced' <= marital_status AND marital_status <= 'Widowed') AND ('?' <= occupation AND occupation <= 'Transport-moving') AND ('Husband' <= relationship AND relationship <= 'Wife') AND ('Amer-Indian-Eskimo' <= race AND race <= 'White') AND ('Female' <= sex AND sex <= 'Male') AND (0 <= capital_gain AND capital_gain <= 99999) AND (0 <= capital_loss AND capital_loss <= 3683) AND (1 <= hours_per_week AND hours_per_week <= 99) AND ('?' <= native_country AND native_country <= 'Yugoslavia'))")
 
 
 ;; Precision, recall, and f1-score of Q-where 

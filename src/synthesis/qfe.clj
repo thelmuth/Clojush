@@ -186,7 +186,7 @@
 ;;;;;;;;;;
 ;; Example usage
 
-(query-from-examples et/pos-ex et/neg-ex)
+;(query-from-examples et/pos-ex et/neg-ex)
 
 ; Reset things
 #_(do

@@ -56,7 +56,7 @@
          ")")))
 
 
-;(naive-bounding-box et/pos-ex et/neg-ex)
+(naive-bounding-box et/pos-ex et/neg-ex)
 
 
 
@@ -77,7 +77,7 @@
                                                  (repeat "neg"))))))))
 
 (def Q0-where
-  "age > 40 AND education = 'Masters'")
+  "(greater_50k = '>50K')")
 
 ; Print cond.data
 ;(c50-printout et/pos-ex et/neg-ex)

@@ -56,4 +56,43 @@
          ")")))
 
 
-(naive-bounding-box et/pos-ex et/neg-ex)
+;(naive-bounding-box et/pos-ex et/neg-ex)
+
+
+
+;; Printout data for C5.0
+(defn c50-printout
+  [positive-examples negative-examples]
+  (let [attributes (map first db/synthesis-db-columns)
+        example-to-string (fn [example class]
+                            (apply str (interpose ", "
+                                                  (concat (map #(get example %) attributes)
+                                                          [class]))))]
+    (println (apply str
+                    (interpose "\n" (concat (map example-to-string
+                                                 positive-examples
+                                                 (repeat "pos"))
+                                            (map example-to-string
+                                                 negative-examples
+                                                 (repeat "neg"))))))))
+
+(def Q0-where
+  "age > 40 AND education = 'Masters'")
+
+; Print cond.data
+;(c50-printout et/pos-ex et/neg-ex)
+
+; Print cond.test
+#_(c50-printout (db/run-db-function db/synthesis-db
+                                  db/db-query
+                                  (str "SELECT *
+                                        FROM adult
+                                        WHERE "
+                                       Q0-where))
+              (db/run-db-function db/synthesis-db
+                                  db/db-query
+                                  (str "SELECT *
+                                        FROM adult
+                                        WHERE NOT("
+                                       Q0-where
+                                       ")")))

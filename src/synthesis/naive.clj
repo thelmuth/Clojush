@@ -77,7 +77,7 @@
                                                  (repeat "neg"))))))))
 
 (def Q0-where
-  "age > 40 AND education = 'Masters'")
+  "(education_num < 9 AND hours_per_week > 40) OR (occupation = 'Farming-fishing')")
 
 ; Print cond.data
 ;(c50-printout et/pos-ex et/neg-ex)

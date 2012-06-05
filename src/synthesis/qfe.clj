@@ -173,6 +173,7 @@
       :use-single-thread true
       :problem-specific-report qfe-report
       :use-historically-assessed-hardness true
+      :use-historically-assessed-similarity true
       )
     (finally
       (et/drop-examples-table))))

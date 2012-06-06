@@ -1,5 +1,5 @@
 (ns synthesis.examples_tables
-  (:require [clojure.contrib.sql :as sql]
+  (:require [clojure.java.jdbc :as sql]
             [synthesis.db :as db]
             [local-file]))
 

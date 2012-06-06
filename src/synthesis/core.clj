@@ -4,7 +4,7 @@
 
 (ns synthesis.core
   (:require [clojush]
-            [clojure.contrib.sql :as sql]
+            [clojure.java.jdbc :as sql]
             [synthesis.db :as db]
             [synthesis.examples_tables :as et]))
 

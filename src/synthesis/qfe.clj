@@ -132,8 +132,11 @@
                       false-positives (count (clojure.set/intersection (set negative-examples)
                                                                        (set result-rows)))
                       true-negatives (- (count negative-examples) false-positives)
-                      error (- 1.0 (float (/ (+ true-positives true-negatives)
+                      error (- 1.0 (float (/ (+ true-positives true-negatives) ;;ERROR=ACCURACY
                                              (+ (count negative-examples) (count positive-examples)))))]
+                      ;error (- 1.0 (f1-score true-positives ;;ERROR=F1-SCORE
+                      ;                       false-positives
+                      ;                       (- (count positive-examples) true-positives)))]
                   ;(println "True positives: " true-positives)
                   ;(println "False positives: " false-positives)
                   ;(println "True negatives: " (- (count negative-examples) false-positives))

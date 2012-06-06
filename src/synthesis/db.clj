@@ -1,5 +1,5 @@
 (ns synthesis.db
-  (:require [clojure.contrib.sql :as sql]
+  (:require [clojure.java.jdbc :as sql]
             [local-file]))
 
 ;;;;;;;;;;

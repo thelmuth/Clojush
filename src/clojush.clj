@@ -46,6 +46,7 @@
 (def max-random-float 1.0)
 (def min-random-string-length 1)
 (def max-random-string-length 10)
+(def max-string-length 100)
 (def max-points-in-random-expressions 50) ;; for code_rand
 (def maintain-histories true) ;; histories are lists of total-error values for ancestors
 (def maintain-ancestors false) ;; if true save all ancestors in each individual (costly)
@@ -68,6 +69,9 @@
 ;; using the "Previous Generation / Difference" method. 
 (def global-use-historically-assessed-hardness (atom false))
 (def solution-rates (atom (repeat 0)))
+
+;; Lexicase Parent Selection (see Spector paper in GECCO-UP 2012 workshop proceedings)
+(def global-use-lexicase-selection (atom false)) ;; if true then no other selection params matter
 
 ;; Historically-assessed similarity (of test cases)
 ;; Similar in idea to HAH, except it bases weights on how similar a test case is to the
@@ -1001,10 +1005,13 @@
   string_concat
   (fn [state]
     (if (not (empty? (rest (:string state))))
-      (push-item (str (stack-ref :string 1 state)
-                      (stack-ref :string 0 state))
-                 :string
-                 (pop-item :string (pop-item :string state)))
+      (if (>= max-string-length (+ (count (stack-ref :string 1 state))
+                                   (count (stack-ref :string 0 state))))
+        (push-item (str (stack-ref :string 1 state)
+                        (stack-ref :string 0 state))
+                   :string
+                   (pop-item :string (pop-item :string state)))
+        state)
       state)))
 
 (define-registered 
@@ -1026,6 +1033,38 @@
                  :integer
                  (pop-item :string state))
       state)))
+
+(define-registered
+  string_atoi
+  (fn [state]
+    (if (not (empty? (:string state)))
+      (try (pop-item :string
+                     (push-item (Integer/parseInt (top-item :string state))
+                                :integer state))
+           (catch Exception e state))
+      state)))
+
+(define-registered
+  string_reverse
+  (fn [state]
+    (if (empty? (:string state))
+      state
+      (let [top-string (top-item :string state)]
+        (push-item (apply str (reverse top-string))
+                   :string
+                   (pop-item :string state))))))
+
+(define-registered
+  string_parse_to_chars
+  (fn [state]
+    (if (empty? (:string state))
+      state
+      (loop [char-list (reverse (top-item :string state))
+             loop-state (pop-item :string state)]
+        (if (empty? char-list)
+          loop-state
+          (recur (rest char-list)
+                 (push-item (str (first char-list)) :string loop-state)))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; code and exec instructions
@@ -2090,23 +2129,39 @@ normal, or :abnormal otherwise."
       (problem-specific-report best population generation error-function report-simplifications)
       best)))
 
+(defn lexicase-selection
+  "Returns an individual that does the best on a randomly selected set of fitness cases"
+  [pop]
+  (loop [survivors pop
+         cases (shuffle (range (count (:errors (first pop)))))]
+    (if (or (empty? cases)
+            (empty? (rest survivors)))
+      (first survivors)
+      (let [min-err-for-case (apply min (map #(nth % (first cases))
+                                             (map #(:errors %) survivors)))]
+        (recur (filter #(= (nth (:errors %) (first cases)) min-err-for-case)
+                       survivors)
+               (rest cases))))))
+
 (defn select
-  "Conducts a tournament and returns the individual with the lower total error."
+  "Returns a selected parent, using lexicase or tournament selection."
   [pop tournament-size radius location]
-  (let [tournament-set 
-        (doall
-          (for [_ (range tournament-size)]
-            (nth pop
-                 (if (zero? radius)
-                   (lrand-int (count pop))
-                   (mod (+ location (- (lrand-int (+ 1 (* radius 2))) radius))
-                        (count pop))))))
-        err-fn (if (or @global-use-historically-assessed-hardness
-                       @global-use-historically-assessed-similarity)
-                 :historically-scaled-error
-                 :total-error)]
-    (reduce (fn [i1 i2] (if (< (err-fn i1) (err-fn i2)) i1 i2))
-            tournament-set)))
+  (if @global-use-lexicase-selection
+    (lexicase-selection pop)
+    (let [tournament-set 
+          (doall
+            (for [_ (range tournament-size)]
+              (nth pop
+                   (if (zero? radius)
+                     (lrand-int (count pop))
+                     (mod (+ location (- (lrand-int (+ 1 (* radius 2))) radius))
+                          (count pop))))))
+          err-fn (if (or @global-use-historically-assessed-hardness
+                         @global-use-historically-assessed-similarity)
+                   :historically-scaled-error
+                   :total-error)]
+      (reduce (fn [i1 i2] (if (< (err-fn i1) (err-fn i2)) i1 i2))
+              tournament-set))))
 
 (defn mutate 
   "Returns a mutated version of the given individual."
@@ -2305,15 +2360,15 @@ computing them if necessary."
 (defn pushgp
   "The top-level routine of pushgp."
   [& {:keys [error-function error-threshold population-size max-points atom-generators max-generations
-             max-mutations mutation-probability mutation-max-points crossover-probability 
+             max-mutations mutation-probability mutation-max-points crossover-probability
              simplification-probability tournament-size report-simplifications final-report-simplifications
              reproduction-simplifications trivial-geography-radius decimation-ratio decimation-tournament-size
              evalpush-limit evalpush-time-limit node-selection-method node-selection-leaf-probability
-             node-selection-tournament-size pop-when-tagging gaussian-mutation-probability 
+             node-selection-tournament-size pop-when-tagging gaussian-mutation-probability
              gaussian-mutation-per-number-mutation-probability gaussian-mutation-standard-deviation
-             reuse-errors problem-specific-report use-single-thread random-seed 
+             reuse-errors problem-specific-report use-single-thread random-seed
              use-historically-assessed-hardness use-historically-assessed-similarity
-             use-historically-assessed-similarity-normalization]
+             use-historically-assessed-similarity-normalization use-lexicase-selection]
       :or {error-function (fn [p] '(0)) ;; pgm -> list of errors (1 per case)
            error-threshold 0
            population-size 1000
@@ -2350,6 +2405,7 @@ computing them if necessary."
            use-historically-assessed-hardness false
            use-historically-assessed-similarity false
            use-historically-assessed-similarity-normalization false
+           use-lexicase-selection false
            }}]
   (binding [*thread-local-random-generator* (java.util.Random. random-seed)]
     ;; set globals from parameters
@@ -2365,6 +2421,7 @@ computing them if necessary."
     (reset! global-use-historically-assessed-hardness use-historically-assessed-hardness)
     (reset! global-use-historically-assessed-similarity use-historically-assessed-similarity)
     (reset! global-normalize-HAS-zero-one use-historically-assessed-similarity-normalization)
+    (reset! global-use-lexicase-selection use-lexicase-selection)
     (printf "\nStarting PushGP run.\n\n") (flush)
     (printf "Clojush version = ")
     (try
@@ -2408,6 +2465,7 @@ computing them if necessary."
                       node-selection-leaf-probability pop-when-tagging reuse-errors
                       use-single-thread random-seed use-historically-assessed-hardness
                       use-historically-assessed-similarity use-historically-assessed-similarity-normalization
+                      use-lexicase-selection
                       ))
     (printf "\nGenerating initial population...\n") (flush)
     (let [pop-agents (vec (doall (for [_ (range population-size)] 
@@ -2427,7 +2485,8 @@ computing them if necessary."
         (when-not use-single-thread (apply await pop-agents)) ;; SYNCHRONIZE ; might this need a dorun?
         (printf "\nDone computing errors.") (flush)
         ;; calculate solution rates if necessary for historically-assessed hardness
-        (when use-historically-assessed-hardness
+        (when (and use-historically-assessed-hardness
+                   (not use-lexicase-selection))
           (reset! solution-rates
                   (let [error-seqs (map :errors (map deref pop-agents))
                         num-cases (count (first error-seqs))]

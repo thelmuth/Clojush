@@ -158,10 +158,11 @@ group B is discarded. "
 
 (defn select
   "Returns a selected parent."
-  [pop location {:keys [use-lexicase-selection use-elitegroup-lexicase-selection]
+  [pop location {:keys [use-lexicase-selection use-elitegroup-lexicase-selection
+                        use-order-lexicase-selection]
                  :as argmap}]
   (cond 
     use-lexicase-selection (lexicase-selection pop location argmap)
     use-elitegroup-lexicase-selection (elitegroup-lexicase-selection pop)
-    use-order-lexicase-selection (order-lexicase-selection pop argmap)
+    use-order-lexicase-selection (order-lexicase-selection pop location argmap)
     :else (tournament-selection pop location argmap))) ;; use tournament selection by default

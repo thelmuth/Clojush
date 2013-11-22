@@ -1,6 +1,7 @@
 (ns clojush.pushgp.parent-selection
   (:use [clojush.random]
-        [clojush.globals])
+        [clojush.globals]
+        [clojure.math.numeric-tower])
   (:require [clojure.set :as set]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -118,7 +119,40 @@ group B is discarded. "
         (recur (filter #(= (nth (:errors %) (first cases)) min-err-for-case)
                        survivors)
                (rest cases))))))
-       
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; order lexicase selection
+
+(defn order-lexicase-selection
+  "Identical to lexicase selection, except that instead of only keeping elite
+   individuals at each step, keeps the best order-lexicase-retention-rate pecent
+   individuals. If there is a tie at the boundry, keeps all individuals that tie.
+   For example, if order-lexicase-retention-rate == 0.5, then at each step we
+   keep any individual with error at least as good as the median individual on
+   that test case."
+  [pop location {:keys [trivial-geography-radius order-lexicase-retention-rate]}]
+  (let [lower (mod (- location trivial-geography-radius) (count pop))
+        upper (mod (+ location trivial-geography-radius) (count pop))
+        popvec (vec pop)
+        subpop (if (zero? trivial-geography-radius)
+                 pop
+                 (if (< lower upper)
+                   (subvec popvec lower (inc upper))
+                   (into (subvec popvec lower (count pop))
+                         (subvec popvec 0 (inc upper)))))]
+    (loop [survivors (retain-one-individual-per-error-vector subpop)
+           cases (lshuffle (range (count (:errors (first subpop)))))]
+      (if (or (empty? cases)
+              (empty? (rest survivors)))
+        (lrand-nth survivors)
+        (let [kth-order-statistic (dec (round (* (count survivors) order-lexicase-retention-rate)))
+              kth-err-for-case (nth (sort (map #(nth % (first cases))
+                                               (map #(:errors %) survivors)))
+                                    kth-order-statistic)]
+          (recur (filter #(<= (nth (:errors %) (first cases)) kth-err-for-case)
+                         survivors)
+                 (rest cases)))))))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; parent selection
 
@@ -129,4 +163,5 @@ group B is discarded. "
   (cond 
     use-lexicase-selection (lexicase-selection pop location argmap)
     use-elitegroup-lexicase-selection (elitegroup-lexicase-selection pop)
+    use-order-lexicase-selection (order-lexicase-selection pop argmap)
     :else (tournament-selection pop location argmap))) ;; use tournament selection by default

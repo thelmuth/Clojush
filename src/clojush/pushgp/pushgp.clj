@@ -83,6 +83,8 @@
           :use-rmse false ;; When true, total error for tournament selection will depend on the root mean square error of the error vector
           :use-lexicase-selection false ;; If true, uses Lexicase Parent Selection (see Spector paper in GECCO-UP 2012 workshop proceedings)
           :use-elitegroup-lexicase-selection false ;; If true, uses elitegroup lexicase selection, an experimental change to lexicase that thus far is often worse
+          :use-order-lexicase-selection false ;; If true, uses order lexicase selection, which retains the best :order-lexicase-retention-rate percent of the candidates at each step
+          :order-lexicase-retention-rate 0.5 ;; The minimum percent of the the candidates to retain during each step of order-lexicase. It may retain more if there is a tie in error at the cutoff percent
           ;;
           ;;----------------------------------------
           ;; Arguments related to the Push interpreter

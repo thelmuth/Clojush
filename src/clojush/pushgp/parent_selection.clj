@@ -131,6 +131,9 @@ group B is discarded. "
    keep any individual with error at least as good as the median individual on
    that test case."
   [pop location {:keys [trivial-geography-radius order-lexicase-retention-rate]}]
+  (assert (and (<= 0 order-lexicase-retention-rate)
+               (<= order-lexicase-retention-rate 1))
+          ":order-lexicase-retention-rate must be in the range [0.0 1.0]")
   (let [lower (mod (- location trivial-geography-radius) (count pop))
         upper (mod (+ location trivial-geography-radius) (count pop))
         popvec (vec pop)
@@ -145,7 +148,11 @@ group B is discarded. "
       (if (or (empty? cases)
               (empty? (rest survivors)))
         (lrand-nth survivors)
-        (let [kth-order-statistic (dec (round (* (count survivors) order-lexicase-retention-rate)))
+        (let [kth-order-statistic (let [k (dec (round (* (count survivors)
+                                                         order-lexicase-retention-rate)))]
+                                    (if (< k 0)
+                                      0
+                                      k))
               kth-err-for-case (nth (sort (map #(nth % (first cases))
                                                (map #(:errors %) survivors)))
                                     kth-order-statistic)]

@@ -155,9 +155,14 @@ group B is discarded. "
                                       k))
               kth-err-for-case (nth (sort (map #(nth % (first cases))
                                                (map #(:errors %) survivors)))
-                                    kth-order-statistic)]
-          (recur (filter #(<= (nth (:errors %) (first cases)) kth-err-for-case)
-                         survivors)
+                                    kth-order-statistic)
+              new-survivors (let [better-than-kth (filter #(< (nth (:errors %) (first cases)) kth-err-for-case)
+                                                          survivors)]
+                              (if (not (empty? better-than-kth))
+                                better-than-kth
+                                (filter #(= (nth (:errors %) (first cases)) kth-err-for-case) ;If there are no better errors than the kth error, that means the kth error is equal to the best error. Keep all errors equal to best error.
+                                        survivors)))]
+          (recur new-survivors
                  (rest cases)))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

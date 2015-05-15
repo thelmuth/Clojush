@@ -144,6 +144,34 @@
     (when-not use-single-thread (apply await pop-agents)))) ;; SYNCHRONIZE
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; lexicase tournament selection
+
+(defn lexicase-tournament-selection
+  "Uses repeated lexicase selection samples to rank the population by how often
+   lexicase selects each individual. Then, uses those rankings in tournaments
+   to select parents."
+  [pop location {:keys [trivial-geography-radius]}]
+  (let [lower (mod (- location trivial-geography-radius) (count pop))
+        upper (mod (+ location trivial-geography-radius) (count pop))
+        popvec (vec pop)
+        subpop (if (zero? trivial-geography-radius) 
+                 pop
+                 (if (< lower upper)
+                   (subvec popvec lower (inc upper))
+                   (into (subvec popvec lower (count pop)) 
+                         (subvec popvec 0 (inc upper)))))]
+    (loop [survivors (retain-one-individual-per-error-vector subpop)
+           cases (lshuffle (range (count (:errors (first subpop)))))]
+      (if (or (empty? cases)
+              (empty? (rest survivors)))
+        (lrand-nth survivors)
+        (let [min-err-for-case (apply min (map #(nth % (first cases))
+                                               (map #(:errors %) survivors)))]
+          (recur (filter #(= (nth (:errors %) (first cases)) min-err-for-case)
+                         survivors)
+                 (rest cases)))))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; parent selection
 
 (defn select

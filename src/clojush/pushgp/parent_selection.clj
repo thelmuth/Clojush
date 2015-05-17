@@ -169,8 +169,13 @@
 
 (defn biased-order-lexicase-selection
   ""
-  []
-  )
+  [pop location {:keys [bias-lexicase-bias-method bias-lexicase-rank-method]}]
+  (let [ranked-cases '(1 2 3 4 5) ; FIX LATER, use bias-lexicase-rank-method (which should be something like "easiest-first" or "hardest-first" or "highest-variance")
+        case-order-function (case bias-lexicase-bias-method
+                              :toms-method bias-ordering-of-cases-based-on-rank ; FIX LATER
+                              identity)
+        case-ordering (case-order-function ranked-cases)]
+    (lexicase-selection pop location case-ordering)))
 
 ;(defn bias-ordering-of-cases-based-on-rank-probabilities-of-selection
 ;  "Calculates the exact probability of each rank being selected out of n ranked

@@ -35,26 +35,30 @@
 (defn lexicase-selection
   "Returns an individual that does the best on the fitness cases when considered one at a
    time in random order.  If trivial-geography-radius is non-zero, selection is limited to parents within +/- r of location"
-  [pop location {:keys [trivial-geography-radius]}]
-  (let [lower (mod (- location trivial-geography-radius) (count pop))
-        upper (mod (+ location trivial-geography-radius) (count pop))
-        popvec (vec pop)
-        subpop (if (zero? trivial-geography-radius) 
-                 pop
-                 (if (< lower upper)
-                   (subvec popvec lower (inc upper))
-                   (into (subvec popvec lower (count pop)) 
-                         (subvec popvec 0 (inc upper)))))]
-    (loop [survivors (retain-one-individual-per-error-vector subpop)
-           cases (lshuffle (range (count (:errors (first subpop)))))]
-      (if (or (empty? cases)
-              (empty? (rest survivors)))
-        (lrand-nth survivors)
-        (let [min-err-for-case (apply min (map #(nth % (first cases))
-                                               (map #(:errors %) survivors)))]
-          (recur (filter #(= (nth (:errors %) (first cases)) min-err-for-case)
-                         survivors)
-                 (rest cases)))))))
+  ([pop location argmap]
+    (lexicase-selection pop location argmap false))
+  ([pop location {:keys [trivial-geography-radius]} case-order]
+    (let [lower (mod (- location trivial-geography-radius) (count pop))
+          upper (mod (+ location trivial-geography-radius) (count pop))
+          popvec (vec pop)
+          subpop (if (zero? trivial-geography-radius) 
+                   pop
+                   (if (< lower upper)
+                     (subvec popvec lower (inc upper))
+                     (into (subvec popvec lower (count pop)) 
+                           (subvec popvec 0 (inc upper)))))]
+      (loop [survivors (retain-one-individual-per-error-vector subpop)
+             cases (if case-order
+                     case-order
+                     (lshuffle (range (count (:errors (first subpop))))))]
+        (if (or (empty? cases)
+                (empty? (rest survivors)))
+          (lrand-nth survivors)
+          (let [min-err-for-case (apply min (map #(nth % (first cases))
+                                                 (map #(:errors %) survivors)))]
+            (recur (filter #(= (nth (:errors %) (first cases)) min-err-for-case)
+                           survivors)
+                   (rest cases))))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; elitegroup lexicase selection
@@ -142,6 +146,41 @@
                    summed-reward-on-test-cases)
                 pop-agents))
     (when-not use-single-thread (apply await pop-agents)))) ;; SYNCHRONIZE
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; biased lexicase selection
+
+(defn bias-ordering-of-cases-based-on-rank
+  "Takes list of test cases ranked by some metric, and returns a biased shuffled
+   list of cases, earlier-ranked cases have higher probability of coming sooner
+   in the shuffled ordering."
+  [ranked-cases]
+  (loop [result []
+         remaining-cases (vec ranked-cases)
+         number-cases-remaining (count ranked-cases)]
+    (if (empty? remaining-cases)
+      result
+      (let [upper-bound (lrand-int number-cases-remaining)
+            index (lrand-int (inc upper-bound))]
+        (recur (conj result (nth remaining-cases index))
+               (vec (concat (subvec remaining-cases 0 index)
+                            (subvec remaining-cases (inc index))))
+               (dec number-cases-remaining))))))
+
+(defn biased-order-lexicase-selection
+  ""
+  []
+  )
+
+;(defn bias-ordering-of-cases-based-on-rank-probabilities-of-selection
+;  "Calculates the exact probability of each rank being selected out of n ranked
+;   cases with bias ordering of test cases above."
+;  [n]
+;  (map (fn [i]
+;         (float (/ (apply + (map #(/ 1 %)
+;                                 (range (inc i) (inc n))))
+;                   n)))
+;       (range n)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; parent selection

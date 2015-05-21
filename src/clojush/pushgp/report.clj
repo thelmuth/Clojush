@@ -299,7 +299,7 @@
         ]
     (when print-error-frequencies-by-case
       (println "Error frequencies by case:" (doall (map frequencies (apply map vector (map :errors population))))))
-    (when (some #{parent-selection} #{:lexicase :elitegroup-lexicase}) (lexicase-report population argmap))
+    (when (some #{parent-selection} #{:lexicase :elitegroup-lexicase :leaky-lexicase}) (lexicase-report population argmap))
     (when (= total-error-method :ifs) (implicit-fitness-sharing-report population argmap))
     (println (format "--- Best Program (%s) Statistics ---" (str "based on " (name err-fn))))
     (println "Best genome:" (pr-str (not-lazy (:genome best))))
@@ -358,6 +358,8 @@
       (println "Max copy number of one program:" (apply max (vals frequency-map)))
       (println "Min copy number of one program:" (apply min (vals frequency-map)))
       (println "Median copy number:" (nth (sort (vals frequency-map)) (Math/floor (/ (count frequency-map) 2)))))
+    (println "Number of random replacements for reproductively incompetent individuals:" 
+             (count (filter :random-replacement-for-reproductively-incompetent-genome population)))
     (when @global-print-behavioral-diversity
       (swap! population-behaviors #(take-last population-size %)) ; Only use behaviors during evaluation, not those during simplification
       (println "Behavioral diversity:" (behavioral-diversity))

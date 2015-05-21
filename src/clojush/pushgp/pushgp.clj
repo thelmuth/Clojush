@@ -56,6 +56,7 @@
                                            :uniform-silence-mutation 0.0
                                            [:make-next-operator-revertable :uniform-silence-mutation] 0.0 ;Equivalent to a hill-climbing version of uniform-silence-mutation
                                            :autoconstruction 0.0
+                                           :uniform-deletion 0.0
                                            }
           ;;
           ;;----------------------------------------
@@ -71,6 +72,7 @@
           :uniform-mutation-tag-gaussian-standard-deviation 100 ;; The standard deviation used when tweaking tag locations with Gaussian noise
           :uniform-close-mutation-rate 0.1 ;; The probability of each :close being incremented or decremented during uniform close mutation
           :close-increment-rate 0.2 ;; The probability of making an increment change to :close during uniform close mutation, as opposed to a decrement change
+          :uniform-deletion-rate 0.01 ;; The probability that any instruction will be deleted during uniform deletion
           :uniform-silence-mutation-rate 0.1 ;; The probability of each :silent being switched during uniform silent mutation
           :replace-child-that-exceeds-size-limit-with :random ;; When a child is produced that exceeds the size limit of max-points, this is used to determine what program to return. Options include :parent, :empty, :random
           :parent-reversion-probability 1.0 ;; The probability of a child being reverted to its parent by a genetic operator that has been made revertable, if the child is not as good as the parent on at least one test case
@@ -79,13 +81,14 @@
           ;; Epignenetics
           ;;----------------------------------------
           :epigenetic-markers [:close] ;; A vector of the epigenetic markers that should be used in the individuals. Implemented options include: :close, :silent
-          :close-probabilities [0.772 0.206 0.021 0.001] ;; A vector of the probabilities for the number of parens ending at that position. See random-closes in clojush.random          
+          :close-parens-probabilities [0.772 0.206 0.021 0.001] ;; A vector of the probabilities for the number of parens ending at that position. See random-closes in clojush.random          
           :silent-instruction-probability 0.2 ;; If :silent is used as an epigenetic-marker, this is the probability of random instructions having :silent be true
           ;;
           ;;----------------------------------------
           ;; Arguments related to parent selection
           ;;----------------------------------------
-          :parent-selection :lexicase ;; The parent selection method. Options include :tournament, :lexicase, :elitegroup-lexicase
+          :parent-selection :lexicase ;; The parent selection method. Options include :tournament, :lexicase, :elitegroup-lexicase, :uniform :leaky-lexicase
+          :lexicase-leakage 0.1 ;; If using leaky lexicase selection, the percentage of selection events that will return random (tourny 1) individuals
           :tournament-size 7 ;; If using tournament selection, the size of the tournaments
           :total-error-method :sum ;; The method used to compute total error. Options include :sum (standard), :hah (historically-assessed hardness), :rmse (root mean squared error), and :ifs (implicit fitness sharing)
           :normalization :none ;; The method used to normalize the errors to the range [0,1], with 0 being best. Options include :none (no normalization), :divide-by-max-error (divides by value of argument :max-error), :e-over-e-plus-1 (e/(e+1) = 1 - 1/(e+1))

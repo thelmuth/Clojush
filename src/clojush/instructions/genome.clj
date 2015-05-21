@@ -1,5 +1,5 @@
 (ns clojush.instructions.genome  
-  (:use [clojush pushstate globals]
+  (:use [clojush pushstate globals random]
         clojush.instructions.common))
 
 (define-registered genome_pop (with-meta (popper :genome) {:stack-types [:genome]}))
@@ -20,7 +20,8 @@
   (fn [state]
     (if (and (not (empty? (:integer state)))
              (not (empty? (:genome state)))
-             (not (empty? (stack-ref :genome 0 state))))
+             (not (empty? (stack-ref :genome 0 state)))
+             (< (count (first (:genome state))) @global-max-points)) ;; should really be max genome length
       (let [genome (stack-ref :genome 0 state)
             index (mod (stack-ref :integer 0 state) (count genome))]
         (->> (pop-item :integer state)
@@ -42,7 +43,11 @@
         (->> (pop-item :integer state)
              (pop-item :genome)
              (push-item (concat (take index genome)
-                                (list (rand-nth (:random-genome state)))
+                                (list (random-plush-instruction-map 
+                                        @global-atom-generators
+                                        {:epigenetic-markers @global-epigenetic-markers
+                                         :close-parens-probabilities @global-close-parens-probabilities
+                                         :silent-instruction-probability @global-silent-instruction-probability}))
                                 (drop (inc index) genome))
                         :genome)))
       state)))
@@ -97,6 +102,35 @@
                                     (min index (count destination))
                                     (nth source index)))
                         :genome)))
+      state)))
+
+(define-registered
+  genome_gene_copy_range
+  ^{:stack-types [:genome :integer]}
+  ;; copies from the second genome to the first
+  ;; indices are into source -- if destination is too short they will be added to end
+  (fn [state]
+    (if (and (not (empty? (rest (:integer state))))
+             (not (empty? (rest (:genome state))))
+             (not (empty? (stack-ref :genome 1 state))))
+      (let [source (stack-ref :genome 1 state)
+            destination (stack-ref :genome 0 state)
+            indices [(mod (stack-ref :integer 0 state) (count source))
+                     (mod (stack-ref :integer 1 state) (count source))]
+            low-index (apply min indices)
+            high-index (apply max indices)]
+        (->> (pop-item :integer state)
+          (pop-item :integer)
+          (pop-item :genome)
+          (push-item (seq (loop [i low-index
+                                 result (vec destination)]
+                            (if (> i high-index)
+                              result
+                              (recur (inc i)
+                                     (assoc result
+                                            (min i (count destination))
+                                            (nth source i))))))
+                     :genome)))
       state)))
 
 (define-registered
@@ -206,10 +240,4 @@
   ^{:stack-types [:genome]}
   (fn [state]
     (push-item (:parent2-genome state) :genome state)))
-
-(define-registered
-  genome_random
-  ^{:stack-types [:genome]}
-  (fn [state]
-    (push-item (:random-genome state) :genome state)))
 

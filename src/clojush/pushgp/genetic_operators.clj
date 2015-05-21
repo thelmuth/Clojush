@@ -138,6 +138,22 @@
                                     (:ancestors ind))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; uniform deletion
+
+(defn uniform-deletion
+  "Returns the individual with each element of its genome possibly deleted, with probability
+given by uniform-deletion-rate."
+  [ind {:keys [uniform-deletion-rate maintain-ancestors]}]
+  (let [new-genome (filter identity 
+                           (map #(if (< (lrand) uniform-deletion-rate) % nil)
+                                (:genome ind)))]
+    (make-individual :genome new-genome
+                     :history (:history ind)
+                     :ancestors (if maintain-ancestors
+                                  (cons (:genome ind) (:ancestors ind))
+                                  (:ancestors ind)))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; alternation
 
 (defn alternation
@@ -229,7 +245,7 @@
 
 (defn process-genome-for-autoconstruction
   "Replace input instructions with noops and replace autoconstructive_integer_rand with integer_rand."
-  [genome]
+  [genome deterministic?]
   (let [input-instruction? (fn [instruction]
                              (and (symbol? instruction) 
                                   (or (re-seq #"in\d+" (name instruction)) ;; from input-output
@@ -237,46 +253,75 @@
     (map (fn [instruction-map]
            (if (input-instruction? (:instruction instruction-map))
              (assoc instruction-map :instruction 'code_noop)
-             (if (= (:instruction instruction-map) 'autoconstructive_integer_rand)
+             (if (and (not deterministic?)
+                      (= (:instruction instruction-map) 'autoconstructive_integer_rand))
                (assoc instruction-map :instruction 'integer_rand)
                instruction-map)))
          genome)))
 
 (defn produce-child-genome-by-autoconstruction
-  [parent1-genome parent2-genome parent3-genome]
-  (top-item :genome
-            (run-push
-              (translate-plush-genome-to-push-program
-                {:genome (process-genome-for-autoconstruction
-                           parent1-genome)})
-              (-> (->> (make-push-state)
-                    (push-item parent3-genome :genome)
-                    (push-item parent2-genome :genome)
-                    (push-item parent1-genome :genome))
-                (assoc :parent1-genome parent1-genome)
-                (assoc :parent2-genome parent2-genome)
-                (assoc :random-genome parent3-genome)))))
+  [parent1-genome parent2-genome deterministic?]
+  (let [run-result (top-item :genome
+                             (run-push
+                               (translate-plush-genome-to-push-program
+                                 {:genome (process-genome-for-autoconstruction
+                                            parent1-genome
+                                            deterministic?)})
+                               (-> (->> (make-push-state)
+                                     (push-item parent2-genome :genome)
+                                     (push-item parent1-genome :genome))
+                                 (assoc :parent1-genome parent1-genome)
+                                 (assoc :parent2-genome parent2-genome))))]
+    (if (or (seq? run-result) (vector? run-result))
+      run-result
+      ())))
+
+(defn express-same-programs?
+  [g1 g2]
+  (or (= g1 g2) ;; avoid translation for equivalent genomes 
+      (= (translate-plush-genome-to-push-program {:genome g1})
+         (translate-plush-genome-to-push-program {:genome g2}))))
+
+(defn reproductively-competent?
+  [g]
+  (let [c1 (produce-child-genome-by-autoconstruction g g false)
+        c2 (produce-child-genome-by-autoconstruction g g false)]
+    (if (express-same-programs? c1 c2)
+      false
+      (let [c1c (produce-child-genome-by-autoconstruction c1 g true)
+            c2c (produce-child-genome-by-autoconstruction c2 g true)]
+        (if (express-same-programs? c1c c2c)
+          false
+          (let [c1cc (produce-child-genome-by-autoconstruction c1c g true)
+                c2cc (produce-child-genome-by-autoconstruction c2c g true)]
+            (if (express-same-programs? c1cc c2cc)
+              false
+              (if false
+                #_(let [g-size (count g)
+                       descendant-sizes (map count [c1cc1 c1cc2 c2cc1 c2cc2])]
+                   (or (>= (apply min descendant-sizes)
+                           g-size)
+                       (<= (apply max descendant-sizes)
+                           g-size)))
+                false
+                true))))))))
 
 (defn autoconstruction
   "Returns a genome for child produced by autoconstruction by executing parent1 with parent1,
-parent2, and a random genome on top of the genome stack. EXPERIMENTAL AND SUBJECT TO CHANGE."
-  [parent1 parent2 {:keys [maintain-ancestors atom-generators max-points-in-initial-program] 
+and parent2 on top of the genome stack. EXPERIMENTAL AND SUBJECT TO CHANGE."
+  [parent1 parent2 {:keys [maintain-ancestors atom-generators max-points-in-initial-program error-function] 
                     :as argmap}]
   (let [parent1-genome (:genome parent1)
         parent2-genome (:genome parent2)
-        random-genome (random-plush-genome max-points-in-initial-program atom-generators argmap)
-        child-genome-fn (fn [] 
-                          (produce-child-genome-by-autoconstruction parent1-genome parent2-genome random-genome))
-        child1-genome (child-genome-fn)
-        other-child-genomes (repeatedly 1 child-genome-fn)
-        clone (some #{child1-genome}
-                    (concat [parent1-genome parent2-genome]
-                            other-child-genomes))
-        new-genome (if clone
-                     random-genome
-                     child1-genome)]
-    (make-individual :genome new-genome
-                     :history (:history parent1)
-                     :ancestors (if maintain-ancestors
-                                  (cons (:genome parent1) (:ancestors parent1))
-                                  (:ancestors parent1)))))
+        child-genome  (produce-child-genome-by-autoconstruction parent1-genome parent2-genome false)
+        competent (reproductively-competent? child-genome)
+        new-genome (if competent
+                     child-genome
+                     (random-plush-genome max-points-in-initial-program atom-generators argmap))]
+    (assoc (make-individual :genome new-genome
+                            :history (:history parent1)
+                            :ancestors (if maintain-ancestors
+                                         (cons (:genome parent1) (:ancestors parent1))
+                                         (:ancestors parent1)))
+           :random-replacement-for-reproductively-incompetent-genome 
+           (if competent false true))))

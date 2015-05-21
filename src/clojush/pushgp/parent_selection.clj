@@ -172,6 +172,14 @@
                  (rest cases)))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; uniform selection (i.e. no selection, for use as a baseline)
+
+(defn uniform-selection
+  "Returns an individual uniformly at random."
+  [pop]
+  (lrand-nth pop))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; parent selection
 
 (defn select
@@ -184,5 +192,9 @@
       :tournament (tournament-selection pop-with-meta-errors location argmap)
       :lexicase (lexicase-selection pop-with-meta-errors location argmap)
       :elitegroup-lexicase (elitegroup-lexicase-selection pop-with-meta-errors)
+      :leaky-lexicase (if (< (lrand) (:lexicase-leakage argmap))
+                        (tournament-selection pop-with-meta-errors location (merge argmap {:tournament-size 1}))
+                        (lexicase-selection pop-with-meta-errors location argmap))
+      :uniform (uniform-selection pop-with-meta-errors)
       (throw (Exception. (str "Unrecognized argument for parent-selection: "
                               parent-selection))))))

@@ -38,6 +38,7 @@
 (def timing-map (atom {:initialization 0 :reproduction 0 :report 0 :fitness 0 :other 0}))  ;; Used for timing of different parts of pushgp
 (def solution-rates (atom (repeat 0))) ;; Used in historically-assessed hardness
 (def elitegroups (atom ())) ;; Used for elitegroup lexicase selection (will only work if lexicase-selection is off)
+(def lexicase-samples (atom [])) ;; Used for lexicase-tournament selection. Stores maps of the form {:lexicase-samples n :individual i}
 (def population-behaviors (atom ())) ;; Used to store the behaviors of the population for use in tracking behavioral diversity
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

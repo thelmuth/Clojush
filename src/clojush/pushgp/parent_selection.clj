@@ -146,10 +146,17 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; lexicase tournament selection
 
+(defn sample-for-lexicase-tournament-selection
+  ""
+  []
+  )
+
 (defn lexicase-tournament-selection
   "Uses repeated lexicase selection samples to rank the population by how often
    lexicase selects each individual. Then, uses those rankings in tournaments
-   to select parents."
+   to select parents.
+   Options:
+     - lexicase-tournament-remove-zero-sample-individuals - if true, individuals that receive 0 samples will not participate in tournaments; if false, they will."
   [pop location {:keys [trivial-geography-radius]}]
   (let [lower (mod (- location trivial-geography-radius) (count pop))
         upper (mod (+ location trivial-geography-radius) (count pop))

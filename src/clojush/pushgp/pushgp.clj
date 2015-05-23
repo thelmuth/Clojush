@@ -87,8 +87,9 @@
           ;;----------------------------------------
           ;; Arguments related to parent selection
           ;;----------------------------------------
-          :parent-selection :lexicase ;; The parent selection method. Options include :tournament, :lexicase, :elitegroup-lexicase, :uniform :leaky-lexicase
+          :parent-selection :lexicase ;; The parent selection method. Options include :tournament, :lexicase, :elitegroup-lexicase, :uniform, :leaky-lexicase, :lexicase-tournament
           :lexicase-leakage 0.1 ;; If using leaky lexicase selection, the percentage of selection events that will return random (tourny 1) individuals
+          :lexicase-tournament-remove-zero-sample-individuals false ;; If true, individuals with zero samples are not included in lexicase tournaments
           :tournament-size 7 ;; If using tournament selection, the size of the tournaments
           :total-error-method :sum ;; The method used to compute total error. Options include :sum (standard), :hah (historically-assessed hardness), :rmse (root mean squared error), and :ifs (implicit fitness sharing)
           :normalization :none ;; The method used to normalize the errors to the range [0,1], with 0 being best. Options include :none (no normalization), :divide-by-max-error (divides by value of argument :max-error), :e-over-e-plus-1 (e/(e+1) = 1 - 1/(e+1))
@@ -283,6 +284,9 @@
           ;; calculate implicit fitness sharing fitness for population
           (when (= (:total-error-method @push-argmap) :ifs)
             (calculate-implicit-fitness-sharing pop-agents @push-argmap))
+          ;; calculate samples for lexicase-tournament selection
+          (when (= (:parent-selection @push-argmap) :lexicase-tournament)
+            (sample-for-lexicase-tournament-selection pop-agents @push-argmap))
           (timer @push-argmap :other)
           ;; report and check for success
           (let [[outcome best] (report-and-check-for-success (vec (doall (map deref pop-agents)))

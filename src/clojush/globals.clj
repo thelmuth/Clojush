@@ -40,6 +40,7 @@
 (def elitegroups (atom ())) ;; Used for elitegroup lexicase selection (will only work if lexicase-selection is off)
 (def lexicase-tournament-samples (atom [])) ;; Used for lexicase-tournament selection. Stores maps of the form {:lexicase-samples n :individual i}
 (def population-behaviors (atom ())) ;; Used to store the behaviors of the population for use in tracking behavioral diversity
+(def selection-counts (atom {})) ;; Used to store the number of selections for each individual, indexed by UUIDs
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; The globals below may be reset by arguments to pushgp

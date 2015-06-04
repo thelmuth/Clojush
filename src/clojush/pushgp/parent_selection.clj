@@ -184,8 +184,7 @@
                                            pop-with-samples
                                            the-sampled-indices))]
     (println "Lexicase Sample Counts (sorted):" (sort > (map :lexicase-samples result-with-sample-counts)))
-    (println "Programs With One Or More Lexicase Samples:" (count (remove #(zero? %)
-                                                                          (map :lexicase-samples result-with-sample-counts))))
+    (println "Programs With One Or More Lexicase Samples:" (count ((remove #(zero? (:lexicase-samples %)) result-with-sample-counts))))
     (reset! lexicase-tournament-samples (if lexicase-tournament-remove-zero-sample-individuals
                                           (remove #(zero? (:lexicase-samples %)) result-with-sample-counts)
                                           result-with-sample-counts))))

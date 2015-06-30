@@ -1,5 +1,6 @@
 (ns clojush.problems.software.test-case-csvs
-  (:use [clojush.util])
+  (:use [clojush.util]
+        dk.ative.docjure.spreadsheet)
   (:require [clojush.problems.software
 ;             checksum
 ;             collatz-numbers
@@ -7,8 +8,8 @@
 ;             count-odds
 ;             digits
 ;             double-letters
-             even-squares
-;             for-loop-index
+;             even-squares
+             for-loop-index
 ;             grade
 ;             last-index-of-zero
 ;             median
@@ -28,7 +29,7 @@
 ;             vector-average
 ;             vectors-summed
 ;             wallis-pi
-             word-stats
+;             word-stats
 ;             x-word-lines
              ]
             [clojure.data.csv :as csv]
@@ -44,7 +45,7 @@
 ;   ["count-odds" false clojush.problems.software.count-odds/count-odds-data-domains clojush.problems.software.count-odds/count-odds-test-cases]
 ;   ["digits" false clojush.problems.software.digits/digits-data-domains clojush.problems.software.digits/digits-test-cases]
 ;   ["double-letters" false clojush.problems.software.double-letters/double-letters-data-domains clojush.problems.software.double-letters/double-letters-test-cases]
-   ["even-squares" false clojush.problems.software.even-squares/even-squares-data-domains clojush.problems.software.even-squares/even-squares-test-cases]
+;   ["even-squares" false clojush.problems.software.even-squares/even-squares-data-domains clojush.problems.software.even-squares/even-squares-test-cases]
 ;   ["for-loop-index" true clojush.problems.software.for-loop-index/loop-data-domains clojush.problems.software.for-loop-index/loop-test-cases]
 ;   ["grade" true clojush.problems.software.grade/grade-data-domains clojush.problems.software.grade/grade-test-cases]
 ;   ["last-index-of-zero" false clojush.problems.software.last-index-of-zero/last-index-of-zero-data-domains clojush.problems.software.last-index-of-zero/last-index-of-zero-test-cases]
@@ -65,7 +66,7 @@
 ;   ["vector-average" false clojush.problems.software.vector-average/vector-average-data-domains clojush.problems.software.vector-average/vector-average-test-cases]
 ;   ["vectors-summed" true clojush.problems.software.vectors-summed/vectors-summed-data-domains clojush.problems.software.vectors-summed/vectors-summed-test-cases]
 ;   ["wallis-pi" false clojush.problems.software.wallis-pi/wallis-pi-data-domains clojush.problems.software.wallis-pi/wallis-pi-test-cases]
-   ["word-stats" false clojush.problems.software.word-stats/word-stats-data-domains clojush.problems.software.word-stats/word-stats-test-cases]
+;   ["word-stats" false clojush.problems.software.word-stats/word-stats-data-domains clojush.problems.software.word-stats/word-stats-test-cases]
 ;   ["x-word-lines" true clojush.problems.software.x-word-lines/x-word-lines-data-domains clojush.problems.software.x-word-lines/x-word-lines-test-cases]
    ])
 
@@ -134,3 +135,12 @@
 
 (print-csvs-for-problems problems-domains-and-test-cases-generators)
 
+(let [wb (create-workbook "Price List"
+                          [["qwerty" "qw\ner\nty"]
+                           ["aabbcc" "aa\nbb\ncc"]
+                           ["-4-6-8" "-4\n-6\n-8"]
+                           ["edcrfv" "ed\ncr\nfv"]
+                           ["123456" "12\n34\n56"]
+                           ["987654" nil]])
+      ]
+    (save-workbook! "WOOO.xlsx" wb))

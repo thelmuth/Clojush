@@ -1,4 +1,4 @@
-(defproject clojush "2.0.32"
+(defproject clojush "2.0.34"
   :description "The Push programming language and the PushGP genetic programming
                 system implemented in Clojure.
                 See http://hampshire.edu/lspector/push.html"
@@ -17,6 +17,7 @@
                  ;[incanter/incanter-core "1.5.2"]
                  ]
   :dev-dependencies [[lein-ccw "1.2.0"]]
+  :profiles {:dev {:dependencies [[midje "1.6.3"]]}}
   ;;;;;;;;;; jvm settings for high performance, using most of the machine's RAM
 ;  :jvm-opts ~(let [mem-to-use
 ;                   (long (* (.getTotalPhysicalMemorySize

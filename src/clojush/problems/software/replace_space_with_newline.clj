@@ -151,6 +151,8 @@
     (println "Outputs of best individual on training cases:")
     (error-function best-program :train true)
     (println ";;******************************")
+    (when (= generation 10)
+      (spit "rswn10.dat" (pr-str population)))
     )) ;; To do validation, could have this function return an altered best individual
        ;; with total-error > 0 if it had error of zero on train but not on validation
        ;; set. Would need a third category of data cases, or a defined split of training cases.
@@ -163,8 +165,8 @@
    :max-points 1600
    :max-genome-size-in-initial-program 400
    :evalpush-limit 1600
-   :population-size 1000
-   :max-generations 300
+   :population-size 200
+   :max-generations 10
    :parent-selection :lexicase
    :genetic-operator-probabilities {:alternation 0.2
                                     :uniform-mutation 0.2

@@ -166,8 +166,8 @@
                                           -2999 ; large negative number to make sure list isn't empty for generation 0
                                           ))]
         (swap! error-diversities conj error-diversity)
-        (when true #_(and (> generation 10)
-                          (> max-diff-last-10 0.25))
+        (when (and (> generation 10)
+                    (> max-diff-last-10 0.25))
           (spit (str run-log-directory "run_" run-name "_population_gen_" generation ".dat")
                 (pr-str population))
           (spit (str run-log-directory "run_" run-name "_train_and_test_cases.dat")

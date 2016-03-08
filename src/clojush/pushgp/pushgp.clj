@@ -15,6 +15,8 @@
           ;;----------------------------------------
           ;; Clojush system arguments
           ;;----------------------------------------
+          :run-name (str "default-" (java.util.UUID/randomUUID)) ;; Gives a name to this run for storing information about it.
+          :run-log-directory "" ;; Indicates where the logs for this run are stored.
           :use-single-thread false ;; When true, Clojush will only use a single thread
           :random-seed (random/generate-mersennetwister-seed) ;; The seed for the random number generator
           :save-initial-population false ;; When true, saves the initial population

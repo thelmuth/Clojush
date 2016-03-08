@@ -82,6 +82,8 @@
                   (count (filter #(not= \space %) in))]))
        inputs))
 
+(def train-and-test-cases (atom ()))
+
 ; Define error function. For now, each run uses different random inputs
 (defn replace-space-error-function
   "Returns the error function for the Replace Space With Newline problem. Takes as
@@ -90,6 +92,8 @@
   (let [[train-cases test-cases] (map #(sort-by (comp count first) %)
                                       (map replace-space-test-cases
                                            (test-and-train-data-from-domains data-domains)))]
+    (when true ;; This one stores the test cases to later print to a file
+      (reset! train-and-test-cases [train-cases test-cases]))
     (when true ;; Change to false to not print test cases
       (doseq [[i case] (map vector (range) train-cases)]
         (println (format "Train Case: %3d | Input/Output: %s" i (str case))))
@@ -136,7 +140,8 @@
 
 (defn replace-space-report
   "Custom generational report."
-  [best population generation error-function report-simplifications]
+  [best population generation error-function report-simplifications
+   {:keys [run-name run-log-directory] :as argmap}]
   (let [best-program (not-lazy (:program best))
         best-test-errors (error-function best-program :test)
         best-total-test-error (apply +' best-test-errors)]
@@ -153,18 +158,22 @@
     (println "Outputs of best individual on training cases:")
     (error-function best-program :train true)
     (println ";;******************************")
-    (let [error-diversity (float (/ (count (frequencies (map :errors population))) (count population)))
-          max-diff-last-10 (apply max
-                                  (conj (map #(- % error-diversity)
-                                             (take 10 @error-diversities))
-                                        -2999 ; large negative number to make sure list isn't empty
-                                        ))]
-      (swap! error-diversities conj error-diversity)
-      (when (and (> generation 10)
-                (> max-diff-last-10 0.25))
-        (spit (str "population_gen_" generation "_rand_" (lrand-int 1000000) ".dat")
-              (pr-str population))
-        (assoc best :success true)))
+    (if (not-empty population) ; Make sure this isn't during simplification, which has an empty population
+      (let [error-diversity (float (/ (count (frequencies (map :errors population))) (count population)))
+            max-diff-last-10 (apply max
+                                    (conj (map #(- % error-diversity)
+                                               (take 10 @error-diversities))
+                                          -2999 ; large negative number to make sure list isn't empty for generation 0
+                                          ))]
+        (swap! error-diversities conj error-diversity)
+        (when true #_(and (> generation 10)
+                          (> max-diff-last-10 0.25))
+          (spit (str run-log-directory "run_" run-name "_population_gen_" generation ".dat")
+                (pr-str population))
+          (spit (str run-log-directory "run_" run-name "_train_and_test_cases.dat")
+            (pr-str @train-and-test-cases))
+          ;; To later load train and test cases, do something like: (read-string (slurp "/Users/helmuth/Documents/Clojure/Results/testing-logs/run_default-76a2b63d-6a7e-4ab7-8e01-443e96cdf858_train_and_test_cases.dat"))
+          (assoc best :success true))))
     )) ;; To do validation, could have this function return an altered best individual
        ;; with total-error > 0 if it had error of zero on train but not on validation
        ;; set. Would need a third category of data cases, or a defined split of training cases.

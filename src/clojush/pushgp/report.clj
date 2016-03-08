@@ -260,7 +260,12 @@
         err-fn (if (= total-error-method :rmse) :weighted-error :total-error)
         sorted (sort-by err-fn < population)
         err-fn-best (first sorted)
-        psr-best (problem-specific-report err-fn-best population generation error-function report-simplifications)
+        psr-best (problem-specific-report err-fn-best
+                                          population
+                                          generation
+                                          error-function
+                                          report-simplifications
+                                          argmap)
         best (if (= (type psr-best) clojush.individual.individual)
                psr-best
                err-fn-best)
@@ -463,7 +468,7 @@
   "Prints the final report of a PushGP run if the run is successful."
   [generation best
    {:keys [error-function final-report-simplifications report-simplifications
-           print-ancestors-of-solution problem-specific-report]}]
+           print-ancestors-of-solution problem-specific-report] :as argmap}]
   (printf "\n\nSUCCESS at generation %s\nSuccessful program: %s\nErrors: %s\nTotal error: %s\nHistory: %s\nSize: %s\n\n"
           generation (pr-str (not-lazy (:program best))) (not-lazy (:errors best)) (:total-error best)
           (not-lazy (:history best)) (count-points (:program best)))
@@ -473,4 +478,4 @@
   (let [simplified-best (auto-simplify best error-function final-report-simplifications true 500)]
     (println "\n;;******************************")
     (println ";; Problem-Specific Report of Simplified Solution")
-    (problem-specific-report simplified-best [] generation error-function report-simplifications)))
+    (problem-specific-report simplified-best [] generation error-function report-simplifications argmap)))

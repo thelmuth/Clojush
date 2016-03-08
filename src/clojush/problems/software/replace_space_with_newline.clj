@@ -186,8 +186,8 @@
    :max-points 1600
    :max-genome-size-in-initial-program 400
    :evalpush-limit 1600
-   :population-size 200
-   :max-generations 10
+   :population-size 1000
+   :max-generations 300
    :parent-selection :lexicase
    :genetic-operator-probabilities {:alternation 0.2
                                     :uniform-mutation 0.2

@@ -132,6 +132,8 @@
             (swap! population-behaviors conj @behavior))
           errors)))))
 
+(def error-diversities (atom ()))
+
 (defn replace-space-report
   "Custom generational report."
   [best population generation error-function report-simplifications]
@@ -151,8 +153,18 @@
     (println "Outputs of best individual on training cases:")
     (error-function best-program :train true)
     (println ";;******************************")
-    (when (= generation 10)
-      (spit "rswn10.dat" (pr-str population)))
+    (let [error-diversity (float (/ (count (frequencies (map :errors population))) (count population)))
+          max-diff-last-10 (apply max
+                                  (conj (map #(- % error-diversity)
+                                             (take 10 @error-diversities))
+                                        -2999 ; large negative number to make sure list isn't empty
+                                        ))]
+      (swap! error-diversities conj error-diversity)
+      (when (and (> generation 10)
+                (> max-diff-last-10 0.25))
+        (spit (str "population_gen_" generation "_rand_" (lrand-int 1000000) ".dat")
+              (pr-str population))
+        (assoc best :success true)))
     )) ;; To do validation, could have this function return an altered best individual
        ;; with total-error > 0 if it had error of zero on train but not on validation
        ;; set. Would need a third category of data cases, or a defined split of training cases.

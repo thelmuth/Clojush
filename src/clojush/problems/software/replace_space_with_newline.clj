@@ -86,51 +86,55 @@
 (defn replace-space-error-function
   "Returns the error function for the Replace Space With Newline problem. Takes as
    input Replace Space With Newline data domains."
-  [data-domains]
-  (let [[train-cases test-cases] (map #(sort-by (comp count first) %)
-                                      (map replace-space-test-cases
-                                           (test-and-train-data-from-domains data-domains)))]
-    (when true ;; Change to false to not print test cases
-      (doseq [[i case] (map vector (range) train-cases)]
-        (println (format "Train Case: %3d | Input/Output: %s" i (str case))))
-      (doseq [[i case] (map vector (range) test-cases)]
-        (println (format "Test Case: %3d | Input/Output: %s" i (str case)))))
-    (fn the-actual-replace-space-error-function
-      ([program]
-        (the-actual-replace-space-error-function program :train))
-      ([program data-cases] ;; data-cases should be :train or :test
-        (the-actual-replace-space-error-function program data-cases false))
-      ([program data-cases print-outputs]
-        (let [behavior (atom '())
-              errors (flatten
-                       (doall
-                         (for [[input [correct-output correct-int]] (case data-cases
-                                                                      :train train-cases
-                                                                      :test test-cases
-                                                                      [])]
-                           (let [final-state (run-push program
-                                                       (->> (make-push-state)
-                                                         (push-item input :input)
-                                                         (push-item "" :output)))
-                                 printed-result (stack-ref :output 0 final-state)
-                                 int-result (stack-ref :integer 0 final-state)]
-                             (when print-outputs
-                               (println (format "\n| Correct output: %s\n| Program output: %s" (pr-str correct-output) (pr-str printed-result)))
-                               (println (format "| Correct integer: %2d | Program integer: %s" correct-int (str int-result))))
-                             ; Record the behavior
-                             (when @global-print-behavioral-diversity
-                               (swap! behavior conj [printed-result int-result]))
-                             ; Error is Levenshtein distance for printed string and
-                             ; integer distance for returned integer
-                             (vector
-                               (levenshtein-distance correct-output printed-result)
-                               (if (number? int-result)
-                                 (abs (- int-result correct-int)) ;distance from correct integer
-                                 1000) ;penalty for no return value
-                               )))))]
-          (when @global-print-behavioral-diversity
-            (swap! population-behaviors conj @behavior))
-          errors)))))
+  ([data-domains]
+    (replace-space-error-function data-domains nil))
+  ([data-domains train-and-test-cases]
+    (let [[train-cases test-cases] (if train-and-test-cases
+                                     train-and-test-cases
+                                     (map #(sort-by (comp count first) %)
+                                          (map replace-space-test-cases
+                                               (test-and-train-data-from-domains data-domains))))]
+      (when true ;; Change to false to not print test cases
+        (doseq [[i case] (map vector (range) train-cases)]
+          (println (format "Train Case: %3d | Input/Output: %s" i (str case))))
+        (doseq [[i case] (map vector (range) test-cases)]
+          (println (format "Test Case: %3d | Input/Output: %s" i (str case)))))
+      (fn the-actual-replace-space-error-function
+        ([program]
+          (the-actual-replace-space-error-function program :train))
+        ([program data-cases] ;; data-cases should be :train or :test
+                              (the-actual-replace-space-error-function program data-cases false))
+        ([program data-cases print-outputs]
+          (let [behavior (atom '())
+                errors (flatten
+                         (doall
+                           (for [[input [correct-output correct-int]] (case data-cases
+                                                                        :train train-cases
+                                                                        :test test-cases
+                                                                        [])]
+                             (let [final-state (run-push program
+                                                         (->> (make-push-state)
+                                                           (push-item input :input)
+                                                           (push-item "" :output)))
+                                   printed-result (stack-ref :output 0 final-state)
+                                   int-result (stack-ref :integer 0 final-state)]
+                               (when print-outputs
+                                 (println (format "\n| Correct output: %s\n| Program output: %s" (pr-str correct-output) (pr-str printed-result)))
+                                 (println (format "| Correct integer: %2d | Program integer: %s" correct-int (str int-result))))
+                               ; Record the behavior
+                               (when @global-print-behavioral-diversity
+                                 (swap! behavior conj [printed-result int-result]))
+                               ; Error is Levenshtein distance for printed string and
+                               ; integer distance for returned integer
+                               (vector
+                                 (levenshtein-distance correct-output printed-result)
+                                 (if (number? int-result)
+                                   (abs (- int-result correct-int)) ;distance from correct integer
+                                   1000) ;penalty for no return value
+                                 )))))]
+            (when @global-print-behavioral-diversity
+              (swap! population-behaviors conj @behavior))
+            errors))))))
 
 (defn replace-space-report
   "Custom generational report."
@@ -158,7 +162,7 @@
 
 ; Define the argmap
 (def argmap
-  {:error-function (replace-space-error-function replace-space-data-domains)
+  {:error-function (replace-space-error-function nil (read-string (slurp "run_run0_train_and_test_cases.dat")))
    :atom-generators replace-space-atom-generators
    :max-points 1600
    :max-genome-size-in-initial-program 400

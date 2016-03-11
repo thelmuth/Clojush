@@ -209,7 +209,7 @@ into @push-argmap first."
                                    (atom %)
                                    (agent % :error-handler agent-error-handler))
                                 pa)))
-                   (let [pa (read-string (slurp "rswn10.dat"))]
+                   (let [pa (read-string (slurp initial-population-file))]
                      (vec (map #(if use-single-thread
                                   (atom %)
                                   (agent % :error-handler agent-error-handler))

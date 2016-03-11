@@ -15,9 +15,12 @@
           ;;----------------------------------------
           ;; Clojush system arguments
           ;;----------------------------------------
+          :run-name (str "default-" (java.util.UUID/randomUUID)) ;; Gives a name to this run for storing information about it.
+          :run-log-directory "" ;; Indicates where the logs for this run are stored.
           :use-single-thread false ;; When true, Clojush will only use a single thread
           :random-seed (random/generate-mersennetwister-seed) ;; The seed for the random number generator
           :save-initial-population false ;; When true, saves the initial population
+          :initial-population-file nil ;; When set to a filename, the initial population will be loaded from the file
           ;;
           ;;----------------------------------------
           ;; Standard GP arguments
@@ -176,7 +179,7 @@ into @push-argmap first."
 (defn make-agents-and-rng
   [{:keys [use-single-thread population-size random-seed
            max-genome-size-in-initial-program atom-generators
-           save-initial-population]
+           save-initial-population initial-population-file]
     :as argmap}]
   (let [agent-error-handler (fn [agnt except]
                               ;(.printStackTrace except System/out)
@@ -191,20 +194,26 @@ into @push-argmap first."
                                                             (not (some #(random/=byte-array % candidate)
                                                                        seeds))) new-seeds)))); only add seeds that we do not already have
                            seeds)))]
-    {:pop-agents (let [pa (doall (for [_ (range population-size)]
-                                   (make-individual
-                                     :genome (random-plush-genome max-genome-size-in-initial-program
-                                                                  atom-generators
-                                                                  argmap)
-                                     :genetic-operators :random)))
-                       f (str "data/" (System/currentTimeMillis) ".ser")]
-                   (when save-initial-population
-                     (io/make-parents f)
-                     (spit f (printable (map individual-string pa))))
-                   (vec (map #(if use-single-thread
-                                (atom %)
-                                (agent % :error-handler agent-error-handler))
-                             pa)))
+    {:pop-agents (if (nil? initial-population-file)
+                   (let [pa (doall (for [_ (range population-size)]
+                                     (make-individual
+                                       :genome (random-plush-genome max-genome-size-in-initial-program
+                                                                    atom-generators
+                                                                    argmap)
+                                       :genetic-operators :random)))
+                         f (str "data/" (System/currentTimeMillis) ".ser")]
+                     (when save-initial-population
+                       (io/make-parents f)
+                       (spit f (printable (map individual-string pa))))
+                     (vec (map #(if use-single-thread
+                                   (atom %)
+                                   (agent % :error-handler agent-error-handler))
+                                pa)))
+                   (let [pa (read-string (slurp initial-population-file))]
+                     (vec (map #(if use-single-thread
+                                  (atom %)
+                                  (agent % :error-handler agent-error-handler))
+                               pa))))
      :child-agents (vec (doall (for [_ (range population-size)]
                                  ((if use-single-thread atom agent)
                                       (make-individual)

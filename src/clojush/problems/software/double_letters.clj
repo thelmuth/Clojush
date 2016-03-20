@@ -128,7 +128,8 @@
 
 (defn double-letters-report
   "Custom generational report."
-  [best population generation error-function report-simplifications]
+  [best population generation error-function report-simplifications
+   {:keys [run-name run-log-directory] :as argmap}]
   (let [best-program (not-lazy (:program best))
         best-test-errors (error-function best-program :test)
         best-total-test-error (apply +' best-test-errors)]

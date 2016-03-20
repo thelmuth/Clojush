@@ -139,6 +139,22 @@
     (println "Outputs of best individual on training cases:")
     (error-function best-program :train true)
     (println ";;******************************")
+    (if (not-empty population) ; Make sure this isn't during simplification, which has an empty population
+      (let [error-diversity (float (/ (count (frequencies (map :errors population))) (count population)))
+            max-diff-last-10 (apply max
+                                    (conj (map #(- % error-diversity)
+                                               (take 10 @error-diversities))
+                                          -2999 ; large negative number to make sure list isn't empty for generation 0
+                                          ))]
+        (swap! error-diversities conj error-diversity)
+        (when (and (> generation 10)
+                   (> max-diff-last-10 0.25))
+          (spit (str run-log-directory run-name "_population.dat")
+                (pr-str population))
+          (spit (str run-log-directory run-name "_train_and_test_cases.dat")
+                (pr-str @train-and-test-cases))
+          ;; To later load train and test cases, do something like: (read-string (slurp "/Users/helmuth/Documents/Clojure/Results/testing-logs/run_default-76a2b63d-6a7e-4ab7-8e01-443e96cdf858_train_and_test_cases.dat"))
+          (assoc best :success true))))
     )) ;; To do validation, could have this function return an altered best individual
        ;; with total-error > 0 if it had error of zero on train but not on validation
        ;; set. Would need a third category of data cases, or a defined split of training cases.

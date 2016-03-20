@@ -79,6 +79,8 @@
                                           in)))))
        inputs))
 
+(def train-and-test-cases (atom ()))
+
 ; Define error function. For now, each run uses different random inputs
 (defn double-letters-error-function
   "Returns the error function for the Double Letters problem. Takes as
@@ -87,6 +89,8 @@
   (let [[train-cases test-cases] (map #(sort-by (comp count first) %)
                                       (map double-letters-test-cases
                                            (test-and-train-data-from-domains data-domains)))]
+    (when true ;; This one stores the test cases to later print to a file
+      (reset! train-and-test-cases [train-cases test-cases]))
     (when true ;; Change to false to not print test cases
       (doseq [[i case] (map vector (range) train-cases)]
         (println (format "Train Case: %3d | Input/Output: %s" i (str case))))
@@ -119,6 +123,8 @@
           (when @global-print-behavioral-diversity
             (swap! population-behaviors conj @behavior))
           errors)))))
+
+(def error-diversities (atom ()))
 
 (defn double-letters-report
   "Custom generational report."

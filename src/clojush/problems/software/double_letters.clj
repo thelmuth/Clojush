@@ -150,7 +150,7 @@
 
 ; Define the argmap
 (def argmap
-  {:error-function (replace-space-error-function nil (read-string (slurp "run_run0_train_and_test_cases.dat")))
+  {:error-function (double-letters-error-function nil (read-string (slurp "run_run0_train_and_test_cases.dat")))
    :atom-generators double-letters-atom-generators
    :max-points 1600
    :max-genome-size-in-initial-program 400

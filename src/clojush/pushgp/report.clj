@@ -388,7 +388,7 @@
                                                    (repeat (- population-size (count @selection-counts)) 0))))
       (reset! selection-counts {}))
     (when autoconstructive
-      (println "Number of random replacements for recursively invariant individuals:"
+      (println "Number of random replacements for non-diversifying individuals:"
                (count (filter :is-random-replacement population))))
     (println "--- Run Statistics ---")
     (println "Number of program evaluations used so far:" @evaluations-count)
@@ -409,6 +409,8 @@
         (printf "Fitness Testing: %8.1f seconds, %4.1f%%\n" (/ fitness 1000.0) (* 100.0 (/ fitness total-time)))
         (printf "Report:          %8.1f seconds, %4.1f%%\n" (/ report-time 1000.0) (* 100.0 (/ report-time total-time)))
         (printf "Other:           %8.1f seconds, %4.1f%%\n" (/ other 1000.0) (* 100.0 (/ other total-time)))))
+    (println ";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;")
+    (println ";; -*- End of report for generation" generation)
     (println ";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;")
     (flush)
     (when print-csv-logs (csv-print population generation argmap))

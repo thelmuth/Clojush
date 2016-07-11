@@ -90,7 +90,7 @@
           ;;----------------------------------------
           ;; Arguments related to parent selection
           ;;----------------------------------------
-          :parent-selection :lexicase ;; The parent selection method. Options include :tournament, :lexicase, :elitegroup-lexicase, :uniform :leaky-lexicase
+          :parent-selection :lexicase ;; The parent selection method. Options include :tournament, :lexicase, :elitegroup-lexicase, :uniform, :leaky-lexicase, :interleaved-sampling
           :lexicase-leakage 0.1 ;; If using leaky lexicase selection, the percentage of selection events that will return random (tourny 1) individuals
           :tournament-size 7 ;; If using tournament selection, the size of the tournaments
           :total-error-method :sum ;; The method used to compute total error. Options include :sum (standard), :hah (historically-assessed hardness), :rmse (root mean squared error), and :ifs (implicit fitness sharing)
@@ -224,7 +224,7 @@ into @push-argmap first."
   (when-not use-single-thread (apply await pop-agents))) ;; SYNCHRONIZE
 
 (defn produce-new-offspring
-  [pop-agents child-agents rand-gens
+  [pop-agents child-agents rand-gens generation
    {:keys [decimation-ratio population-size decimation-tournament-size
            trivial-geography-radius use-single-thread ]}]
   (let [pop (if (>= decimation-ratio 1)
@@ -236,8 +236,8 @@ into @push-argmap first."
     (dotimes [i population-size]
       ((if use-single-thread swap! send)
            (nth child-agents i) 
-           breed 
-           i (nth rand-gens i) pop @push-argmap)))
+           breed
+           i (nth rand-gens i) pop generation @push-argmap)))
   (when-not use-single-thread (apply await child-agents))) ;; SYNCHRONIZE
 
 (defn install-next-generation
@@ -310,6 +310,9 @@ into @push-argmap first."
           ;; calculate implicit fitness sharing fitness for population
           (when (= (:total-error-method @push-argmap) :ifs)
             (calculate-implicit-fitness-sharing pop-agents @push-argmap))
+          ;; choose random case for interleaved sampling
+          (reset! interleaved-sampling-case-for-this-generation
+                  (rand-int (count (:errors (deref (first pop-agents))))))
           (timer @push-argmap :other)
           ;; report and check for success
           (let [[outcome best] (report-and-check-for-success (vec (doall (map deref pop-agents)))
@@ -320,7 +323,7 @@ into @push-argmap first."
                                            (flush)))
                   (= outcome :continue) (do (timer @push-argmap :report)
                                           (println "\nProducing offspring...")
-                                          (produce-new-offspring pop-agents child-agents rand-gens @push-argmap)
+                                          (produce-new-offspring pop-agents child-agents rand-gens generation @push-argmap)
                                           (println "Installing next generation...")
                                           (install-next-generation pop-agents child-agents @push-argmap)
                                           (recur (inc generation)))

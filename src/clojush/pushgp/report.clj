@@ -326,6 +326,8 @@
     (println "Size:" (count-points (:program best)))
     (printf "Percent parens: %.3f\n" (double (/ (count-parens (:program best)) (count-points (:program best))))) ;Number of (open) parens / points
     (println "--- Population Statistics ---")
+    (when (= parent-selection :interleaved-sampling)
+      (println "Interleaved sampling case for this generation:" @interleaved-sampling-case-for-this-generation))
     (when print-cosmos-data
       (println "Cosmos Data:" (let [quants (config/quantiles (count population))]
                                 (zipmap quants (map #(:total-error (nth (sort-by :total-error population) %)) quants)))))

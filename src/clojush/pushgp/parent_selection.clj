@@ -19,6 +19,9 @@
         err-fn (case total-error-method
                  :sum :total-error
                  (:hah :rmse :ifs) :weighted-error
+                 :one-random-case (fn [ind] 
+                                    (nth (:errors ind)
+                                         @interleaved-sampling-case-for-this-generation))
                  (throw (Exception. (str "Unrecognized argument for total-error-method: "
                                          total-error-method))))]
     (reduce (fn [i1 i2] (if (< (err-fn i1) (err-fn i2)) i1 i2))
@@ -144,6 +147,17 @@
     (when-not use-single-thread (apply await pop-agents)))) ;; SYNCHRONIZE
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Interleaved Sampling
+;; from: Balancing Learning and Overfitting in Genetic Programming with Interleaved Sampling of Training Data
+;; Gonçalves, Ivo and Silva, Sara
+
+(defn interleaved-sampling
+  [pop generation location argmap]
+  (if (zero? (mod generation 2))
+    (tournament-selection pop location argmap)
+    (tournament-selection pop location (assoc argmap :total-error-method :one-random-case))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; uniform selection (i.e. no selection, for use as a baseline)
 
 (defn uniform-selection
@@ -156,8 +170,8 @@
 
 (defn select
   "Returns a selected parent."
-  [pop location {:keys [parent-selection print-selection-counts]
-                 :as argmap}]
+  [pop location generation {:keys [parent-selection print-selection-counts]
+                            :as argmap}]
   (let [pop-with-meta-errors (map (fn [ind] (update-in ind [:errors] concat (:meta-errors ind)))
                                   pop)
         selected (case parent-selection
@@ -167,6 +181,7 @@
                    :leaky-lexicase (if (< (lrand) (:lexicase-leakage argmap))
                                      (uniform-selection pop-with-meta-errors)
                                      (lexicase-selection pop-with-meta-errors location argmap))
+                   :interleaved-sampling (interleaved-sampling pop-with-meta-errors generation location argmap)
                    :uniform (uniform-selection pop-with-meta-errors)
                    (throw (Exception. (str "Unrecognized argument for parent-selection: "
                                            parent-selection))))]

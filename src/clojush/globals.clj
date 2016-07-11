@@ -40,6 +40,7 @@
 (def elitegroups (atom ())) ;; Used for elitegroup lexicase selection (will only work if lexicase-selection is off)
 (def population-behaviors (atom ())) ;; Used to store the behaviors of the population for use in tracking behavioral diversity
 (def selection-counts (atom {})) ;; Used to store the number of selections for each individual, indexed by UUIDs
+(def interleaved-sampling-case-for-this-generation (atom 0)) ;; Used for interleaved sampling
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; The globals below may be reset by arguments to pushgp

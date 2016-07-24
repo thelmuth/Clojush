@@ -68,7 +68,6 @@
   (loop [survivors (retain-one-individual-per-error-vector pop)
          case-tuples (partition paired-lexicase-tuple-size
                                (lshuffle (range (count (:errors (first pop))))))]
-    (println case-tuples)
     (if (or (empty? case-tuples)
             (empty? (rest survivors)))
       (lrand-nth survivors)
@@ -197,6 +196,7 @@
                    :leaky-lexicase (if (< (lrand) (:lexicase-leakage argmap))
                                      (uniform-selection pop-with-meta-errors)
                                      (lexicase-selection pop-with-meta-errors location argmap))
+                   :paired-lexicase (paired-lexicase-selection pop-with-meta-errors argmap)
                    :uniform (uniform-selection pop-with-meta-errors)
                    (throw (Exception. (str "Unrecognized argument for parent-selection: "
                                            parent-selection))))]

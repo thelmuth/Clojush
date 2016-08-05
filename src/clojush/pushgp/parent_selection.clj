@@ -24,6 +24,30 @@
     (reduce (fn [i1 i2] (if (< (err-fn i1) (err-fn i2)) i1 i2))
             tournament-set)))
 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; eliteness-based tournament selection
+
+(defn eliteness-based-tournament-selection
+  "Tournament selection, where the fitness of an individual is the number of test cases
+   on which the individual has the best error value of any individual in the tournament."
+  [pop {:keys [tournament-size]}]
+  (let [tournament-set (repeatedly tournament-size
+                                  (fn []
+                                    (lrand-nth pop)))
+        min-error-on-each-case (map (partial apply min)
+                                    (apply mapv vector ; transpose error vectors into vector of errors per case
+                                           (map :errors tournament-set)))]
+    (:ind (apply max-key ; Find the individual with maximum number of elite cases
+                 :elite-cases
+                 (map (fn [ind]
+                        {:ind ind
+                         :elite-cases (count ; The nunmber of cases on which individual's error = min error
+                                        (filter identity
+                                                (map = min-error-on-each-case (:errors ind))))})
+                      tournament-set)))))
+
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; lexicase selection
 
@@ -162,6 +186,7 @@
                                   pop)
         selected (case parent-selection
                    :tournament (tournament-selection pop-with-meta-errors location argmap)
+                   :eliteness-based-tournament-selection (eliteness-based-tournament-selection pop-with-meta-errors argmap)
                    :lexicase (lexicase-selection pop-with-meta-errors location argmap)
                    :elitegroup-lexicase (elitegroup-lexicase-selection pop-with-meta-errors)
                    :leaky-lexicase (if (< (lrand) (:lexicase-leakage argmap))

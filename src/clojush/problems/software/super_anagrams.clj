@@ -123,7 +123,7 @@
   (let [[train-cases test-cases] (map #(sort-by second %)
                                       (map super-anagrams-test-cases
                                           (test-and-train-data-from-domains data-domains)))]
-    (when true ;; Change to false to not print test cases
+    (when false ;; Change to false to not print test cases
       (doseq [[i case] (map vector (range) train-cases)]
         (println (format "Train Case: %3d | Input/Output: %s" i (str case))))
       (doseq [[i case] (map vector (range) test-cases)]
@@ -219,7 +219,11 @@
 ;  [program print-outputs]
 ;  ((super-anagrams-error-function super-anagrams-data-domains) program :train print-outputs))
 ;
-; This program works
+;(defn test-program-on-testing
+;  [program print-outputs]
+;  ((super-anagrams-error-function super-anagrams-data-domains) program :test print-outputs))
+;
+;; This program works
 ;(def tom-program
 ;  '(
 ;     in2 in1 exec_string_iterate
@@ -231,7 +235,9 @@
 ;     true
 ;     ))
 ;
-;(test-program-on-training tom-program false)
+;(apply + (test-program-on-training tom-program false))
+;
+;(apply + (test-program-on-testing tom-program false))
 ;
 ;(run-push tom-program
-;          (push-item "clinteastwood" :input (push-item "oldowestact" :input (make-push-state))))
+;          (push-item "oldowestact" :input (push-item "clinteastwood" :input (make-push-state))))

@@ -175,6 +175,39 @@
                (rest cases))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; divide and conquer lexicase selection
+
+(defn best-in-group-on-case
+  "Takes a group of individuals, usually 2 (but could be 1, and could be more in a variant),
+   as a list. Also takes a test case index. Returns the individual in the group that's best
+   on the test case. If none is best, returns a random out of the best."
+  [group case]
+  (let [min-error-for-case-in-group (apply min (map #(nth (:errors %) case)
+                                                    group))]
+    (lrand-nth (filter #(= (nth (:errors %) case)
+                           min-error-for-case-in-group)
+                       group))))
+
+(defn divide-and-conquer-lexicase-selection
+  "Pairs off population into groups of 2. Then, keeps only the one with better error
+   on the next test case. Repeats process, removing half the population at each step,
+   until down to one individual, the parent. Note: We shuffle the population at each
+   step to: 1) Make sure the same individuals aren't always paired together, and
+   2) Since the last individual in an odd-lengthed survivors list always makes it
+   through, this makes it so it isn't the same guy each time."
+  [population]
+  (loop [survivors (lshuffle population)
+         cases (lshuffle (range (count (:errors (first population)))))]
+    (if (or (empty? cases) ;This won't happen unless (length cases) < (log_2 survivors)
+            (empty? (rest survivors)))
+      (first survivors)
+      (let [grouped-in-twos (partition 2 2 [] survivors)
+            new-survivors (map #(best-in-group-on-case % (first cases))
+                               grouped-in-twos)]
+        (recur (lshuffle new-survivors)
+               (rest cases))))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; implicit fitness sharing
 
 (defn assign-ifs-error-to-individual
@@ -240,6 +273,7 @@
                    :leaky-lexicase (if (< (lrand) (:lexicase-leakage argmap))
                                      (uniform-selection pop-with-meta-errors)
                                      (lexicase-selection pop-with-meta-errors location argmap))
+                   :divide-and-conquer-lexicase (divide-and-conquer-lexicase-selection pop-with-meta-errors)
                    :uniform (uniform-selection pop-with-meta-errors)
                    (throw (Exception. (str "Unrecognized argument for parent-selection: "
                                            parent-selection))))]

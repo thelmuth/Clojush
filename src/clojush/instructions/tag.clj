@@ -155,3 +155,14 @@
                         "_"
                         (str (lrand-int limit))))))
   ([types] (return-tag-instruction-erc types @global-tag-limit)))
+
+(define-registered
+  integer_tag_exec_instruction
+  ^{:stack-types [:integer :tag :exec]}
+  (fn [state]
+    (if (not (empty? (:integer state)))
+      (push-item (symbol (str "tag_exec_" (mod (#(if (neg? %) (- %) %) (stack-ref :integer 0 state))
+                                               @global-tag-limit)))
+                 :exec
+                 (pop-item :integer state))
+      state)))

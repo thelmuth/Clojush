@@ -134,7 +134,7 @@
   [data-domains]
   (let [[train-cases test-cases] (map string-differences-test-cases
                                           (test-and-train-data-from-domains data-domains))]
-    (when true ;; Change to false to not print test cases
+    (when false ;; Change to false to not print test cases
       (doseq [[i case] (map vector (range) train-cases)]
         (println (format "Train Case: %3d | Input/Output: %s" i (str case))))
       (doseq [[i case] (map vector (range) test-cases)]
@@ -227,49 +227,63 @@
 
 ;;;;;;;;;;
 ;; Below here is for testing a hand-written solution.
-;
-;(reset! global-evalpush-limit 2000)
-;
-;(reset! global-max-points 1000)
-;
-;(defn test-program-on-training
-;  [program print-outputs]
-;  ((string-differences-error-function string-differences-data-domains) program :train print-outputs))
-;
-;; This program works
-;(def tom-program
-;  '(
-;     in1 string_length in2 string_length integer_min ;get length of shorter string
-;     integer_dup 0 integer_lte exec_when exec_flush ;when shorter string has length <= 0, don't do anything
-;     exec_do*count
-;     (
-;       integer_dup integer_dup
-;       in1 string_nth in2 string_nth
-;       char_eq boolean_not
-;       exec_when
-;       (
-;         boolean_empty boolean_not exec_when
-;         print_newline
-;         true ; put on boolean stack just to know when have been here before
-;         integer_dup integer_dup integer_dup
-;         print_integer
-;         \space print_char
-;         in1 string_nth print_char
-;         \space print_char
-;         in2 string_nth print_char
-;         )
-;       )
-;     ))
-;
-;(test-program-on-training tom-program true)
-;
-;(run-push tom-program
-;          (push-item "" :output (push-item "dealer" :input (push-item "dollars" :input (make-push-state)))))
-;
-;(run-push tom-program
-;          (push-item "" :output (push-item "uUT|b~" :input (push-item "uSQ|b~" :input (make-push-state))))
-;          false)
-;
-;(run-push tom-program
-;          (push-item "" :output (push-item "abcdefg" :input (push-item "ABCDE" :input (make-push-state))))
-;          false)
+
+(reset! global-evalpush-limit 2000)
+
+(reset! global-max-points 1000)
+
+(defn test-program-on-training
+  [program print-outputs train-or-test]
+  ((string-differences-error-function string-differences-data-domains) program train-or-test print-outputs))
+
+; This program works
+(def tom-program
+  '(
+     in1 string_length in2 string_length integer_min ;get length of shorter string
+     integer_dup 0 integer_lte exec_when exec_flush ;when shorter string has length <= 0, don't do anything
+     exec_do*count
+     (
+       integer_dup integer_dup
+       in1 string_nth in2 string_nth
+       char_eq boolean_not
+       exec_when
+       (
+         boolean_empty boolean_not exec_when
+         print_newline
+         true ; put on boolean stack just to know when have been here before
+         integer_dup integer_dup integer_dup
+         print_integer
+         \space print_char
+         in1 string_nth print_char
+         \space print_char
+         in2 string_nth print_char
+         )
+       )
+     ))
+
+(apply + (test-program-on-training tom-program false :test))
+
+(run-push tom-program
+          (push-item "" :output (push-item "dealer" :input (push-item "dollars" :input (make-push-state)))))
+
+(run-push tom-program
+          (push-item "" :output (push-item "uUT|b~" :input (push-item "uSQ|b~" :input (make-push-state))))
+          false)
+
+(run-push tom-program
+          (push-item "" :output (push-item "abcdefg" :input (push-item "ABCDE" :input (make-push-state))))
+          false)
+
+(def evolved-eva-program
+  '(in1 in2 0 exec_string_iterate
+        (char_dup string_parse_to_chars integer_eq string_removechar string_empty exec_string_iterate
+                  (exec_if ()
+                           (integer_tag_exec_instruction 
+                             print_newline boolean_stackdepth print_integer exec_dup
+                                                         (\space 0 print_char print_char))))))
+
+(apply + (test-program-on-training evolved-eva-program false :test))
+
+(run-push evolved-eva-program
+          (push-item "" :output (push-item "abcdefg" :input (push-item "ABCDE" :input (make-push-state))))
+          true)

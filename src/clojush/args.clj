@@ -271,6 +271,11 @@
           ;; lexicase selection process will "slip" and return a random candidate from the current
           ;; pool, rather than continuing to filter the pool.
 
+          :divide-and-conquer-lexicase-group-size 2
+          ;; When using divide-and-conquer-lexicase, this is the size of the groups of individuals
+          ;; in the base case. It also represents the number of parts to divide the population into
+          ;; at the highest level.
+
           :tournament-size 7
           ;; If using tournament selection, the size of the tournaments.
 

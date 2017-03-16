@@ -189,21 +189,25 @@
                        group))))
 
 (defn divide-and-conquer-lexicase-selection
-  "Pairs off population into groups of 2. Then, keeps only the one with better error
+  "Pairs off population into groups of size grouped-individuals.
+   Then, keeps only the one with better error
    on the next test case. Repeats process, removing half the population at each step,
    until down to one individual, the parent. Note: We shuffle the population at each
    step to: 1) Make sure the same individuals aren't always paired together, and
    2) Since the last individual in an odd-lengthed survivors list always makes it
    through, this makes it so it isn't the same guy each time."
-  [population]
+  [population {:keys [divide-and-conquer-lexicase-group-size]}]
   (loop [survivors (lshuffle population)
          cases (lshuffle (range (count (:errors (first population)))))]
     (if (or (empty? cases) ;This won't happen unless (length cases) < (log_2 survivors)
             (empty? (rest survivors)))
       (first survivors)
-      (let [grouped-in-twos (partition 2 2 [] survivors)
+      (let [grouped-individuals (partition divide-and-conquer-lexicase-group-size
+                                           divide-and-conquer-lexicase-group-size
+                                           []
+                                           survivors)
             new-survivors (map #(best-in-group-on-case % (first cases))
-                               grouped-in-twos)]
+                               grouped-individuals)]
         (recur (lshuffle new-survivors)
                (rest cases))))))
 
@@ -273,7 +277,7 @@
                    :leaky-lexicase (if (< (lrand) (:lexicase-leakage argmap))
                                      (uniform-selection pop-with-meta-errors)
                                      (lexicase-selection pop-with-meta-errors location argmap))
-                   :divide-and-conquer-lexicase (divide-and-conquer-lexicase-selection pop-with-meta-errors)
+                   :divide-and-conquer-lexicase (divide-and-conquer-lexicase-selection pop-with-meta-errors argmap)
                    :uniform (uniform-selection pop-with-meta-errors)
                    (throw (Exception. (str "Unrecognized argument for parent-selection: "
                                            parent-selection))))]

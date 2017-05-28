@@ -71,7 +71,7 @@
     (if (empty? map-of-weighted-cases)
       shuffled-case-list
       (let [total (reduce + (vals map-of-weighted-cases))
-            randnum (rand total)
+            randnum (lrand total)
             test-cases-with-endpoints (reductions (fn [[cur-ind cur-sum]
                                                        [new-ind new-sum]]
                                                     [new-ind (+ cur-sum new-sum)])
@@ -83,6 +83,7 @@
           (concat shuffled-case-list (shuffle (keys map-of-weighted-cases)))
           (recur (dissoc map-of-weighted-cases chosen-test-case)
                  (conj shuffled-case-list chosen-test-case)))))))
+
 (defn variance 
   [vector-of-error]
   (def sqr (fn [x] (*' x x)))
@@ -110,6 +111,7 @@
     (if (odd? counted)
       (nth sorted (quot counted 2))
       (/ (+(nth sorted (quot counted 2))(nth sorted bottom))2))))
+
 (defn median-inverse
   [vector-of-error]
   (if (= 0 (median vector-of-error))
@@ -163,7 +165,6 @@ If trivial-geography-radius is non-zero, selection is limited to parents within 
   [pop location {:keys [trivial-geography-radius]}]
   ;(println @testcase-weights)
   ;(println (weighted-shuffle))
- 
   (loop [survivors (retain-one-individual-per-error-vector pop)
          cases (weighted-shuffle)]
     (if (or (empty? cases)
@@ -180,21 +181,23 @@ If trivial-geography-radius is non-zero, selection is limited to parents within 
 ;;;;;;biased lexicase selection
 
 
-(defn case-order
+(defn rank-cases
+  "This takes a the @testcase-weights and returns a list of tast case ordered by rank
+   NOTE: Old version broke ties deterministically, meaning that tied test cases would always
+         be ranked in the same order, which may have made it worse. Now ties broken randomly"
   []
   (loop [map-of-weighted-cases @testcase-weights
-         ordered-list []]
+         ranked-list []]
     (if (empty? map-of-weighted-cases)
-      ordered-list
-      (let [chosen-test-case (key(apply max-key val map-of-weighted-cases))]
+      ranked-list
+      (let [highest-weight (val (apply max-key val map-of-weighted-cases))
+            chosen-test-case (key (lrand-nth (filter #(= (val %) highest-weight) map-of-weighted-cases)))]
         (recur (dissoc map-of-weighted-cases chosen-test-case)
-                 (conj ordered-list chosen-test-case))))))
-    
-    
-    
+               (conj ranked-list chosen-test-case))))))
+
+
 (defn bias-lexicase-selection
- [pop location {:keys [tournament-size trivial-geography-radius
-                       ]}]
+ [pop location {:keys [tournament-size trivial-geography-radius]}]
  (let [tournament-set 
        (doall
          (for [_ (range tournament-size)]
@@ -205,7 +208,7 @@ If trivial-geography-radius is non-zero, selection is limited to parents within 
                        (count pop))))))]
    
    (loop [survivors (retain-one-individual-per-error-vector tournament-set)
-        cases (case-order)]
+        cases (rank-cases)]
    (if (or (empty? cases)
            (empty? (rest survivors)))
      (lrand-nth survivors)
@@ -217,19 +220,6 @@ If trivial-geography-radius is non-zero, selection is limited to parents within 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;ranked lexicase selection
-        
-(defn rank-cases
-  "This takes a the @testcase-weights and returns a list of tast case ordered by rank"       
-  []
-  (loop [map-of-weighted-cases @testcase-weights
-         ranked-list []]
-    (if (empty? map-of-weighted-cases)
-      ranked-list
-      (let [chosen-test-case (key(apply max-key val map-of-weighted-cases))]
-       (recur (dissoc map-of-weighted-cases chosen-test-case)
-                (conj ranked-list chosen-test-case))))))
-
-
 
 (defn bias-ordering-of-cases-based-on-rank
   "Takes list of test cases ranked by some metric, and returns a biased shuffled
@@ -237,17 +227,17 @@ If trivial-geography-radius is non-zero, selection is limited to parents within 
    in the shuffled ordering."
   []
   (let [ranked-cases (rank-cases)]
-  (loop [result []
-         remaining-cases (vec ranked-cases)
-         number-cases-remaining (count ranked-cases)]
-    (if (empty? remaining-cases) 
-      result
-      (let [upper-bound (lrand-int number-cases-remaining)
-            index (lrand-int (inc upper-bound))]
-        (recur (conj result (nth remaining-cases index))
-               (vec (concat (subvec remaining-cases 0 index)
-                            (subvec remaining-cases (inc index))))
-               (dec number-cases-remaining)))))))
+    (loop [result []
+           remaining-cases (vec ranked-cases)
+           number-cases-remaining (count ranked-cases)]
+      (if (empty? remaining-cases) 
+        result
+        (let [upper-bound (lrand-int number-cases-remaining)
+              index (lrand-int (inc upper-bound))]
+          (recur (conj result (nth remaining-cases index))
+                 (vec (concat (subvec remaining-cases 0 index)
+                              (subvec remaining-cases (inc index))))
+                 (dec number-cases-remaining)))))))
 
 (defn ranked-lexicase-selection
   "Returns an individual that does the best on the fitness cases when considered one at a

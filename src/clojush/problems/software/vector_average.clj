@@ -42,12 +42,17 @@
 ;; inputs is either a list or a function that, when called, will create a
 ;; random element of the set.
 (def vector-average-data-domains
-  [[(list [0.0] [100.0] [-100.0]) 3 0] ;; Length 1 vectors
+  [[(list [0.0] [100.0] [-100.0] [1000.0] [-1000.0]) 5 0] ;; Length-1 vectors
+   [(fn [] (vector-average-input 1)) 45 500] ;; Random Length-1 vectors
    [(list [2.0 129.0]
           [0.12345 -4.678]
-          [999.99 74.113]) 3 0] ;; Length 2 vectors
-   [(fn [] (vector-average-input 50)) 4 50] ;; Length 50 vectors
-   [(fn [] (vector-average-input (inc (lrand-int 50)))) 90 950] ;; Random length, random floats
+          [999.99 74.113]
+          [987.654321 995.0003]
+          [-788.788 -812.19]) 5 0] ;; Length-2 vectors
+   [(fn [] (vector-average-input 2)) 45 500] ;; Random Length-2 vectors
+   [(fn [] (vector-average-input (+ 3 (lrand-int 3)))) 50 500] ;; Random Length-3, -4, and -5 vectors
+   [(fn [] (vector-average-input 50)) 5 50] ;; Random Length-50 vectors
+   [(fn [] (vector-average-input (inc (lrand-int 50)))) 95 1000] ;; Random length, random floats
    ])
 
 ;;Can make Vector Average test data like this:
@@ -63,19 +68,9 @@
                    (count %)))
        inputs))
 
-; Define error function. For now, each run uses different random inputs
-(defn vector-average-error-function
-  "Returns the error function for the vector-average problem. Takes as
-   input Vector Average data domains."
-  [data-domains]
-  (let [[train-cases test-cases] (map vector-average-test-cases
-                                      (test-and-train-data-from-domains data-domains))]
-    (when true ;; Change to false to not print test cases
-      (doseq [[i case] (map vector (range) train-cases)]
-        (println (format "Train Case: %3d | Input/Output: %s" i (str case))))
-      (doseq [[i case] (map vector (range) test-cases)]
-        (println (format "Test Case: %3d | Input/Output: %s" i (str case)))))
-    (fn the-actual-vector-average-error-function
+(defn make-vector-average-error-function-from-cases
+  [train-cases test-cases]
+  (fn the-actual-vector-average-error-function
       ([program]
         (the-actual-vector-average-error-function program :train))
       ([program data-cases] ;; data-cases should be :train or :test
@@ -108,7 +103,26 @@
                            )))]
           (when @global-print-behavioral-diversity
             (swap! population-behaviors conj @behavior))
-          errors)))))
+          errors))))
+
+(defn get-vector-average-train-and-test
+  "Returns the train and test cases."
+  [data-domains]
+  (map vector-average-test-cases
+       (test-and-train-data-from-domains data-domains)))
+
+; Define train and test cases
+(def vector-average-train-and-test-cases
+  (get-vector-average-train-and-test vector-average-data-domains))
+
+(defn vector-average-initial-report
+  [argmap]
+  (println "Train and test cases:")
+  (doseq [[i case] (map vector (range) (first vector-average-train-and-test-cases))]
+    (println (format "Train Case: %3d | Input/Output: %s" i (str case))))
+  (doseq [[i case] (map vector (range) (second vector-average-train-and-test-cases))]
+    (println (format "Test Case: %3d | Input/Output: %s" i (str case))))
+  (println ";;******************************"))
 
 (defn vector-average-report
   "Custom generational report."
@@ -136,9 +150,10 @@
 
 ; Define the argmap
 (def argmap
-  {:error-function (vector-average-error-function vector-average-data-domains)
+  {:error-function (make-vector-average-error-function-from-cases (first vector-average-train-and-test-cases)
+                                                                  (second vector-average-train-and-test-cases))
    :atom-generators vector-average-atom-generators
-   :max-points 800
+   :max-points 1600
    :max-genome-size-in-initial-program 200
    :evalpush-limit 800
    :population-size 1000
@@ -153,6 +168,7 @@
    :alignment-deviation 10
    :uniform-mutation-rate 0.01
    :problem-specific-report vector-average-report
+   :problem-specific-initial-report vector-average-initial-report
    :print-behavioral-diversity true
    :report-simplifications 0
    :final-report-simplifications 5000

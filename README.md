@@ -2,7 +2,6 @@ Clojush [![Travis branch](https://img.shields.io/travis/lspector/Clojush/master.
 =======
 
 
-
 Lee Spector (lspector@hampshire.edu), started 20100227
 [See version history](https://github.com/lspector/Clojush/commits/master).
 Older version history is in `old-version-history.txt`.
@@ -52,7 +51,7 @@ Another option is to evaluate in the leinigen REPL (Read Eval Print Loop):
 
     sh> lein repl
     ...
-    clojush.core=> (use 'clojush.examples.simple-regression)
+    clojush.core=> (use 'clojush.problems.demos.simple-regression)
     ...
     clojush.core=> (pushgp argmap)
 

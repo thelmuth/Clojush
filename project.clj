@@ -1,10 +1,9 @@
-(defproject clojush "2.0.55-SNAPSHOT"
+(defproject clojush "2.32.2-1-SNAPSHOT" 
   :description "The Push programming language and the PushGP genetic programming
-                system implemented in Clojure.
-                See http://hampshire.edu/lspector/push.html"
+                system implemented in Clojure. See http://pushlanguage.com"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
-  :dependencies [[org.clojure/clojure "1.7.0"]
+  :dependencies [[org.clojure/clojure "1.8.0"]
                  [org.clojars.etosch/cosmos "1.0.0"]
                  [org.clojure/math.numeric-tower "0.0.4"]
                  [org.clojure/math.combinatorics "0.1.1"]
@@ -12,10 +11,13 @@
                  [local-file "0.1.0"]
                  [clojure-csv "2.0.1"]
                  [org.clojure/data.json "0.2.6"]
-                 [clj-random "0.1.7"]]
+                 [clj-random "0.1.7"]
+                 ;; https://mvnrepository.com/artifact/org.apache.commons/commons-math3
+                 [org.apache.commons/commons-math3 "3.2"]
+                 [cheshire "5.7.1"]]
   :plugins [[lein-codox "0.9.1"]
             [lein-shell "0.5.0"]
-            [lein-gorilla "0.3.5"]
+            [lein-gorilla "0.4.0"]
             [lein-cloverage "1.0.6"]]
   :codox {:source-uri "http://github.com/lspector/Clojush/blob/master/{filepath}#L{line}"
           :namespaces [#"^(?!clojush\.problems)"]
@@ -28,11 +30,12 @@
                               :sign-releases false
                               :password :env}]]
   :release-tasks [["vcs" "assert-committed"]
+                  ["change" "version" "leiningen.release/bump-version"]
                   ["change" "version" "leiningen.release/bump-version" "release"]
                   ["shell" "git" "commit" "-am" "Version ${:version} [ci skip]"]
                   ["vcs" "tag" "v" "--no-sign"] ; disable signing and add "v" prefix
                   ["deploy"]
-                  ["change" "version" "leiningen.release/bump-version"]
+                  ["change" "version" "leiningen.release/bump-version" "qualifier"]
                   ["shell" "git" "commit" "-am" "Version ${:version} [ci skip]"]
                   ["vcs" "push"]]
 ;;;;;;;;;; jvm settings for high performance, using most of the machine's RAM

@@ -18,8 +18,8 @@
      :vector_integer (fn [thing] (and (vector? thing) (integer? (first thing))))
      :vector_float (fn [thing] (and (vector? thing) (float? (first thing))))
      :vector_string (fn [thing] (and (vector? thing) (string? (first thing))))
-     :vector_boolean (fn [thing] (and (vector? thing) (or (= (first thing) true) (= (first thing) false))))
-     }))
+     :vector_boolean (fn [thing] (and (vector? thing) (or (= (first thing) true) (= (first thing) false))))}))
+     
 
 (defn recognize-literal
   "If thing is a literal, return its type -- otherwise return false."
@@ -310,8 +310,8 @@
                          ;; of last of row + 1 (since we will be using vectors, peek is more efficient)
                          ;; or it could be a case of insertion, then the value is above+1, and we chose
                          ;; the minimum of the three
-                         (inc (min diagonal above (peek row)))
-                         )]
+                         (inc (min diagonal above (peek row))))]
+                         
         (conj row update-val)))
     ;; we need to initialize the reduce function with the value of a row, since we are
     ;; constructing this row from the previous one, the row is a vector of 1 element which
@@ -345,3 +345,44 @@
               ;; b and the empty string.
               (range (inc (count b)))
               a))))
+
+(defn sequence-similarity
+  [sequence1 sequence2]
+  "Returns a number between 0 and 1, indicating how similar the sequences are as a normalized,
+  inverted Levenshtein distance, it 1 indicating identity and 0 indicating no similarity."
+  (if (and (empty? sequence1) (empty? sequence2))
+    1
+    (let [dist (levenshtein-distance sequence1 sequence2)
+          max-dist (max (count sequence1) (count sequence2))]
+      (/ (- max-dist dist) max-dist))))
+
+;;;;;;;;;;;;;;:::::;;;;;;;;;;;;;;
+;; Simple Statistic Functions
+;; From: https://github.com/clojure-cookbook/clojure-cookbook/blob/master/01_primitive-data/1-20_simple-statistics.asciidoc
+
+(defn mean
+  [coll]
+  "https://github.com/clojure-cookbook/clojure-cookbook/blob/master/01_primitive-data/1-20_simple-statistics.asciidoc"
+  (let [sum (apply + coll)
+        count (count coll)]
+    (if (pos? count)
+      (/ sum count)
+      0)))
+
+(defn average
+  [& args]
+  (mean args))
+
+(defn median
+  [coll]
+  "https://github.com/clojure-cookbook/clojure-cookbook/blob/master/01_primitive-data/1-20_simple-statistics.asciidoc"
+  (let [sorted (sort coll)
+        cnt (count sorted)
+        halfway (quot cnt 2)]
+    (if (odd? cnt)
+      (nth sorted halfway)
+      (let [bottom (dec halfway)
+            bottom-val (nth sorted bottom)
+            top-val (nth sorted halfway)]
+           (mean [bottom-val top-val])))))
+

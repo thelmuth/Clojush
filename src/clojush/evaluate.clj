@@ -30,7 +30,10 @@
      :size (minimize size of program)
      :compressibility (minimize ammount a program compresses compared to itself)
      :total-error (minimize total error)
-     :unsolved-cases (maximize number of cases with zero error)"
+     :unsolved-cases (maximize number of cases with zero error)
+     :rand (a random floating-point value)
+     :rand-bit (randomly 0 or 1)
+     :age (minimize genealogical age of program)"
   [ind {:keys [meta-error-categories error-threshold] :as argmap}]
   (let [meta-error-fn (fn [cat]
                         (cond
@@ -38,7 +41,11 @@
                           (= cat :size) (count (:genome ind))
 ;                          (= cat :compressibility) 555 ;;TMH fix later
                           (= cat :total-error) (:total-error ind)
-                          (= cat :unsolved-cases) (count (filter #(> % error-threshold) (:errors ind)))
+                          (= cat :unsolved-cases) (count (filter #(> % error-threshold) 
+                                                                 (:errors ind)))
+                          (= cat :rand) (lrand)
+                          (= cat :rand-bit) (lrand-nth [0 1])
+                          (= cat :age) (:age ind)
                           :else (throw (Exception. (str "Unrecognized meta category: " cat)))))]
     (doall (map meta-error-fn meta-error-categories))))
 
@@ -122,3 +129,7 @@
                            )
             me (calculate-meta-errors new-ind argmap)]
         (assoc new-ind :meta-errors me)))))
+
+
+
+

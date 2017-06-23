@@ -40,11 +40,14 @@
                       (list 
                         (fn [] (* 1.0 (- (lrand-int 21) 10)))
                         'in1))
-   :population-size 10000
+   :population-size 1000
    :epigenetic-markers []
    :parent-selection :tournament
    :genetic-operator-probabilities {:alternation 0.5
                                     :uniform-mutation 0.5}
+   :uniform-mutation-rate 0.1
+   :alternation-rate 0.1
+   :alignment-deviation 100                                
    :uniform-mutation-constant-tweak-rate 0.8
    :uniform-mutation-float-gaussian-standard-deviation 0.1
    })

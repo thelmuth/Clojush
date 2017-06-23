@@ -5,7 +5,8 @@
 
 (ns clojush.problems.software.test-case-csvs
   (:use [clojush.util]
-        dk.ative.docjure.spreadsheet)
+        dk.ative.docjure.spreadsheet
+        )
   (:require [clojush.problems.software
              checksum
              collatz-numbers
@@ -40,11 +41,9 @@
             [clojure.data.csv :as csv]
             [clojure.java.io :as io]))
 
-
-
 (def problems-domains-and-test-cases-generators
   [; [problem-string multiple-inputs-bool data-domains test-case-generator]
-   ["checksum" false clojush.problems.software.checksum/checksum-data-domains clojush.problems.software.checksum/checksum-test-cases]
+;   ["checksum" false clojush.problems.software.checksum/checksum-data-domains clojush.problems.software.checksum/checksum-test-cases]
 ;   ["collatz-numbers" false clojush.problems.software.collatz-numbers/collatz-numbers-data-domains clojush.problems.software.collatz-numbers/collatz-numbers-test-cases]
 ;   ["compare-string-lengths" true clojush.problems.software.compare-string-lengths/csl-data-domains clojush.problems.software.compare-string-lengths/csl-test-cases]
 ;   ["count-odds" false clojush.problems.software.count-odds/count-odds-data-domains clojush.problems.software.count-odds/count-odds-test-cases]
@@ -54,12 +53,12 @@
 ;   ["for-loop-index" true clojush.problems.software.for-loop-index/loop-data-domains clojush.problems.software.for-loop-index/loop-test-cases]
 ;   ["grade" true clojush.problems.software.grade/grade-data-domains clojush.problems.software.grade/grade-test-cases]
 ;   ["last-index-of-zero" false clojush.problems.software.last-index-of-zero/last-index-of-zero-data-domains clojush.problems.software.last-index-of-zero/last-index-of-zero-test-cases]
-;   ["median" true clojush.problems.software.median/median-data-domains clojush.problems.software.median/median-test-cases]
+   ["median" true clojush.problems.software.median/median-data-domains clojush.problems.software.median/median-test-cases]
 ;   ["mirror-image" true clojush.problems.software.mirror-image/mirror-image-data-domains clojush.problems.software.mirror-image/mirror-image-test-cases]
 ;   ["negative-to-zero" false clojush.problems.software.negative-to-zero/negative-to-zero-data-domains clojush.problems.software.negative-to-zero/negative-to-zero-test-cases]
 ;   ["number-io" true clojush.problems.software.number-io/num-io-data-domains clojush.problems.software.number-io/num-io-test-cases]
 ;   ["pig-latin" false clojush.problems.software.pig-latin/pig-latin-data-domains clojush.problems.software.pig-latin/pig-latin-test-cases]
-;   ["replace-space-with-newline" false clojush.problems.software.replace-space-with-newline/replace-space-data-domains clojush.problems.software.replace-space-with-newline/replace-space-test-cases]
+   ["replace-space-with-newline" false clojush.problems.software.replace-space-with-newline/replace-space-data-domains clojush.problems.software.replace-space-with-newline/replace-space-test-cases]
 ;   ["scrabble-score" false clojush.problems.software.scrabble-score/scrabble-score-data-domains clojush.problems.software.scrabble-score/scrabble-score-test-cases]
 ;   ["small-or-large" false clojush.problems.software.small-or-large/small-or-large-data-domains clojush.problems.software.small-or-large/small-or-large-test-cases]
 ;   ["smallest" true clojush.problems.software.smallest/smallest-data-domains clojush.problems.software.smallest/smallest-test-cases]
@@ -97,9 +96,9 @@
                                        (map #(str "train_output_" %)
                                             (range 1 (inc number-outputs))))]
         test-header [(concat (map #(str "test_input_" %)
-                                            (range 1 (inc number-inputs)))
-                                       (map #(str "test_output_" %)
-                                            (range 1 (inc number-outputs))))]
+                                  (range 1 (inc number-inputs)))
+                             (map #(str "test_output_" %)
+                                  (range 1 (inc number-outputs))))]
         train-data (map (fn [[input output]]
                             (concat (if multiple-inputs
                                       input
@@ -137,12 +136,12 @@
   [problems-with-domains-and-tests filename-prefix print-csv print-xls]
   (doseq [[problem multiple-inputs domains test-generators] problems-with-domains-and-tests]
     (println problem)
-      (print-examples-to-csv (get-io-examples domains test-generators)
-                             multiple-inputs
-                             problem
-                             filename-prefix
-                             print-csv
-                             print-xls)))
+    (print-examples-to-csv (get-io-examples domains test-generators)
+                           multiple-inputs
+                           problem
+                           filename-prefix
+                           print-csv
+                           print-xls)))
 
 (print-csvs-for-problems problems-domains-and-test-cases-generators
                          "DELETE-LATER-"
@@ -150,7 +149,7 @@
                          false)
 
 ; Fake argmap
-(def argmap
+#_(def argmap
   {:error-function (fn [p] [0])
    :atom-generators (list 0)
    :max-points 10

@@ -14,10 +14,13 @@
                  [clj-random "0.1.7"]
                  ;; https://mvnrepository.com/artifact/org.apache.commons/commons-math3
                  [org.apache.commons/commons-math3 "3.2"]
-                 [cheshire "5.7.1"]]
+                 [cheshire "5.7.1"]
+                 [dk.ative/docjure "1.8.0"]
+                 ]
   :plugins [[lein-codox "0.9.1"]
             [lein-shell "0.5.0"]
             [lein-gorilla "0.4.0"]
+            [cider/cider-nrepl "0.14.0"]
             [lein-cloverage "1.0.6"]]
   :codox {:source-uri "http://github.com/lspector/Clojush/blob/master/{filepath}#L{line}"
           :namespaces [#"^(?!clojush\.problems)"]

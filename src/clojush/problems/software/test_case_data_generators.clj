@@ -5,7 +5,10 @@
             [clojush.problems.software
              median
              replace-space-with-newline])
-  (:import (java.util.zip ZipEntry ZipOutputStream)))
+  (:import (java.util.zip ZipEntry ZipOutputStream))
+  (:gen-class
+    :name clojush.problems.software.tcdg
+    :methods [#^{:static true} [generate_data_files [String int String] String]]))
 
 (def problem-map ;[multiple-inputs-bool data-domains test-case-generator]
   {"median" [true clojush.problems.software.median/median-data-domains clojush.problems.software.median/median-test-cases]
@@ -112,6 +115,11 @@
                            suffix)))
     (io/delete-file prefix)
     (str prefix ".zip")))
+
+(defn -generate_data_files
+  "Java method for this function"
+  [problem number-of-files file-type]
+  (generate-data-files problem number-of-files file-type))
 
 ;(generate-data-files "median" 5 "csv")
 

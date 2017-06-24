@@ -1,4 +1,4 @@
-(defproject clojush "2.32.2-1-SNAPSHOT" 
+(defproject clojush "2.32.3" 
   :description "The Push programming language and the PushGP genetic programming
                 system implemented in Clojure. See http://pushlanguage.com"
   :license {:name "Eclipse Public License"
@@ -56,4 +56,5 @@
   ;:jvm-opts ["-Djava.awt.headless=true"]
   ;;"-XX:+UseG1GC"
   ;:jvm-opts ["-Xmx12g" "-Xms12g" "-XX:+UseParallelGC"]
-  :main clojush.core)
+  ;:main clojush.core
+  :aot [clojush.problems.software.test-case-data-generators])

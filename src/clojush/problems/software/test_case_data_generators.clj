@@ -142,8 +142,8 @@
   "Generates data for given problem, in a number of files specified by the argument.
   Puts all generated files into a zip. Returns the location of the generated zip file."
   [problem number-of-files file-type path]
-  (let [directory (apply str (repeatedly 8 #(rand-nth "abcdefghijklmnopqrstuvwxyz")))
-        prefix (str path problem "-" directory)
+  (let [directory (apply str problem "-" (repeatedly 8 #(rand-nth "abcdefghijklmnopqrstuvwxyz")))
+        prefix (str path directory)
         suffix (case file-type
                  "csv" ".csv"
                  (throw (Exception. (str "Unrecognized file type: " file-type))))
@@ -169,12 +169,11 @@
                            index
                            suffix)))
     (io/delete-file prefix)
-    (str prefix ".zip")))
+    (str directory ".zip")))
 
 (defn -generate_data_files
   "Java method for this function"
   [problem number-of-files file-type path]
   (generate-data-files problem number-of-files file-type path))
 
-;(generate-data-files "last-index-of-zero" 7 "csv" "/Users/helmuth/Desktop/generated-data/")
-
+;(-generate_data_files "last-index-of-zero" 7 "csv" "/Users/helmuth/Desktop/generated-data/")

@@ -48,12 +48,10 @@
 (defn behavioral-diversity
   "Returns the behavioral diversity of the population, as described by David
    Jackson in 'Promoting phenotypic diversity in genetic programming'. It is
-   the percent of distinct behavior vectors in the population. Since finite
-   algebras has binary test cases, error vectors are equivalent to behavior
-   vectors."
-  []
-  (float (/ (count (distinct @population-behaviors))
-            (count @population-behaviors))))
+   the percent of distinct behavior vectors in the population."
+  [population]
+  (float (/ (count (distinct (map :behaviors population)))
+            (count population))))
 
 (defn sample-population-edit-distance
   "Returns a sample of Levenshtein distances between programs in the population,
@@ -309,7 +307,9 @@
            print-edn-logs edn-keys edn-log-filename edn-additional-keys]
            
     :as argmap}]
-  (r/generation-data! [:population] population)
+  (r/generation-data! [:population]
+    (map #(dissoc % :program) population))
+
   (println)
   (println ";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;")
   (println ";; -*- Report at generation" generation)
@@ -354,7 +354,7 @@
           (lexicase-report population argmap))
     (when (= total-error-method :ifs) (implicit-fitness-sharing-report population argmap))
     (println (format "--- Best Program (%s) Statistics ---" (str "based on " (name err-fn))))
-    (r/generation-data! [:best :individual] best)
+    (r/generation-data! [:best :individual] (dissoc best :program))
     (println "Best genome:" (print-genome best))
     (println "Best program:" (pr-str (not-lazy (:program best))))
     (when (> report-simplifications 0)
@@ -380,6 +380,8 @@
       :rmse (println "RMS-error:" (:weighted-error best))
       :ifs (println "IFS-error:" (:weighted-error best))
       nil)
+    (when (= parent-selection :novelty-search)
+      (println "Novelty: " (float (:novelty best))))
     (when print-history (println "History:" (not-lazy (:history best))))
     (println "Genome size:" (r/generation-data! [:best :genome-size] (count (:genome best))))
     (println "Size:" (r/generation-data! [:best :program-size] (count-points (:program best))))
@@ -480,11 +482,8 @@
     (println "Error (vector) diversity:\t\t\t" 
         (r/generation-data! [:population-report :percent-errors-unique]
              (float (/ (count (distinct (map :errors population))) (count population)))))
-    (when @global-print-behavioral-diversity
-      (swap! population-behaviors 
-             #(take-last population-size %)) ; Only use behaviors during evaluation, not those during simplification
-      (println "Behavioral diversity:\t\t\t\t" (behavioral-diversity))
-      (reset! population-behaviors ()))
+    (when (not (nil? (:behaviors (first population))))
+      (println "Behavioral diversity:\t\t\t\t" (behavioral-diversity population)))
     (when print-homology-data
       (let [num-samples 1000
             sample-1 (sample-population-edit-distance population num-samples)

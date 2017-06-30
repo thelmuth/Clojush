@@ -6,6 +6,7 @@
 
 (ns clojush.problems.software.calc
   (:use [clojush.pushgp.pushgp]
+        [clojush.args]
         [clojush.pushstate]
         [clojush.interpreter]
         [clojush.random]
@@ -427,7 +428,7 @@
                          ;return_zip_pop
                          ;string_atoi
                          ;string_concat
-                         ;string_contained
+                         ;string_contains
                          ;string_dup
                          ;string_eq
                          ;string_flush

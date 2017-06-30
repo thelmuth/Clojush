@@ -1,3 +1,4 @@
+
 (ns clojush.random
   (:use [clojush globals translate])
   (:require [clj-random.core :as random]))
@@ -42,14 +43,17 @@
   "Returns a random instruction map given the atom-generators and the required
    epigenetic-markers."
   ([atom-generators]
-    (random-plush-instruction-map atom-generators {}))
-  ([atom-generators {:keys [epigenetic-markers
-                            close-parens-probabilities
-                            silent-instruction-probability]
-                     :or {epigenetic-markers []
-                          close-parens-probabilities [0.772 0.206 0.021 0.001]
-                          silent-instruction-probability 0}}]
-    (let [markers (conj epigenetic-markers :instruction)]
+   (random-plush-instruction-map atom-generators {}))
+  ([atom-generators  {:keys [epigenetic-markers
+                             close-parens-probabilities
+                             silent-instruction-probability
+                             track-instruction-maps]
+                      :or {epigenetic-markers []
+                           close-parens-probabilities [0.772 0.206 0.021 0.001]
+                           silent-instruction-probability 0}}]
+   (let [markers (cond->
+                     (conj epigenetic-markers :instruction)
+                   track-instruction-maps (conj :uuid :random-insertion))]
       (zipmap markers
               (map (fn [marker]
                      (case marker
@@ -64,16 +68,18 @@
                        :silent (if (< (lrand) silent-instruction-probability)
                                  true
                                  false)
+                       :random-insertion true
+                       :uuid (java.util.UUID/randomUUID)
                        ))
                    markers)))))
 
 (defn random-plush-genome-with-size
   "Returns a random Plush genome containing the given number of points."
   [genome-size atom-generators argmap]
-  (repeatedly genome-size
-              #(random-plush-instruction-map
-                 atom-generators
-                 argmap)))
+  (vec (repeatedly genome-size
+                   #(random-plush-instruction-map
+                      atom-generators
+                      argmap))))
 
 (defn random-plush-genome
   "Returns a random Plush genome with size limited by max-genome-size."
@@ -81,8 +87,8 @@
     (random-plush-genome max-genome-size atom-generators {}))
   ([max-genome-size atom-generators argmap]
     (random-plush-genome-with-size (inc (lrand-int max-genome-size))
-                           atom-generators
-                           argmap)))
+                                   atom-generators
+                                   argmap)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; random Push code generator
@@ -97,3 +103,4 @@
                                     atom-generators
                                     argmap)}
       argmap)))
+

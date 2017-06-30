@@ -93,7 +93,7 @@
   "Returns a copy of the state with the specified stack popped. This is a utility,
    not for use as an instruction in Push programs."
   [type state]
-  (assoc state type (rest (type state))))
+  (update state type rest))
 
 (defn end-environment
   "Ends the current environment by popping the :environment stack and replacing
@@ -144,5 +144,5 @@
   "Takes a map of stack names and entire stack states, and returns a new push-state
    with those stacks set."
   [& {:as stack-assignments}]
-    (merge (make-push-state) stack-assignments)
-    )
+  (merge (make-push-state) stack-assignments))
+    

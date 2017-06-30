@@ -54,7 +54,7 @@
    "negative-to-zero" [false clojush.problems.software.negative-to-zero/negative-to-zero-data-domains clojush.problems.software.negative-to-zero/negative-to-zero-test-cases]
    "number-io" [true clojush.problems.software.number-io/num-io-data-domains clojush.problems.software.number-io/num-io-test-cases]
    "pig-latin" [false clojush.problems.software.pig-latin/pig-latin-data-domains clojush.problems.software.pig-latin/pig-latin-test-cases]
-   "replace-space-with-newline" [false clojush.problems.software.replace-space-with-newline/replace-space-data-domains clojush.problems.software.replace-space-with-newline/replace-space-test-cases]
+   "replace-space-with-newline" [false clojush.problems.software.replace-space-with-newline/replace-space-with-newline-data-domains clojush.problems.software.replace-space-with-newline/replace-space-with-newline-test-cases]
    "scrabble-score" [false clojush.problems.software.scrabble-score/scrabble-score-data-domains clojush.problems.software.scrabble-score/scrabble-score-test-cases]
    "small-or-large" [false clojush.problems.software.small-or-large/small-or-large-data-domains clojush.problems.software.small-or-large/small-or-large-test-cases]
    "smallest" [true clojush.problems.software.smallest/smallest-data-domains clojush.problems.software.smallest/smallest-test-cases]

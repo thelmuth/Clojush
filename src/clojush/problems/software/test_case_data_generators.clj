@@ -1,6 +1,8 @@
 (ns clojush.problems.software.test-case-data-generators
   (:use clojush.util)
   (:require [clojure.data.csv :as csv]
+            [clojure.edn :as edn]
+            [clojure.data.json :as json]
             [clojure.java.io :as io]
             [clojush.problems.software
              checksum
@@ -129,6 +131,18 @@
   (with-open [csv-file (io/writer csv-filename :append false)]
     (csv/write-csv csv-file data-to-write)))
 
+(defn write-data-to-edn
+  "Takes given data as a vector of vectors, where each internal vector
+  is a line to write in the EDN. Then, writes the EDN file."
+  [data-to-write edn-filename]
+  (spit edn-filename (prn-str data-to-write)))
+
+(defn write-data-to-json
+  "Takes given data as a vector of vectors, where each internal vector
+  is a line to write in the JSON. Then, writes the JSON file."
+  [data-to-write json-filename]
+  (spit json-filename (json/write-str data-to-write)))
+
 (defn generate-and-write-data-to-file
   "Generates train and test data for the given problem. Then, writes that data
   to the given file, using the given file structure"
@@ -136,6 +150,8 @@
   (let [data-to-write (get-writeable-data problem)]
     (case file-type
       "csv" (write-data-to-csv data-to-write output-filename)
+      "edn" (write-data-to-edn data-to-write output-filename)
+      "json" (write-data-to-json data-to-write output-filename)
       (throw (Exception. (str "Unrecognized file type: " file-type))))))
 
 (defn generate-data-files
@@ -146,6 +162,8 @@
         prefix (str path directory)
         suffix (case file-type
                  "csv" ".csv"
+                 "edn" ".edn"
+                 "json" ".json"
                  (throw (Exception. (str "Unrecognized file type: " file-type))))
         ]
     (.mkdir (java.io.File. prefix))
@@ -177,3 +195,4 @@
   (generate-data-files problem number-of-files file-type path))
 
 ;(-generate_data_files "last-index-of-zero" 7 "csv" "/Users/helmuth/Desktop/generated-data/")
+

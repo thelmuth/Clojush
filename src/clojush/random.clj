@@ -1,4 +1,3 @@
-
 (ns clojush.random
   (:use [clojush globals translate])
   (:require [clj-random.core :as random]))
@@ -69,6 +68,7 @@
                                  true
                                  false)
                        :random-insertion true
+                       :tag (lrand-int @global-tag-limit)  ; For tagged epigenes
                        :uuid (java.util.UUID/randomUUID)
                        ))
                    markers)))))
@@ -98,10 +98,10 @@
   ([max-points atom-generators]
     (random-push-code max-points atom-generators {:max-points @global-max-points}))
   ([max-points atom-generators argmap]
-    (translate-plush-genome-to-push-program
-      {:genome (random-plush-genome (max (int (/ max-points 4)) 1)
-                                    atom-generators
-                                    argmap)}
-      argmap)))
+   (:program (translate-plush-genome-to-push-program
+              {:genome (random-plush-genome (max (int (/ max-points 4)) 1)
+                                            atom-generators
+                                            argmap)}
+              argmap))))
 
 

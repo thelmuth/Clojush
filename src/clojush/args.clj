@@ -253,6 +253,10 @@
           ;; If true, each Plush instruction map will have a UUID attached to it. If the
           ;; gene has a "parent gene", it will also have the UUID of its parent.
 
+          :epigenetic-tag-code-blocks-only true
+          ;; If true, when using tag epigenetics, will only tag code blocks
+          ;; If false, will also tag single instructions and literals
+          
           ;;----------------------------------------
           ;; Arguments related to parent selection
           ;;----------------------------------------
@@ -479,6 +483,7 @@
           ;; Should be in the format "<hostname>:<port>"
           ;; If set, will send logs of each run to a server running on this
           ;; host
+
           :label nil
           ;; If set, will send this in the configuration of the run, to the
           ;; external record

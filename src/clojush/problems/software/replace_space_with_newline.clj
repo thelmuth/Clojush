@@ -38,12 +38,13 @@
             (fn [] (replace-space-with-newline-input (lrand-int 21))) ;String ERC
             ;;; end ERCs
             (tag-instruction-erc [:exec :integer :boolean :string :char] 1000)
-            (tagged-instruction-erc 1000)
+            ;(tagged-instruction-erc 1000)
             ;;; end tag ERCs
             'in1
             ;;; end input instructions
             )
-          (registered-for-stacks [:integer :boolean :string :char :exec :print])))
+          (registered-for-stacks [:integer :boolean :string :char :exec :print])
+          (repeat 10 (tagged-instruction-erc 1000)))) ;Extra tagged for experiment
 
 
 ;; A list of data domains for the problem. Each domain is a vector containing
@@ -96,14 +97,16 @@
 (defn replace-space-with-newline-evaluate-program-for-behaviors
   "Evaluates the program on the given list of cases.
    Returns the behaviors, a list of the outputs of the program on the inputs."
-  [program cases]
+  [ind cases]
   (flatten
    (doall
     (for [[input output] cases]
-      (let [final-state (run-push program
-                                  (->> (make-push-state)
-                                       (push-item input :input)
-                                       (push-item "" :output)))
+      (let [final-state (run-push (:program ind)
+                                  (assoc (->> (make-push-state)
+                                              (push-item input :input)
+                                              (push-item "" :output))
+                                         :tag
+                                         (:initial-tagspace ind)))
             printed-result (stack-ref :output 0 final-state)
             int-result (stack-ref :integer 0 final-state)]
         (vector printed-result int-result))))))
@@ -135,8 +138,9 @@
                  :train (first replace-space-with-newline-train-and-test-cases)
                  :test (second replace-space-with-newline-train-and-test-cases)
                  [])
-         behaviors (replace-space-with-newline-evaluate-program-for-behaviors (:program individual)
-                                                                 cases)
+         behaviors (replace-space-with-newline-evaluate-program-for-behaviors
+                    individual
+                    cases)
          errors (replace-space-with-newline-errors-from-behaviors behaviors cases)]
      (cond
        (= data-cases :train) (assoc individual :behaviors behaviors :errors errors)

@@ -7,11 +7,11 @@
 
 (defrecord individual [genome program errors behaviors total-error normalized-error weighted-error
                        novelty meta-errors history ancestors uuid parent-uuids genetic-operators
-                       age grain-size is-random-replacement])
+                       age grain-size is-random-replacement initial-tagspace])
 
 (defn make-individual [& {:keys [genome program errors behaviors total-error normalized-error weighted-error
                                  novelty meta-errors history ancestors uuid parent-uuids
-                                 genetic-operators age grain-size is-random-replacement]
+                                 genetic-operators age grain-size is-random-replacement initial-tagspace]
                           :or {genome nil
                                program nil
                                errors nil
@@ -29,10 +29,11 @@
                                age 0
                                grain-size 1 ; used for random-screen
                                is-random-replacement false
+                               initial-tagspace {}
                                }}]
   (individual. genome program errors behaviors total-error normalized-error weighted-error novelty
                meta-errors history ancestors uuid parent-uuids genetic-operators age grain-size
-               is-random-replacement))
+               is-random-replacement initial-tagspace))
 
 (defn printable [thing]
   (letfn [(unlazy [[head & tail]]
@@ -47,6 +48,6 @@
         (let [k '(:genome :program :errors :behaviors :total-error :normalized-error 
                           :weighted-error :novelty :meta-errors :history :ancestors :uuid 
                           :parent-uuids :genetic-operators :age :grain-size 
-                          :is-random-replacement)]
+                          :is-random-replacement :initial-tagspace)]
           (interleave k  (map #(printable (get i %)) k)))))
 

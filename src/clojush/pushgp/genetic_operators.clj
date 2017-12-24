@@ -794,16 +794,17 @@ the resulting top genome."
   ([genome-to-run parent1-genome parent2-genome argmap]
    (let [run-result (top-item :genome
                               (run-push
+                               (:program
                                 (translate-plush-genome-to-push-program
-                                  {:genome
-                                   (process-genome-for-autoconstruction genome-to-run)}
-                                  argmap)
-                                (-> (->> (make-push-state)
-                                         (push-item parent2-genome :genome)
-                                         (push-item parent1-genome :genome))
-                                    (assoc :parent1-genome parent1-genome)
-                                    (assoc :parent2-genome parent2-genome)
-                                    (assoc :autoconstructing true))))]
+                                 {:genome
+                                  (process-genome-for-autoconstruction genome-to-run)}
+                                 argmap))
+                               (-> (->> (make-push-state)
+                                        (push-item parent2-genome :genome)
+                                        (push-item parent1-genome :genome))
+                                   (assoc :parent1-genome parent1-genome)
+                                   (assoc :parent2-genome parent2-genome)
+                                   (assoc :autoconstructing true))))]
      (if (or (seq? run-result) (vector? run-result))
        (vec run-result)
        []))))
@@ -813,8 +814,8 @@ the resulting top genome."
 genome g."
   [g argmap]
   (ensure-list
-    (list-to-open-close-sequence
-      (translate-plush-genome-to-push-program {:genome g} argmap))))
+   (list-to-open-close-sequence
+    (:program (translate-plush-genome-to-push-program {:genome g} argmap)))))
 
 (defn expressed-difference
   "Returns the levenshtein distance between the open-close sequences for the
@@ -839,12 +840,12 @@ programs encoded by genomes g1 and g2."
   [ind argmap]
   (let [g (:genome ind)]
     (assoc ind :diversifying
-      (not= (translate-plush-genome-to-push-program 
-              {:genome g} 
-              argmap)
-            (translate-plush-genome-to-push-program 
-              {:genome (produce-child-genome-by-autoconstruction g g argmap)} 
-              argmap)))))
+           (not= (:program (translate-plush-genome-to-push-program 
+                            {:genome g} 
+                            argmap))
+                 (:program (translate-plush-genome-to-push-program 
+                            {:genome (produce-child-genome-by-autoconstruction g g argmap)} 
+                            argmap))))))
 
 (defn doesnt-clone-genetically-diversifying?
   [ind argmap]
@@ -857,18 +858,18 @@ programs encoded by genomes g1 and g2."
   (let [g (:genome ind)]
     (let [child-genome (produce-child-genome-by-autoconstruction g g argmap)]
       (assoc ind :diversifying
-        (not= (translate-plush-genome-to-push-program 
-                {:genome child-genome} 
-                argmap)
-              (translate-plush-genome-to-push-program 
-                {:genome (produce-child-genome-by-autoconstruction 
-                           child-genome child-genome argmap)} 
-                argmap))))))
+             (not= (:program (translate-plush-genome-to-push-program 
+                              {:genome child-genome} 
+                              argmap))
+                   (:program (translate-plush-genome-to-push-program 
+                              {:genome (produce-child-genome-by-autoconstruction 
+                                        child-genome child-genome argmap)} 
+                              argmap)))))))
 
 (defn not-a-clone-diversifying?
   [ind {:keys [parent1-genome parent2-genome] :as argmap}]
   (let [g (:genome ind)
-        express #(translate-plush-genome-to-push-program {:genome %} argmap)
+        express #(:program (translate-plush-genome-to-push-program {:genome %} argmap))
         pgm (express g)
         parent1-pgm (express parent1-genome)
         parent2-pgm (express parent2-genome)]
@@ -1128,10 +1129,9 @@ programs encoded by genomes g1 and g2."
                    (do
                      (swap! evaluations-count inc)
                      (:errors ((:error-function argmap)
-                               {:genome (:genome ind)
-                                :program (translate-plush-genome-to-push-program
-                                           {:genome (:genome ind)}
-                                           argmap)}))))]
+                               (translate-plush-genome-to-push-program
+                                {:genome (:genome ind)}
+                                argmap)))))]
       (assoc ind :diversifying
         (and (not= errs (take (count errs) (:parent1-errors argmap)))
              (not= errs (take (count errs) (:parent2-errors argmap))))))

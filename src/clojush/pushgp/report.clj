@@ -218,6 +218,8 @@
                                                           report-simplifications 
                                                           false 
                                                           1000))))))
+    (when (:initial-tagspace lex-best)
+      (println "Lexicase best initial tagspace:" (:initial-tagspace lex-best)))
     (when print-errors (println "Lexicase best errors:" (not-lazy (:errors lex-best))))
     (when (and print-errors (not (empty? meta-error-categories)))
       (println "Lexicase best meta-errors:" (not-lazy (:meta-errors lex-best))))
@@ -242,6 +244,9 @@
                                                           report-simplifications 
                                                           false 
                                                           1000))))))
+    (when (:initial-tagspace most-zero-cases-best)
+      (println "Lexicase best initial tagspace:" (:initial-tagspace most-zero-cases-best)))
+
     (when print-errors (println "Zero cases best errors:" (not-lazy (:errors most-zero-cases-best))))
     (when (and print-errors (not (empty? meta-error-categories)))
       (println "Zero cases best meta-errors:" (not-lazy (:meta-errors most-zero-cases-best))))
@@ -366,6 +371,8 @@
                                                           report-simplifications 
                                                           false 
                                                           1000)))))))
+    (when (:initial-tagspace best)
+      (println "Lexicase best initial tagspace:" (:initial-tagspace best)))
     (when print-errors (println "Errors:" (not-lazy (:errors best))))
     (when (and print-errors (not (empty? meta-error-categories)))
       (println "Meta-Errors:" (not-lazy (:meta-errors best))))

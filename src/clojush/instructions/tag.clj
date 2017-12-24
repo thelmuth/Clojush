@@ -1,7 +1,5 @@
 (ns clojush.instructions.tag
-  (:use [clojush.pushstate]
-        [clojush.globals]
-        [clojush.random])
+  (:use [clojush pushstate globals random])
   (:require [clojure.string :as string]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

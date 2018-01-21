@@ -8,7 +8,7 @@
          tag zip environment input-output genome]
         [clojush.pushgp breed report]
         [clojush.pushgp.selection 
-         selection epsilon-lexicase elitegroup-lexicase implicit-fitness-sharing novelty]
+         selection epsilon-lexicase elitegroup-lexicase implicit-fitness-sharing novelty sampled-lexicase-tournament]
         [clojush.experimental.decimation]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -197,6 +197,9 @@
           (when (or (= (:parent-selection @push-argmap) :novelty-search)
                     (some #{:novelty} (:meta-error-categories @push-argmap)))
             (calculate-novelty pop-agents novelty-archive @push-argmap))
+          ;; calculate samples for lexicase-tournament selection
+          (when (= (:parent-selection @push-argmap) :sampled-lexicase-tournament)
+            (sample-for-lexicase-tournament-selection pop-agents @push-argmap))
           (timer @push-argmap :other)
           ;; report and check for success
           (let [[outcome best] (report-and-check-for-success (vec (doall (map deref pop-agents)))

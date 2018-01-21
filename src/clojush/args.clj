@@ -263,7 +263,7 @@
           :parent-selection :lexicase
           ;; The parent selection method. Options include :tournament, :lexicase, :epsilon-lexicase,
           ;; :elitegroup-lexicase, :uniform, :leaky-lexicase, :random-threshold-lexicase,
-          ;; :novelty-search
+          ;; :novelty-search, :sampled-lexicase-tournament
 
           :epsilon-lexicase-epsilon nil
           ;; When parent-selection is :epsilon-lexicase,
@@ -289,6 +289,9 @@
           ;; "slip" and return a random candidate from the current pool, rather than continuing 
           ;; to filter the pool.
 
+          :sampled-lexicase-tournament-remove-zero-sample-individuals false
+          ;; If true, individuals with zero samples are not included in sampled lexicase tournaments
+          
           :tournament-size 7
           ;; If using tournament selection, the size of the tournaments.
 

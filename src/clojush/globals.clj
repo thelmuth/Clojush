@@ -73,6 +73,9 @@
 (def elitegroups (atom ())) 
 ;; Used for elitegroup lexicase selection (will only work if lexicase-selection is off)
 
+(def lexicase-tournament-samples (atom []))
+;; Used for lexicase-tournament selection. Stores maps of the form {:lexicase-samples n :individual i}
+
 (def epsilons-for-epsilon-lexicase (atom ())) 
 ;; Used in epsilon lexicase. Only calculated once per population
 

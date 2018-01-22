@@ -64,8 +64,8 @@
                       (for [[error-vector inds-vector] semantic-maps]
                         (vector error-vector
                                 (apply + (map :lexicase-samples inds-vector))))))
-        (println "Semantic Lexicase Sample Counts for each Error Vector:")
-        (prn @semantic-SLT-samples)))))
+        (println "Semantic Lexicase Sample Counts for each Error Vector:"
+                 (pr-str @semantic-SLT-samples))))))
 
 (defn sampled-lexicase-tournament-selection
   "Uses repeated lexicase selection samples to rank the population by how often

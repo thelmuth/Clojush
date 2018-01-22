@@ -291,6 +291,12 @@
 
           :sampled-lexicase-tournament-remove-zero-sample-individuals false
           ;; If true, individuals with zero samples are not included in sampled lexicase tournaments
+
+          :semantic-sampled-lexicase-tournament false
+          ;; If true, will base SLT on sampling of semantics instead of individuals
+
+          :sampled-slt-fitness :samples
+          ;; Options include :samples, :total-error
           
           :tournament-size 7
           ;; If using tournament selection, the size of the tournaments.

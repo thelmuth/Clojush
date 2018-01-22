@@ -5,7 +5,7 @@
 
 (defn select
   "Returns a selected parent."
-  [pop {:keys [parent-selection print-selection-counts] :as argmap}]
+  [pop {:keys [parent-selection print-selection-counts semantic-sampled-lexicase-tournament] :as argmap}]
   (let [pop-with-meta-errors (map #(update-in % [:errors] (comp vec concat) (:meta-errors %)) pop)
         preselected (preselect pop-with-meta-errors argmap)
         selected (case parent-selection
@@ -19,7 +19,9 @@
                                      (lrand-nth preselected)
                                      (lexicase-selection preselected argmap))
                    :novelty-search (novelty-tournament-selection preselected argmap)
-                   :sampled-lexicase-tournament (sampled-lexicase-tournament-selection argmap)
+                   :sampled-lexicase-tournament (if semantic-sampled-lexicase-tournament
+                                                  (semantic-sampled-lexicase-tournament-selection argmap)
+                                                  (sampled-lexicase-tournament-selection argmap))
                    :uniform (lrand-nth preselected)
                    (throw (Exception. (str "Unrecognized argument for parent-selection: "
                                            parent-selection))))]

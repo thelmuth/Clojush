@@ -53,5 +53,6 @@
   ;;;;;;;;;; misc other jvm-opts
   ;:jvm-opts ["-Djava.awt.headless=true"]
   ;;"-XX:+UseG1GC"
-  ;:jvm-opts ["-Xmx12g" "-Xms12g" "-XX:+UseParallelGC"]
+  :jvm-opts ["-Xmx20g" "-Xms20g" "-XX:+UseParallelGC"]
+  ;:jvm-opts ["-Xmx20g"]
   :main clojush.core)

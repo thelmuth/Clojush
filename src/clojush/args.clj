@@ -210,6 +210,10 @@
           :autoconstructive-decay 0.0
           ;; The rate for random gene deletions after autoconstruction.
           
+          :autoconstructive-clone-decay :same
+          ;; The rate for random gene deletions after cloning in autoconstruction. If this is
+          ;; :same then the value for :autoconstructive-decay is used.
+          
           :autoconstructive-parent-decay 0.0
           ;; The rate for random gene deletions in parent genomes used for autoconstruction.
 
@@ -266,7 +270,7 @@
           :parent-selection :lexicase
           ;; The parent selection method. Options include :tournament, :lexicase, :epsilon-lexicase,
           ;; :elitegroup-lexicase, :uniform, :leaky-lexicase, :random-threshold-lexicase,
-          ;; :novelty-search
+          ;; :random-toggle-lexicase, :randomly-truncated-lexicase, :novelty-search
 
           :epsilon-lexicase-epsilon nil
           ;; When parent-selection is :epsilon-lexicase,
@@ -281,6 +285,14 @@
           ;; The probability that each filtering step in random threshold lexicase selection will 
           ;; allow candidates with errors equal to or better than a randomly chosen threshold to 
           ;; survive, rather than just the best.
+          
+          :random-toggle-lexicase-probability 1
+          ;; The probability that each filtering step in random toggle lexicase selection will 
+          ;; allow just the best to survive, rather than all individuals in the pool.
+          
+          :randomly-truncated-lexicase-probability 1
+          ;; The probability that an application of randomly-truncated-lexicase-selection
+          ;; will consider only a random subset of the test cases, rather than all of them.
 
           :lexicase-leakage 0.1
           ;; If using leaky lexicase selection, the probability that a selection event will return
@@ -291,6 +303,11 @@
           ;; selection, the probability that each step of the lexicase selection process will
           ;; "slip" and return a random candidate from the current pool, rather than continuing 
           ;; to filter the pool.
+          
+          :sort-meta-errors-for-lexicase :random
+          ;; If using lexicase selection, determines how meta-errors will be sorted among
+          ;; the actual errors. Options are :random (errors and meta-errors are shuffled 
+          ;; together), :first (meta-errors come first), or :last (meta-errors come last).
 
           :tournament-size 7
           ;; If using tournament selection, the size of the tournaments.
@@ -310,8 +327,16 @@
           ;; normalization.
 
           :meta-error-categories []
-          ;; A vector containing meta-error categories that can be used for parent selection, but
-          ;; do not affect total error. See clojush.evaluate for options.
+          ;; A vector containing meta-error categories that can be used for parent selection, 
+          ;; but that do not affect total error or the determination of whether an individual 
+          ;; is considered to be a solution. Each meta-error-category should either be a function 
+          ;; (which must be namespace-qualified if provided in a command-line argument) or a 
+          ;; keyword corresponding to a pre-defined meta-error function. In either case the 
+          ;; function should take an individual, an evaluated population, and an argmap, and
+          ;; it should return a numeric meta error value or collection of values, for which 
+          ;; lower is interpreted as better. For keyword :foo, the corresponding meta-error 
+          ;; function will be clojush.meta-errors/foo-meta-error. See clojush.meta-errors for 
+          ;; the current options for pre-defined meta-error functions.
           
           :improvement-discount 0.5
           ;; The factor by successively older improvements are discounted when calculating
@@ -553,7 +578,8 @@
                                             genome_autoconstructing
                                             genome_if_autoconstructing
                                             genome_gene_genome_instruction
-                                            genome_if_gene_genome_instruction))
+                                            genome_if_gene_genome_instruction
+                                            genome_genesis))
                     :uniform (into (registered-for-stacks
                                      (if (:autoconstructive-environments @push-argmap)
                                        [:integer :boolean :exec :float :tag :environment]
@@ -593,7 +619,174 @@
                                       genome_alternation
                                       genome_uniform_crossover
                                       genome_gene_genome_instruction
-                                      genome_if_gene_genome_instruction)))]
+                                      genome_if_gene_genome_instruction))
+                    :non-recombinative (into (registered-for-stacks
+                                               (if (:autoconstructive-environments @push-argmap)
+                                                 [:integer :boolean :exec :float :tag :environment]
+                                                 [:integer :boolean :exec :float :tag]))
+                                             '(genome_pop
+                                                genome_dup
+                                                genome_swap
+                                                genome_rot
+                                                genome_flush
+                                                genome_eq
+                                                genome_stackdepth
+                                                genome_yank
+                                                genome_yankdup
+                                                genome_shove
+                                                genome_empty
+                                                genome_gene_dup
+                                                genome_gene_randomize
+                                                genome_gene_replace
+                                                genome_gene_delete
+                                                genome_rotate
+                                                ;genome_gene_copy
+                                                ;genome_gene_copy_range
+                                                genome_toggle_silent
+                                                genome_silence
+                                                genome_unsilence
+                                                genome_instruction_eq
+                                                genome_gene_close
+                                                genome_gene_silent
+                                                genome_close_inc
+                                                genome_close_dec
+                                                genome_new
+                                                genome_parent1
+                                                genome_parent2
+                                                autoconstructive_integer_rand
+                                                autoconstructive_boolean_rand
+                                                genome_autoconstructing
+                                                genome_if_autoconstructing
+                                                genome_gene_genome_instruction
+                                                genome_if_gene_genome_instruction
+                                                genome_genesis
+                                                genome_uniform_instruction_mutation
+                                                genome_uniform_integer_mutation
+                                                genome_uniform_float_mutation
+                                                genome_uniform_tag_mutation
+                                                genome_uniform_string_mutation
+                                                genome_uniform_boolean_mutation
+                                                genome_uniform_close_mutation
+                                                genome_uniform_silence_mutation
+                                                genome_uniform_deletion
+                                                genome_uniform_addition
+                                                genome_uniform_addition_and_deletion
+                                                ;genome_uniform_combination_and_deletion
+                                                ;genome_alternation
+                                                ;genome_uniform_crossover
+                                                ))
+                    :gene-oriented-non-recombinative 
+                    (into (registered-for-stacks
+                            (if (:autoconstructive-environments @push-argmap)
+                              [:integer :boolean :exec :float :tag :environment]
+                              [:integer :boolean :exec :float :tag]))
+                          '(genome_pop
+                             genome_dup
+                             genome_swap
+                             genome_rot
+                             genome_flush
+                             genome_eq
+                             genome_stackdepth
+                             genome_yank
+                             genome_yankdup
+                             genome_shove
+                             genome_empty
+                             genome_gene_dup
+                             genome_gene_randomize
+                             genome_gene_replace
+                             genome_gene_delete
+                             genome_rotate
+                             ;genome_gene_copy
+                             ;genome_gene_copy_range
+                             genome_toggle_silent
+                             genome_silence
+                             genome_unsilence
+                             genome_instruction_eq
+                             genome_gene_close
+                             genome_gene_silent
+                             genome_close_inc
+                             genome_close_dec
+                             genome_new
+                             genome_parent1
+                             genome_parent2
+                             autoconstructive_integer_rand
+                             autoconstructive_boolean_rand
+                             genome_autoconstructing
+                             genome_if_autoconstructing
+                             genome_gene_genome_instruction
+                             genome_if_gene_genome_instruction
+                             genome_genesis
+                             ;;genome_uniform_instruction_mutation
+                             ;;genome_uniform_integer_mutation
+                             ;;genome_uniform_float_mutation
+                             ;;genome_uniform_tag_mutation
+                             ;;genome_uniform_string_mutation
+                             ;;genome_uniform_boolean_mutation
+                             ;;genome_uniform_close_mutation
+                             ;;genome_uniform_silence_mutation
+                             ;;genome_uniform_deletion
+                             ;;genome_uniform_addition
+                             ;;genome_uniform_addition_and_deletion
+                             ;genome_uniform_combination_and_deletion
+                             ;genome_alternation
+                             ;genome_uniform_crossover
+                             ))
+                    :uniform-non-recombinative 
+                    (into (registered-for-stacks
+                            (if (:autoconstructive-environments @push-argmap)
+                              [:integer :boolean :exec :float :tag :environment]
+                              [:integer :boolean :exec :float :tag]))
+                          '(genome_pop
+                             genome_dup
+                             genome_swap
+                             genome_rot
+                             genome_flush
+                             genome_eq
+                             genome_stackdepth
+                             genome_yank
+                             genome_yankdup
+                             genome_shove
+                             genome_empty
+                             ;;genome_gene_dup
+                             ;;genome_gene_randomize
+                             ;;genome_gene_replace
+                             ;;genome_gene_delete
+                             ;;genome_rotate
+                             ;genome_gene_copy
+                             ;genome_gene_copy_range
+                             ;;genome_toggle_silent
+                             ;;genome_silence
+                             ;;genome_unsilence
+                             ;;genome_instruction_eq
+                             ;;genome_gene_close
+                             ;;genome_gene_silent
+                             ;;genome_close_inc
+                             ;;genome_close_dec
+                             genome_new
+                             genome_parent1
+                             genome_parent2
+                             autoconstructive_integer_rand
+                             autoconstructive_boolean_rand
+                             genome_autoconstructing
+                             genome_if_autoconstructing
+                             genome_gene_genome_instruction
+                             genome_if_gene_genome_instruction
+                             genome_genesis
+                             genome_uniform_instruction_mutation
+                             genome_uniform_integer_mutation
+                             genome_uniform_float_mutation
+                             genome_uniform_tag_mutation
+                             genome_uniform_string_mutation
+                             genome_uniform_boolean_mutation
+                             genome_uniform_close_mutation
+                             genome_uniform_silence_mutation
+                             genome_uniform_deletion
+                             genome_uniform_addition
+                             genome_uniform_addition_and_deletion
+                             ;genome_uniform_combination_and_deletion
+                             ;genome_alternation
+                             ;genome_uniform_crossover
+                             )))]
       (when (not (some #{instr} (:atom-generators @push-argmap)))
         (swap! push-argmap assoc :atom-generators (conj (:atom-generators @push-argmap) instr))))
     (swap! push-argmap assoc

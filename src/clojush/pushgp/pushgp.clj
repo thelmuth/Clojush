@@ -3,7 +3,8 @@
             [clj-random.core :as random]
             [clojure.repl :as repl]
             [clojush.pushgp.record :as r])
-  (:use [clojush args globals util pushstate random individual evaluate simplification translate]
+  (:use [clojush args globals util pushstate random individual evaluate meta-errors
+         simplification translate]
         [clojush.instructions boolean code common numbers random-instructions string char vectors
          tag zip environment input-output genome]
         [clojush.pushgp breed report]
@@ -88,9 +89,8 @@
   (when-not use-single-thread (apply await pop-agents)) ;; SYNCHRONIZE
   ;; compute meta-errors in a second pass, passing evaluated population
   (dorun (map #((if use-single-thread swap! send)
-                %1 evaluate-individual-meta-errors (mapv deref pop-agents) %2 argmap)
-              pop-agents
-              rand-gens))
+                %1 evaluate-individual-meta-errors (mapv deref pop-agents) argmap)
+              pop-agents))
   (when-not use-single-thread (apply await pop-agents))) ;; SYNCHRONIZE
 
 (defn produce-new-offspring
@@ -237,3 +237,4 @@
            (if (nil? next-novelty-archive)
              return-val
              (recur (inc generation) next-novelty-archive))))))))
+

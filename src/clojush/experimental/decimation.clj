@@ -25,3 +25,10 @@
                             (subvec population (inc victim-index)))))
              target-size tournament-size))))
 
+
+(defn elitist-survival
+  "Retains only the elitist-survival-rate proportion of the population,
+  after sorting by total error."
+  [pop elitist-survival-rate]
+  (take (Math/ceil (* elitist-survival-rate (count pop)))
+        (sort-by :total-error pop)))

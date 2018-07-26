@@ -95,12 +95,15 @@
 
 (defn produce-new-offspring
   [pop-agents child-agents rand-gens
-   {:keys [decimation-ratio population-size decimation-tournament-size use-single-thread]}]
-  (let [pop (if (>= decimation-ratio 1)
-              (vec (doall (map deref pop-agents)))
-              (decimate (vec (doall (map deref pop-agents)))
-                        (int (* decimation-ratio population-size))
-                        decimation-tournament-size))
+   {:keys [decimation-ratio population-size decimation-tournament-size use-single-thread elitist-survival-rate]}]
+  (let [deci-pop (if (>= decimation-ratio 1)
+                   (vec (doall (map deref pop-agents)))
+                   (decimate (vec (doall (map deref pop-agents)))
+                             (int (* decimation-ratio population-size))
+                             decimation-tournament-size))
+        pop (if (< elitist-survival-rate 1)
+              (elitist-survival deci-pop elitist-survival-rate)
+              deci-pop)
         ages (map :age pop)]
     (reset! min-age (apply min ages))
     (reset! max-age (apply max ages))

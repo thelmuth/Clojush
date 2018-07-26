@@ -350,6 +350,9 @@
           :decimation-tournament-size 2
           ;; Size of the decimation tournaments.
 
+          :elitist-survival-rate 1
+          ;; Percent of the population that survives, as sorted by total error
+          
           :print-selection-counts false
           ;; If true, keeps track of and prints the number of times each individual was selected
           ;; to be a parent

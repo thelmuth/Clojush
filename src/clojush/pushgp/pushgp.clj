@@ -95,15 +95,18 @@
 
 (defn produce-new-offspring
   [pop-agents child-agents rand-gens
-   {:keys [decimation-ratio population-size decimation-tournament-size use-single-thread elitist-survival-rate]}]
+   {:keys [decimation-ratio population-size decimation-tournament-size use-single-thread elitist-survival-rate] :as argmap}]
   (let [deci-pop (if (>= decimation-ratio 1)
                    (vec (doall (map deref pop-agents)))
                    (decimate (vec (doall (map deref pop-agents)))
                              (int (* decimation-ratio population-size))
                              decimation-tournament-size))
-        pop (if (< elitist-survival-rate 1)
-              (elitist-survival deci-pop elitist-survival-rate)
-              deci-pop)
+        pop (map #(assoc %1 :rank-by-total-error %2)
+                 (sort-by :total-error
+                          (if (< elitist-survival-rate 1)
+                            (elitist-survival deci-pop elitist-survival-rate)
+                            deci-pop))
+                 (range))
         ages (map :age pop)]
     (reset! min-age (apply min ages))
     (reset! max-age (apply max ages))
@@ -111,7 +114,7 @@
       ((if use-single-thread swap! send)
        (nth child-agents i)
        breed
-       i (nth rand-gens i) pop @push-argmap)))
+       i (nth rand-gens i) pop argmap)))
   (when-not use-single-thread (apply await child-agents))) ;; SYNCHRONIZE
 
 (defn install-next-generation
@@ -201,7 +204,9 @@
                                   (produce-new-offspring pop-agents
                                                          child-agents
                                                          rand-gens
-                                                         @push-argmap)
+                                                         (assoc @push-argmap
+                                                                :generation
+                                                                generation))
                                   (println "Installing next generation...") (flush)
                                   (install-next-generation pop-agents child-agents @push-argmap)
                                   [next-novelty-archive nil])

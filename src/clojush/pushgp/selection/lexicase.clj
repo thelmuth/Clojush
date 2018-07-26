@@ -1,5 +1,7 @@
 (ns clojush.pushgp.selection.lexicase
-  (:use [clojush random]))
+  (:use [clojush random])
+  (:require [clojure.data.csv :as csv]
+            [clojure.java.io :as io]))
 
 (defn shuffle-cases
   [pop argmap]
@@ -20,16 +22,24 @@
 (defn lexicase-selection
   "Returns an individual that does the best on the fitness cases when considered one at a
   time in random order."
-  [pop argmap]
+  [pop {:keys [generation csv-log-filename] :as argmap}]
   (loop [survivors pop
          cases (shuffle-cases pop argmap)]
     (if (or (empty? cases)
             (empty? (rest survivors))
             (< (lrand) (:lexicase-slippage argmap)))
-      (lrand-nth survivors)
+      (let [selected-ind (lrand-nth survivors)
+            cases-used (- (count (:errors (first pop)))
+                          (count cases))]
+        (with-open [csv-file (io/writer csv-log-filename :append true)]
+          (csv/write-csv csv-file
+                         [[generation
+                            ;(str (:uuid selected-ind)) ; Not needed, since rank and generation uniquely identify each individual
+                            cases-used
+                            (:rank-by-total-error selected-ind)]]))
+        selected-ind)
       (let [min-err-for-case (apply min (map #(nth % (first cases))
                                              (map :errors survivors)))]
         (recur (filter #(= (nth (:errors %) (first cases)) min-err-for-case)
                        survivors)
                (rest cases))))))
-

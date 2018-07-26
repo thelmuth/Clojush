@@ -554,12 +554,18 @@
 
 (defn initial-report
   "Prints the initial report of a PushGP run."
-  [{:keys [problem-specific-initial-report] :as push-argmap}]
+  [{:keys [problem-specific-initial-report csv-log-filename] :as push-argmap}]
   (problem-specific-initial-report push-argmap)
   (println "Registered instructions:"
     (r/config-data! [:registered-instructions] @registered-instructions))
   (println "Starting PushGP run.")
   (printf "Clojush version = ")
+  (with-open [csv-file (io/writer csv-log-filename :append false)]
+    (csv/write-csv csv-file
+                   [["generation"
+                     ; "UUID"
+                     "number-test-cases-used"
+                     "rank-by-total-error"]]))
   (try
     (let [version-str (apply str (butlast (re-find #"\".*\""
                                                    (first (string/split-lines

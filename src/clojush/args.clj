@@ -515,6 +515,9 @@
           :csv-log-filename "log.csv"
           ;; The file to print CSV log to.
 
+          :csv-case-usage-filename "caseUsage.csv"
+          ;; The file to print case usage CSV log to.
+
           :edn-log-filename "log.edn"
           ;; The file to print EDN log to.
 

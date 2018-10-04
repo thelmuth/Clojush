@@ -6,7 +6,7 @@
   (:use [clojush args globals util pushstate random individual evaluate meta-errors
          simplification translate]
         [clojush.instructions boolean code common numbers random-instructions string char vectors
-         tag zip environment input-output genome]
+         tag zip environment input-output genome gtm]
         [clojush.pushgp breed report]
         [clojush.pushgp.selection
          selection epsilon-lexicase elitegroup-lexicase implicit-fitness-sharing novelty]
@@ -36,16 +36,22 @@
   "Makes the population of agents containing the initial random individuals in the population.
    Argument is a push argmap"
   [{:keys [use-single-thread population-size
-           max-genome-size-in-initial-program atom-generators]
+           max-genome-size-in-initial-program atom-generators genome-representation]
     :as argmap}]
   (let [population-agents (vec (repeatedly population-size
                                            #(make-individual
-                                              :genome (strip-random-insertion-flags
-                                                        (random-plush-genome
-                                                          max-genome-size-in-initial-program
-                                                          atom-generators
-                                                          argmap))
-                                              :genetic-operators :random)))]
+                                             :genome (case genome-representation
+                                                       :plush (strip-random-insertion-flags
+                                                               (random-plush-genome
+                                                                max-genome-size-in-initial-program
+                                                                atom-generators
+                                                                argmap))
+                                                       :plushy (random-plushy-genome
+                                                                (* 1.165
+                                                                   max-genome-size-in-initial-program)
+                                                                atom-generators
+                                                                argmap))
+                                             :genetic-operators :random)))]
     (mapv #(if use-single-thread
              (atom %)
              (agent % :error-handler agent-error-handler))
@@ -81,12 +87,26 @@
 
 
 (defn compute-errors
-  [pop-agents rand-gens {:keys [use-single-thread error-function] :as argmap}]
+  [pop-agents rand-gens novelty-archive
+   {:keys [use-single-thread error-function] :as argmap}]
   (dorun (map #((if use-single-thread swap! send)
                 %1 evaluate-individual error-function %2 argmap)
               pop-agents
               rand-gens))
   (when-not use-single-thread (apply await pop-agents)) ;; SYNCHRONIZE
+  ;; Compute values needed for meta-errors
+  ;;
+  ;; calculate novelty when novelty-search or novelty meta errors are used
+  (when (or (= (:parent-selection argmap) :novelty-search)
+            (some #{:novelty} (:meta-error-categories argmap)))
+    (calculate-novelty pop-agents novelty-archive argmap))
+  ;; calculates novelty lexicase meta errors
+  (when (some #{:novelty-by-case} (:meta-error-categories argmap))
+    (calculate-lex-novelty pop-agents novelty-archive argmap))
+  ;; ;;Novelty Lexicase based on distance
+  ;; (when (some #{:novelty-by-case} (:meta-error-categories argmap))
+  ;;   (calculate-lex-dist-novelty pop-agents novelty-archive argmap))
+  ;;
   ;; compute meta-errors in a second pass, passing evaluated population
   (dorun (map #((if use-single-thread swap! send)
                 %1 evaluate-individual-meta-errors (mapv deref pop-agents) argmap)
@@ -128,12 +148,25 @@
   [argmap]
   (let [prob-map (:genetic-operator-probabilities argmap)]
     (doseq [gen-op (keys prob-map)]
-      (if (sequential? gen-op)
+      (if (sequential? gen-op) ; gen-op will be sequential if it is an operator pipeline
         (doseq [g gen-op]
           (assert (contains? genetic-operators g)
-                  (str "Unrecognized genetic operator: " g " in " gen-op)))
-        (assert (contains? genetic-operators gen-op)
-                (str "Unrecognized genetic operator: " gen-op))))
+                  (str "Unrecognized genetic operator: " g " in " gen-op))
+          (when (= (:genome-representation argmap) :plushy)
+            (assert (:works-with-plushy (get genetic-operators g))
+                    (str "You are using Plushy genomes with a genetic operator that does not support Plushy genomes: " g)))
+          (when (= (:genome-representation argmap) :plush)
+            (assert (:works-with-plush (get genetic-operators g))
+                    (str "You are using Plush genomes with a genetic operator that does not support Plush genomes: " g))))
+        (do
+          (assert (contains? genetic-operators gen-op)
+                  (str "Unrecognized genetic operator: " gen-op))
+          (when (= (:genome-representation argmap) :plushy)
+            (assert (:works-with-plushy (get genetic-operators gen-op))
+                    (str "You are using Plushy genomes with a genetic operator that does not support Plushy genomes: " gen-op)))
+          (when (= (:genome-representation argmap) :plush)
+            (assert (:works-with-plush (get genetic-operators gen-op))
+                    (str "You are using Plush genomes with a genetic operator that does not support Plush genomes: " gen-op))))))
     (assert (< 0.99999
                (apply + (vals prob-map))
                1.00001)
@@ -157,12 +190,14 @@
    where new novelty archive will be nil if we are done."
   [rand-gens pop-agents child-agents generation novelty-archive]
   (r/new-generation! generation)
-  (println "Processing generation:" generation) (flush)
-  (population-translate-plush-to-push pop-agents @push-argmap)
+  (println "Processing generation:" generation)
+  (case (:genome-representation @push-argmap)
+    :plush (population-translate-plush-to-push pop-agents @push-argmap)
+    :plushy (population-translate-plushy-to-push pop-agents @push-argmap))
   (timer @push-argmap :reproduction)
-  (print "Computing errors... ") (flush)
-  (compute-errors pop-agents rand-gens @push-argmap)
-  (println "Done computing errors.") (flush)
+  (println "Computing errors... ")
+  (compute-errors pop-agents rand-gens novelty-archive @push-argmap)
+  (println "Done computing errors.")
   (timer @push-argmap :fitness)
   ;; calculate solution rates if necessary for historically-assessed hardness
   (calculate-hah-solution-rates pop-agents @push-argmap)
@@ -175,10 +210,6 @@
   ;; calculate epsilons for epsilon lexicase selection
   (when (= (:parent-selection @push-argmap) :epsilon-lexicase)
     (calculate-epsilons-for-epsilon-lexicase pop-agents @push-argmap))
-  ;; calculate novelty when necessary
-  (when (or (= (:parent-selection @push-argmap) :novelty-search)
-            (some #{:novelty} (:meta-error-categories @push-argmap)))
-    (calculate-novelty pop-agents novelty-archive @push-argmap))
   (timer @push-argmap :other)
   ;; report and check for success
   (let [[outcome best] (report-and-check-for-success (vec (doall (map deref pop-agents)))

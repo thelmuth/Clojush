@@ -118,7 +118,7 @@
                      (pop-item :integer state))))))
 
 ; Atom generators
-(def wc-atom-generators
+(def wc-atom-generators-new
   (concat
    (registered-for-stacks [:string :integer :exec :boolean :char])
    (list
@@ -137,68 +137,88 @@
     'output_wordcount
     'output_linecount
     ;;;; end problem-specific instructions
-    ;; 'string_pop
-    ;; 'string_take
-    ;; 'string_eq
-    ;; 'string_stackdepth
-    ;; 'string_rot
-    ;; 'string_parse_to_chars
-    ;; ;'string_rand
-    ;; 'string_contains
-    ;; 'string_reverse
-    ;; 'string_yank
-    ;; 'string_swap
-    ;; 'string_yankdup
-    ;; 'string_flush
-    ;; 'string_length
-    ;; 'string_concat
-    ;; ;'string_atoi
-    ;; 'string_shove
-    ;; 'string_dup
-    ;; 'string_split
-    ;; ;;; end string instructions
-    ;; 'integer_add
-    ;; 'integer_swap
-    ;; 'integer_yank
-    ;; 'integer_dup
-    ;; 'integer_yankdup
-    ;; 'integer_shove
-    ;; 'integer_mult
-    ;; 'integer_div
-    ;; 'integer_max
-    ;; 'integer_sub
-    ;; 'integer_mod
-    ;; 'integer_rot
-    ;; 'integer_min
-    ;; 'integer_inc
-    ;; 'integer_dec
-    ;; ;;; end integer instructions
-    ;; 'exec_y
-    ;; 'exec_pop
-    ;; 'exec_eq
-    ;; 'exec_stackdepth
-    ;; 'exec_rot
-    ;; 'exec_when
-    ;; 'exec_do*times
-    ;; 'exec_do*count
-    ;; 'exec_s
-    ;; 'exec_do*range
-    ;; 'exec_if
-    ;; 'exec_k
-    ;; 'exec_yank
-    ;; 'exec_yankdup
-    ;; 'exec_swap
-    ;; 'exec_dup
-    ;; 'exec_shove
-    ;; ;;; end exec instructions
-    ;; 'boolean_swap
-    ;; 'boolean_and
-    ;; 'boolean_not
-    ;; 'boolean_or
-    ;; 'boolean_frominteger
-    ;; 'boolean_stackdepth
-    ;; 'boolean_dup
     )))
+
+
+(def wc-atom-generators
+  (list
+   (fn [] (- (lrand-int 201) 100))
+   (fn [] (lrand-nth ["\n" "\t" " "]))
+   (fn [] (lrand-nth (concat ["\n" "\t"] (map (comp str char) (range 32 127)))))
+   (tag-instruction-erc [:exec :string :integer] 1000)
+   (tagged-instruction-erc 1000)
+    ;;;; end ERCs
+   'string_readchar
+   'string_readline
+   'string_whitespace
+   'file_EOF
+   'file_begin
+   'output_charcount
+   'output_wordcount
+   'output_linecount
+    ;;;; end problem-specific instructions
+   'string_pop
+   'string_take
+   'string_eq
+   'string_stackdepth
+   'string_rot
+   'string_parse_to_chars
+   ;'string_rand
+   'string_contains
+   'string_reverse
+   'string_yank
+   'string_swap
+   'string_yankdup
+   'string_flush
+   'string_length
+   'string_concat
+   ;'string_atoi
+   'string_shove
+   'string_dup
+   'string_split
+   ;;; end string instructions
+   'integer_add
+   'integer_swap
+   'integer_yank
+   'integer_dup
+   'integer_yankdup
+   'integer_shove
+   'integer_mult
+   'integer_div
+   'integer_max
+   'integer_sub
+   'integer_mod
+   'integer_rot
+   'integer_min
+   'integer_inc
+   'integer_dec
+   ;;; end integer instructions
+   'exec_y
+   'exec_pop
+   'exec_eq
+   'exec_stackdepth
+   'exec_rot
+   'exec_when
+   'exec_do*times
+   'exec_do*count
+   'exec_s
+   'exec_do*range
+   'exec_if
+   'exec_k
+   'exec_yank
+   'exec_yankdup
+   'exec_swap
+   'exec_dup
+   'exec_shove
+   ;;; end exec instructions
+   'boolean_swap
+   'boolean_and
+   'boolean_not
+   'boolean_or
+   'boolean_frominteger
+   'boolean_stackdepth
+   'boolean_dup
+   ))
 
 ;; Define test cases
 (defn wc-input

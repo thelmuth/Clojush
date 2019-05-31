@@ -31,17 +31,49 @@
             'in1
             ;;; end input instructions
             )
-          (registered-for-stacks [:boolean :string :char :exec :vector_string])))
+          (registered-for-stacks [:boolean :string :char :exec :vector_string :print])))
 
 
 ;; Define test cases
 (defn tic-tac-toe-input
   "Makes a Tic Tac Toe input."
   [in]
-    (case in
-      0 "."
-      1 "O"
-      2 "X"))
+    (vector (case (nth in 0)
+              0 "."
+              1 "O"
+              2 "X")
+            (case (nth in 1)
+                    0 "."
+                    1 "O"
+                    2 "X")
+            (case (nth in 2)
+                    0 "."
+                    1 "O"
+                    2 "X")
+            (case (nth in 3)
+                    0 "."
+                    1 "O"
+                    2 "X")
+            (case (nth in 4)
+                    0 "."
+                    1 "O"
+                    2 "X")
+            (case (nth in 5)
+                    0 "."
+                    1 "O"
+                    2 "X")
+            (case (nth in 6)
+                    0 "."
+                    1 "O"
+                    2 "X")
+            (case (nth in 7)
+                    0 "."
+                    1 "O"
+                    2 "X")
+            (case (nth in 8)
+                    0 "."
+                    1 "O"
+                    2 "X")))
 
 ;; A list of data domains for the problem. Each domain is a vector containing
 ;; a "set" of inputs and two integers representing how many cases from the set
@@ -79,7 +111,7 @@
           ["X" "O" "X"
            "X" "O" "X"
            "O" "X" "O"]) 10 0]  ;; "Special" inputs covering the base cases
-   [(fn [] (vec (repeatedly 9 #(tic-tac-toe-input (lrand-int 3))))) 90 1000]
+   [(fn [] (tic-tac-toe-input (vec (repeatedly 9 #(lrand-int 3))))) 90 1000]
    ])
 
 ;;Can make Tic Tac Toe test data like this:
@@ -91,17 +123,18 @@
    [input output]."
   [inputs]
   (map (fn [in]
-          (case
-              (let [rows [[(nth in 0) (nth in 1) (nth in 2)]
-                          [(nth in 3) (nth in 4) (nth in 5)]
-                          [(nth in 6) (nth in 7) (nth in 8)]]
-                    cols (apply map vector rows)
-                    diags (map #(map % (range 3)) [#((rows %) %) #((rows %) (- 2 %))])
-                    lines (concat rows cols diags)]
-              (first (some (comp #{#{"X"} #{"O"}} set) lines)))
-              "X" "X won"
-              "O" "O won"
-              nil "No winner"))
+          (vector in
+              (case
+                  (let [rows [[(nth in 0) (nth in 1) (nth in 2)]
+                              [(nth in 3) (nth in 4) (nth in 5)]
+                              [(nth in 6) (nth in 7) (nth in 8)]]
+                        cols (apply map vector rows)
+                        diags (map #(map % (range 3)) [#((rows %) %) #((rows %) (- 2 %))])
+                        lines (concat rows cols diags)]
+                  (first (some (comp #{#{"X"} #{"O"}} set) lines)))
+                  "X" "X won"
+                  "O" "O won"
+                  "No winner")))
        inputs))
 
 (defn make-tic-tac-toe-error-function-from-cases

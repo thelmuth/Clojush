@@ -27,7 +27,7 @@
          :error-function (fn [p] '(0))
           ;; Function that takes a program and returns a list of errors.
 
-         :down-sample-factor 0.1
+         :down-sample-factor 0.25
          ;; between 0 and 1
 
          :error-threshold 0

@@ -1,14 +1,7 @@
 ;; tic_tac_toe.clj
 ;; Tom Helmuth, thelmuth@cs.umass.edu
 ;;
-;; Problem Source: iJava (http://ijava.cs.umass.edu/)
 ;;
-;; Given a string, print the string, doubling every letter character, and
-;; trippling every exclamation point. All other non-alphabetic and non-exclamation
-;; characters should be printed a single time each. The input string will have
-;; maximum length of 20 characters.
-;;
-;; input stack has the input string
 
 (ns clojush.problems.software.tic_tac_toe
   (:use clojush.pushgp.pushgp
@@ -118,6 +111,7 @@
 ;(test-and-train-data-from-domains tic-tac-toe-data-domains)
 
 ; Helper function for error function
+; Cite: Some code from https://codereview.stackexchange.com/questions/62979/clojure-tic-tac-toe-solver
 (defn tic-tac-toe-test-cases
   "Takes a sequence of inputs and gives IO test cases of the form
    [input output]."

@@ -69,6 +69,12 @@
   [ind evaluated-population argmap]
   (if (zero? (:age ind)) 1 0))
 
+(defn empty-genome-meta-error
+  [ind evaluated-population argmap]
+  (if (empty? (:genome ind))
+    1
+    0))
+
 (defn novelty-meta-error
   "Novelty was calculated earlier and stored in each individual.
   Note that we need to invert novelty, since it is calculated as a value to maximize."
@@ -109,6 +115,60 @@
               (apply = hist))
         1000000
         (dec (count (take-while #(= % (first hist)) (rest hist))))))))
+
+(defn no-recent-error-change-meta-error
+  [ind evaluated-population argmap]
+  (if (not (:print-history argmap))
+    (throw 
+      (Exception. 
+        ":print-history must be true for :no-recent-error-change"))
+    (let [hist (:history ind)
+          limit (:error-change-recency-limit argmap)]
+      (if (< (count hist) limit)
+        1
+        (if (apply = (take limit hist))
+          2
+          0)))))
+
+(defn lineage-redundancy-meta-error
+  [ind evaluated-population argmap]
+  (if (not (:print-history argmap))
+    (throw
+     (Exception.
+      ":print-history must be true for :lineage-redundancy"))
+    (let [hist (:history ind)]
+      (if (< (count hist) 2)
+        1/2
+        (- 1 (/ (count (distinct hist))
+                (count hist)))))))
+
+(defn redundant-lineage-meta-error
+  [ind evaluated-population argmap]
+  (if (not (:print-history argmap))
+    (throw
+     (Exception.
+      ":print-history must be true for :redundant-lineage"))
+    (let [hist (:history ind)]
+      (if (< (count hist) 2)
+        0
+        (if (> (/ (count (distinct hist))
+                  (count hist))
+               1/2)
+          0
+          1)))))
+
+(defn repeating-lineage-meta-error
+  [ind evaluated-population argmap]
+  (if (not (:print-history argmap))
+    (throw
+     (Exception.
+      ":print-history must be true for :repeating-lineage"))
+    (let [hist (:history ind)]
+      (if (< (count hist) 2)
+        0
+        (if (apply distinct? hist)
+          0
+          1)))))
 
 (defn gens-since-total-error-improvement-meta-error
   [ind evaluated-population argmap]
@@ -384,6 +444,37 @@
                          siblings)
                    0
                    1))))))))
+                   
+(defn case-appropriate-family-diversity-meta-error
+  [ind evaluated-population argmap]
+  (if (not (:print-history argmap))
+    (throw
+     (Exception.
+      ":print-history must be true for :case-appropriate-family-diversity"))
+    (if (or (empty? (:parent-uuids ind))
+            (empty? (rest (:history ind))))
+      (vec (repeat (count (:errors ind)) 1))
+      (let [siblings (filter #(and (= (first (:parent-uuids ind))
+                                      (first (:parent-uuids %)))
+                                   (not (empty? (rest (:history %))))) ; new random sibs don't count
+                             evaluated-population)]
+        (vec (for [case-index (range (count (:errors ind)))]
+               (if (zero? (nth (second (:history ind)) case-index))
+                 (if ;; mom solved, error for any child to be different
+                  (some (fn [sib]
+                          (not= (-> (:history sib) ;; sib error different than mom's
+                                    (first)
+                                    (nth case-index))
+                                (-> (:history sib)
+                                    (second)
+                                    (nth case-index))))
+                        siblings)
+                   1
+                   0)
+                 ;; mom unsolved, higher error the fewer variants
+                 (let [num-variants (count (distinct (map #(nth (first (:history %)) case-index)
+                                                          siblings)))]
+                   (/ 1 num-variants)))))))))
 
 (defn case-scaled-error-plus-change-meta-error
   [ind evaluated-population argmap]
@@ -801,3 +892,54 @@
            (not= (:errors ind) (:parent2-errors ind)))
     0
     1))
+
+#_(defn inherited-errors-meta-error
+  [ind evaluated-population argmap]
+  (if (and (:parent1-errors ind)
+           (:parent2-errors ind))
+    (if (and (not= (:errors ind) (:parent1-errors ind))
+             (not= (:errors ind) (:parent2-errors ind)))
+      0
+      1)
+    0))
+
+#_(defn case-inherited-errors-meta-error
+  [ind evaluated-population argmap]
+  (if (and (:parent1-errors ind)
+           (:parent2-errors ind))
+    (mapv #(if (some #{%1} [%2 %3]) 1 0)
+          (:errors ind) 
+          (:parent1-errors ind)
+          (:parent2-errors ind))
+    (vec (repeat (count (:errors ind)) 1))))
+
+(defn case-inherited-errors-meta-error
+  [ind evaluated-population argmap]
+  (if (and (:parent1-errors ind)
+           (:parent2-errors ind))
+    (mapv #(if (some #{%1} [%2 %3]) 1 0)
+          (:errors ind) 
+          (:parent1-errors ind)
+          (:parent2-errors ind))
+    (vec (repeat (count (:errors ind)) 1))))
+
+(defn case-inherited-non-zero-errors-meta-error
+  [ind evaluated-population argmap]
+  (if (and (:parent1-errors ind)
+           (:parent2-errors ind))
+    (mapv #(if (and (not (zero? %1))
+                    (some #{%1} [%2 %3]))
+             1
+             0)
+          (:errors ind)
+          (:parent1-errors ind)
+          (:parent2-errors ind))
+    (vec (repeat (count (:errors ind)) 1))))
+
+(defn case-error-frequency-meta-error
+  [ind evaluated-population argmap]
+  (mapv (fn [e i]
+          (count (filter #(= e (nth (:errors %) i))
+                         evaluated-population)))
+        (:errors ind)
+        (iterate inc 0)))

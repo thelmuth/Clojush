@@ -169,7 +169,7 @@
                           atom-generators
                           argmap))]
     (make-individual :genome genome
-                     :history (:history ind)
+                     :history ()
                      :age 0
                      :grain-size (compute-grain-size genome argmap)
                      :ancestors (if maintain-ancestors
@@ -899,9 +899,11 @@ the resulting top genome."
                         (top-item :genome
                                   (run-push
                                     program-to-run
-                                    (-> (->> (make-push-state)
-                                             (push-item parent2-genome :genome)
-                                             (push-item parent1-genome :genome))
+                                    (-> (if (= (:autoconstructive-genome-instructions argmap) :appending)
+                                          (make-push-state)
+                                          (->> (make-push-state)
+                                               (push-item parent2-genome :genome)
+                                               (push-item parent1-genome :genome)))
                                         (assoc :parent1-genome parent1-genome)
                                         (assoc :parent2-genome parent2-genome)
                                         (assoc :autoconstructing true))))))]
@@ -998,15 +1000,87 @@ programs encoded by genomes g1 and g2."
         parent1-pgm (express parent1-genome)
         parent2-pgm (express parent2-genome)]
     (assoc ind :diversifying
-      (and (not= pgm parent1-pgm)
-           (not= pgm parent2-pgm)))))
+           (and (not= pgm parent1-pgm)
+                (not= pgm parent2-pgm)))))
+
+(defn lineage-behavior-diversifying?
+  [ind argmap]
+  (if (not (:print-history argmap))
+    (throw
+     (Exception.
+      ":print-history must be true for :lineage-behavior diversification test"))
+    (assoc ind :diversifying
+           (let [hist (:parent1-history argmap)]
+             (or (< (count hist) 2)
+                 (apply distinct? hist))))))
+
+(defn new-errors-diversifying?
+  [ind argmap]
+  (if (not (:print-history argmap))
+    (throw
+     (Exception.
+      ":print-history must be true for :new-errors diversification test"))
+    (let [errs (or (:errors ind)
+                   (do
+                     (swap! evaluations-count inc)
+                     (:errors ((:error-function argmap)
+                               {:genome (:genome ind)
+                                :program (translate-plush-genome-to-push-program
+                                          {:genome (:genome ind)}
+                                          argmap)}))))]
+      (assoc ind :diversifying
+             (not (some #{errs} (:parent1-history argmap)))))))
+
+(defn at-least-half-new-errors-diversifying?
+  [ind argmap]
+  (if (not (:print-history argmap))
+    (throw
+     (Exception.
+      ":print-history must be true for :at-least-half-new-errors diversification test"))
+    (let [errs (or (:errors ind)
+                   (do
+                     (swap! evaluations-count inc)
+                     (:errors ((:error-function argmap)
+                               {:genome (:genome ind)
+                                :program (translate-plush-genome-to-push-program
+                                          {:genome (:genome ind)}
+                                          argmap)}))))]
+      (assoc ind :diversifying
+             (let [hist (:parent1-history argmap)]
+               (>= (* 2 (count (distinct (conj hist errs))))
+                   (count (conj hist errs))))))))
+
+(defn enough-new-errors-diversifying?
+  [ind argmap]
+  (if (not (:print-history argmap))
+    (throw
+     (Exception.
+      ":print-history must be true for :enough-new-errors diversification test"))
+    (let [errs (or (:errors ind)
+                   (do
+                     (swap! evaluations-count inc)
+                     (:errors ((:error-function argmap)
+                               {:genome (:genome ind)
+                                :program (translate-plush-genome-to-push-program
+                                          {:genome (:genome ind)}
+                                          argmap)}))))]
+      (assoc ind :diversifying
+             (let [hist (:parent1-history argmap)]
+               (>= (count (distinct (conj hist errs)))
+                   (* (:autoconstructive-enough-new-errors-fraction argmap)
+                      (count (conj hist errs)))))))))
+
+(defn not-empty-diversifying?
+  [ind argmap]
+  (assoc ind :diversifying
+         (not (empty? (translate-plush-genome-to-push-program ind argmap)))))
 
 (defn minimum-genetic-difference-diversifying?
   [ind {:keys [parent1-genome parent2-genome]}]
   (let [g (:genome ind)]
     (assoc ind :diversifying
-      (and (<= (sequence-similarity g parent1-genome) 0.9)
-           (<= (sequence-similarity g parent2-genome) 0.9)))))
+           (and (<= (sequence-similarity g parent1-genome) 0.9)
+                (<= (sequence-similarity g parent2-genome) 0.9)))))
 
 (defn three-gens-diff-diffs-diversifying?
   [ind argmap]
@@ -1451,6 +1525,19 @@ programs encoded by genomes g1 and g2."
     (assoc ind :diversifying
       (not= c-made-by c2-made-by))))
 
+(defn three-way-symbolic-reproductive-divergence-diversifying?
+  [ind argmap]
+  (let [symbolic #(filter (comp not number?) %)
+        g (:genome ind)
+        c (produce-child-genome-by-autoconstruction g g argmap)
+        c2 (produce-child-genome-by-autoconstruction g g argmap)
+        c3 (produce-child-genome-by-autoconstruction g g argmap)
+        c-made-by (symbolic (flatten (:made-by (meta c))))
+        c2-made-by (symbolic (flatten (:made-by (meta c2))))
+        c3-made-by (symbolic (flatten (:made-by (meta c3))))]
+    (assoc ind :diversifying
+      (distinct? c-made-by c2-made-by c3-made-by))))
+
 (defn reproductive-divergence-diversifying?
   [ind argmap]
   (let [g (:genome ind)
@@ -1460,6 +1547,18 @@ programs encoded by genomes g1 and g2."
         c2-made-by (flatten (:made-by (meta c2)))]
     (assoc ind :diversifying
       (not= c-made-by c2-made-by))))
+
+(defn three-way-reproductive-divergence-diversifying?
+  [ind argmap]
+  (let [g (:genome ind)
+        c (produce-child-genome-by-autoconstruction g g argmap)
+        c2 (produce-child-genome-by-autoconstruction g g argmap)
+        c3 (produce-child-genome-by-autoconstruction g g argmap)
+        c-made-by (flatten (:made-by (meta c)))
+        c2-made-by (flatten (:made-by (meta c2)))
+        c3-made-by (flatten (:made-by (meta c3)))]
+    (assoc ind :diversifying
+      (distinct? c-made-by c2-made-by c3-made-by))))
 
 (defn reproductive-change-changes-differently-diversifying?
   [ind argmap]
@@ -1510,9 +1609,45 @@ programs encoded by genomes g1 and g2."
     (assoc ind :diversifying
       (and (distinct? 1 mbsim-c-gc mbsim-gc-ggc)
            (distinct? 1 mbsim-c2-gc2 mbsim-gc2-ggc2)
-           ;(distinct? mbsim-gc-ggc mbsim-gc2-ggc2)
+           (distinct? mbsim-gc-ggc mbsim-gc2-ggc2) ;**
            (distinct? (- mbsim-c-gc mbsim-gc-ggc)
                       (- mbsim-c2-gc2 mbsim-gc2-ggc2))))))
+
+(defn symbolic-three-way-reproductive-change-changes-differently-diversifying?
+  [ind argmap]
+  (let [symbolic #(filter (comp not number?) %)
+        g (:genome ind)
+        c (produce-child-genome-by-autoconstruction g g argmap)
+        c2 (produce-child-genome-by-autoconstruction g g argmap)
+        c3 (produce-child-genome-by-autoconstruction g g argmap)
+        c-made-by (symbolic (flatten (:made-by (meta c))))
+        c2-made-by (symbolic (flatten (:made-by (meta c2))))
+        c3-made-by (symbolic (flatten (:made-by (meta c3))))
+        gc (produce-child-genome-by-autoconstruction c g g argmap)
+        gc2 (produce-child-genome-by-autoconstruction c2 g g argmap)
+        gc3 (produce-child-genome-by-autoconstruction c3 g g argmap)
+        gc-made-by (symbolic (flatten (:made-by (meta gc))))
+        gc2-made-by (symbolic (flatten (:made-by (meta gc2))))
+        gc3-made-by (symbolic (flatten (:made-by (meta gc3))))
+        ggc (produce-child-genome-by-autoconstruction gc g g argmap)
+        ggc2 (produce-child-genome-by-autoconstruction gc2 g g argmap)
+        ggc3 (produce-child-genome-by-autoconstruction gc3 g g argmap)
+        ggc-made-by (symbolic (flatten (:made-by (meta ggc))))
+        ggc2-made-by (symbolic (flatten (:made-by (meta ggc2))))
+        ggc3-made-by (symbolic (flatten (:made-by (meta ggc3))))
+        mbsim-c-gc (sequence-similarity c-made-by gc-made-by)
+        mbsim-c2-gc2 (sequence-similarity c2-made-by gc2-made-by)
+        mbsim-c3-gc3 (sequence-similarity c3-made-by gc3-made-by)
+        mbsim-gc-ggc (sequence-similarity gc-made-by ggc-made-by)
+        mbsim-gc2-ggc2 (sequence-similarity gc2-made-by ggc2-made-by)
+        mbsim-gc3-ggc3 (sequence-similarity gc3-made-by ggc3-made-by)]
+    (assoc ind :diversifying
+      (and (distinct? 1 mbsim-c-gc mbsim-gc-ggc)
+           (distinct? 1 mbsim-c2-gc2 mbsim-gc2-ggc2)
+           (distinct? 1 mbsim-c3-gc3 mbsim-gc3-ggc3)
+           (distinct? (- mbsim-c-gc mbsim-gc-ggc)
+                      (- mbsim-c2-gc2 mbsim-gc2-ggc2)
+                      (- mbsim-c3-gc3 mbsim-gc3-ggc3))))))
 
 (defn use-mate-diversifying?
   [ind argmap]
@@ -1582,6 +1717,36 @@ programs encoded by genomes g1 and g2."
         (and (not= errs (take (count errs) (:parent1-errors argmap)))
              (not= errs (take (count errs) (:parent2-errors argmap))))))
     (assoc ind :diversifying true)))
+
+(defn new-errors-prospective-when-necessary-diversifying?
+  [ind argmap]
+  (if (not (:print-history argmap))
+    (throw
+     (Exception.
+      ":print-history must be true for :new-errors-prospective-when-necessary diversification test"))
+    (let [errs (or (:errors ind)
+                   (do
+                     (swap! evaluations-count inc)
+                     (:errors ((:error-function argmap)
+                               {:genome (:genome ind)
+                                :program (translate-plush-genome-to-push-program
+                                          {:genome (:genome ind)}
+                                          argmap)}))))]
+      (assoc ind :diversifying
+             (if (not (empty? (:parent1-history argmap)))
+               (not (some #{errs} (:parent1-history argmap)))
+               (let [g (:genome ind)
+                     c (produce-child-genome-by-autoconstruction g g argmap)]
+                 (if (empty? c)
+                   false
+                   (not= errs
+                         (do
+                           (swap! evaluations-count inc)
+                           ((:error-function argmap)
+                            {:genome c
+                             :program (translate-plush-genome-to-push-program
+                                       {:genome c}
+                                       argmap)}))))))))))
 
 (defn new-instruction-diversifying?
   [ind {:keys [parent1-genome parent2-genome] :as argmap}]
@@ -1680,10 +1845,13 @@ programs encoded by genomes g1 and g2."
                 :symbolic-three-children-make-children-differently symbolic-three-children-make-children-differently-diversifying?
                 :symbolic-reproductive-change-changes symbolic-reproductive-change-changes-diversifying?
                 :symbolic-reproductive-change-changes-differently symbolic-reproductive-change-changes-differently-diversifying?
+                :symbolic-three-way-reproductive-change-changes-differently symbolic-three-way-reproductive-change-changes-differently-diversifying?
                 :symbolic-reproductive-change symbolic-reproductive-change-diversifying?
                 :reproductive-change reproductive-change-diversifying?
                 :symbolic-reproductive-divergence symbolic-reproductive-divergence-diversifying?
                 :reproductive-divergence reproductive-divergence-diversifying?
+                :three-way-symbolic-reproductive-divergence symbolic-reproductive-divergence-diversifying?
+                :three-way-reproductive-divergence reproductive-divergence-diversifying?
                 :reproductive-change-changes reproductive-change-changes-diversifying?
                 :reproductive-change-changes-differently reproductive-change-changes-differently-diversifying?
                 :use-mate use-mate-diversifying?
@@ -1693,8 +1861,14 @@ programs encoded by genomes g1 and g2."
                 :doesnt-clone-genetically doesnt-clone-genetically-diversifying?
                 :child-doesnt-clone child-doesnt-clone-diversifying?
                 :not-a-clone not-a-clone-diversifying?
+                :lineage-behavior lineage-behavior-diversifying?
+                :not-empty not-empty-diversifying?
                 :minimum-genetic-difference minimum-genetic-difference-diversifying?
                 :different-errors different-errors-diversifying?
+                :new-errors new-errors-diversifying?
+                :new-errors-prospective-when-necessary new-errors-prospective-when-necessary-diversifying?
+                :enough-new-errors enough-new-errors-diversifying?
+                :at-least-half-new-errors at-least-half-new-errors-diversifying?
                 :new-instruction new-instruction-diversifying?
                 :lost-instruction lost-instruction-diversifying?
                 :different-instructions different-instructions-diversifying?
@@ -1718,17 +1892,18 @@ programs encoded by genomes g1 and g2."
                            autoconstructive-clone-probability autoconstructive-decay
                            autoconstructive-parent-decay autoconstructive-clone-decay]
                     :as argmap}]
-  (let [decay (fn [g rate]
-                (if (zero? rate)
-                  g
-                  (vec (filter identity (map #(if (< (lrand) rate) nil %) g)))))
+  (let [decay (fn [g rate-or-rates]
+                (let [rate (random-element-or-identity-if-not-a-collection rate-or-rates)]
+                  (if (zero? rate)
+                    g
+                    (vec (filter identity (map #(if (< (lrand) rate) nil %) g))))))
         parent1-genome (decay (:genome parent1) autoconstructive-parent-decay)
         parent2-genome (decay (:genome parent2) autoconstructive-parent-decay)
         clone (<= (lrand) autoconstructive-clone-probability)
         pre-decay-child-genome (if clone
-                                   parent1-genome
-                                   (produce-child-genome-by-autoconstruction 
-                                     parent1-genome parent2-genome argmap))
+                                 parent1-genome
+                                 (produce-child-genome-by-autoconstruction
+                                  parent1-genome parent2-genome argmap))
         child-genome (if (and clone (not= autoconstructive-clone-decay :same))
                        (decay pre-decay-child-genome autoconstructive-clone-decay)
                        (decay pre-decay-child-genome autoconstructive-decay))
@@ -1737,7 +1912,9 @@ programs encoded by genomes g1 and g2."
                                    (assoc :parent1-genome parent1-genome)
                                    (assoc :parent2-genome parent2-genome)
                                    (assoc :parent1-errors (:errors parent1))
-                                   (assoc :parent2-errors (:errors parent2))))]
+                                   (assoc :parent2-errors (:errors parent2))
+                                   (assoc :parent1-history (:history parent1))
+                                   (assoc :parent2-history (:history parent2))))]
     (if (:diversifying checked)
       (assoc (make-individual :genome child-genome
                               :errors (:errors checked)
@@ -1748,21 +1925,23 @@ programs encoded by genomes g1 and g2."
                                            (cons (:genome parent1) (:ancestors parent1))
                                            (:ancestors parent1))
                               :is-random-replacement false)
-        :parent1-genome parent1-genome
-        :parent2-genome parent2-genome
-        :parent1-errors (:errors parent1)
-        :parent2-errors (:errors parent2))
-      (let [new-genome (random-plush-genome 
-                         max-genome-size-in-initial-program atom-generators argmap)
+             :parent1-genome parent1-genome
+             :parent2-genome parent2-genome
+             :parent1-errors (:errors parent1)
+             :parent2-errors (:errors parent2)
+             :diversifying true)
+      (let [new-genome (random-plush-genome
+                        max-genome-size-in-initial-program atom-generators argmap)
             new-checked (diversifying? {:genome new-genome} argmap)]
         (if (:diversifying new-checked)
-          (make-individual :genome new-genome
-                           :errors (:errors new-checked)
-                           :history ()
-                           :age 0
-                           :grain-size (compute-grain-size new-genome argmap)
-                           :ancestors ()
-                           :is-random-replacement true)
+          (assoc (make-individual :genome new-genome
+                                  :errors (:errors new-checked)
+                                  :history ()
+                                  :age 0
+                                  :grain-size (compute-grain-size new-genome argmap)
+                                  :ancestors ()
+                                  :is-random-replacement true)
+                 :diversifying true)
           (make-individual :genome []
                            :errors nil
                            :history ()
@@ -1770,4 +1949,3 @@ programs encoded by genomes g1 and g2."
                            :grain-size (compute-grain-size [] argmap)
                            :ancestors ()
                            :is-random-replacement true))))))
-

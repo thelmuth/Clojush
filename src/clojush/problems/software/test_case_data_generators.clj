@@ -135,8 +135,6 @@
   "Takes given data as a vector of vectors, where each internal vector
   is a line to write in the EDN. Then, writes the EDN file."
   [data-to-write edn-filename]
-  (println (count data-to-write))
-  (println "WHAT IS THS")
   (spit edn-filename (prn-str data-to-write)))
 
 (defn write-data-to-json

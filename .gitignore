@@ -12,7 +12,6 @@ results/
 .classpath
 .project
 .settings/ccw.repl.cmdhistory.prefs
-/data/
 logs/
 lib/
 /bin

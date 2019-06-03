@@ -68,6 +68,7 @@
 
 (define-registered 
   code_discrepancy
+  ^{:stack-types [:code :integer]}
   (fn [state]
     (if (not (empty? (rest (:code state))))
       (push-item (discrepancy (stack-ref :code 0 state) (stack-ref :code 1 state))
@@ -77,6 +78,7 @@
 
 (define-registered 
   code_overlap
+  ^{:stack-types [:code :float]}
   (fn [state]
     (if (not (empty? (rest (:code state))))
       (push-item (float (overlap (stack-ref :code 0 state) (stack-ref :code 1 state)))

@@ -1,3 +1,7 @@
+
+;; NOTE: (set! *print-length* nil) is below because it is necessary
+;; for cider to behave well.
+
 (ns clojush.problems.software.test-case-data-generators
   (:use clojush.util)
   (:require [clojure.data.csv :as csv]
@@ -39,6 +43,8 @@
   (:gen-class
     :name clojush.problems.software.tcdg
     :methods [#^{:static true} [generate_data_files [String int String String] String]]))
+
+(set! *print-length* nil)
 
 (def problem-map ;[multiple-inputs-bool data-domains test-case-generator]
   {"checksum" [false clojush.problems.software.checksum/checksum-data-domains clojush.problems.software.checksum/checksum-test-cases]
@@ -83,7 +89,7 @@
   a single data point, including inputs and outputs. First vector is a header of
   the form:
      [set, input1, input2, ..., output1, output2, ...]"
-  [problem]
+  [problem set-column]
   (let [[train test] (get-io-examples problem)
         [first-input first-output] (first train)
         multiple-inputs (first (get problem-map problem))
@@ -95,34 +101,38 @@
                                 (= problem "even-squares") (list (first first-output))
                                 (= problem "word-stats") (list (first first-output))
                                 :else (list first-output)))
-        header [(concat ["set"]
+        header [(concat (when set-column ["set"])
                          (map #(str "input" %)
                               (range 1 (inc number-inputs)))
                          (map #(str "output" %)
                               (range 1 (inc number-outputs))))]
         train-data (map (fn [[input output]]
-                          (conj (concat (if multiple-inputs
-                                          input
-                                          (list input))
-                                        (cond
-                                          (= problem "replace-space-with-newline") output
-                                          (= problem "even-squares") (list (first output))
-                                          (= problem "word-stats") (list (first output))
-                                          :else (list output)))
-                                "train"))
+                          (concat (when set-column ["train"])
+                                  (if multiple-inputs
+                                    input
+                                    (list input))
+                                  (cond
+                                    (= problem "replace-space-with-newline") output
+                                    (= problem "even-squares") (list (first output))
+                                    (= problem "word-stats") (list (first output))
+                                    :else (list output))))
                         train)
         test-data (map (fn [[input output]]
-                         (conj (concat (if multiple-inputs
-                                         input
-                                         (list input))
-                                       (cond
-                                         (= problem "replace-space-with-newline") output
-                                         (= problem "even-squares") (list (first output))
-                                         (= problem "word-stats") (list (first output))
-                                         :else (list output)))
-                               "test"))
+                         (concat (when set-column ["test"])
+                                 (if multiple-inputs
+                                   input
+                                   (list input))
+                                 (cond
+                                   (= problem "replace-space-with-newline") output
+                                   (= problem "even-squares") (list (first output))
+                                   (= problem "word-stats") (list (first output))
+                                   :else (list output))))
                        test)]
-    (concat header train-data test-data)))
+    (if set-column
+      (concat header train-data test-data)
+      {:header header
+       :edge train-data
+       :random test-data})))
 
 (defn write-data-to-csv
   "Takes given data as a vector of vectors, where each internal vector
@@ -147,12 +157,30 @@
   "Generates train and test data for the given problem. Then, writes that data
   to the given file, using the given file structure"
   [problem output-filename file-type]
-  (let [data-to-write (get-writeable-data problem)]
+  (let [data-to-write (get-writeable-data problem true)]
     (case file-type
       "csv" (write-data-to-csv data-to-write output-filename)
       "edn" (write-data-to-edn data-to-write output-filename)
       "json" (write-data-to-json data-to-write output-filename)
       (throw (Exception. (str "Unrecognized file type: " file-type))))))
+
+(defn generate-data-for-data-sets
+  "Generates data for publishing datasets.
+  Note: uses train data for edge cases and test data for random data."
+  [problem output-filename-prefix]
+  (let [{:keys [header edge random]} (get-writeable-data problem false)]
+    (write-data-to-csv (concat header edge) (str output-filename-prefix "-edge.csv"))
+    (write-data-to-csv (concat header random) (str output-filename-prefix "-random.csv"))
+    (write-data-to-edn (concat header edge) (str output-filename-prefix "-edge.edn"))
+    (write-data-to-edn (concat header random) (str output-filename-prefix "-random.edn"))
+    (write-data-to-json (concat header edge) (str output-filename-prefix "-edge.json"))
+    (write-data-to-json (concat header random) (str output-filename-prefix "-random.json"))))
+
+
+(let [namespace "collatz-numbers"]
+  (generate-data-for-data-sets namespace (str "data/" namespace)))
+
+
 
 (defn generate-data-files
   "Generates data for given problem, in a number of files specified by the argument.

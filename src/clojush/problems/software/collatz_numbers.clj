@@ -37,10 +37,17 @@
 ;; should be used as training and testing cases respectively. Each "set" of
 ;; inputs is either a list or a function that, when called, will create a
 ;; random element of the set.
-(def collatz-numbers-data-domains
+#_(def collatz-numbers-data-domains
   [[(concat (range 1 11) '(9999 10000)) 12 0] ; Small and large cases
    [(list 6171 6943 7963 9257) 4 0] ; Cases with the largest answers in range: ([6171 262] [6943 257] [7963 252] [9257 260])
    [(fn [] (+ 11 (lrand-int 9988))) 184 2000] ; Random cases [11,9998]
+   ])
+
+(def collatz-numbers-data-domains
+  [[(concat (range 1 11) '(9999 10000)) 12 0] ; Small and large cases
+   [(list 6171 6943 7963 9257) 4 0] ; Cases with the largest answers in range: ([6171 262] [6943 257] [7963 252] [9257 260])
+;   [(fn [] (+ 11 (lrand-int 9988))) 184 2000] ; Random cases [11,9998]
+   [(remove #(contains? #{6171 6943 7963 9257} %) (range 11 9999)) 0 9984]
    ])
 
 ;;Can make Collatz Numbers test data like this:

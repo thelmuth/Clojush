@@ -6,7 +6,7 @@
 #PBS -j oe
 #PBS -l walltime=72:00:00
 #PBS -r y
-#PBS -o /usr/local/research/compsci/helmuth/aabdelha/results/last-index-of-zero10
+#PBS -o /usr/local/research/compsci/helmuth/aabdelha/results/last-index-of-zero25
 #PBS -t 0-99
 # This last line is the range of the number of jobs to start, inclusive
 
@@ -25,9 +25,9 @@ SELECTION="lexicase"
 # Results will go to our shared results directory (helmuth). You may have a symlink to this directory called Collab.
 # Make sure the correct subdirectory follows helmuth -- the first subdirectory should be
 # your username (in my case, thelmuth).
-DIRECTORY="/usr/local/research/compsci/helmuth/aabdelha/results/last-index-of-zero10/$SELECTION/$NAMESPACE"
+DIRECTORY="/usr/local/research/compsci/helmuth/aabdelha/results/last-index-of-zero25/$SELECTION/$NAMESPACE"
 
-PUSHARGS=":parent-selection :$SELECTION :print-timings true :down-sample-factor 0.1 :max-generations 3000"
+PUSHARGS=":parent-selection :$SELECTION :print-timings true :down-sample-factor 0.1 :max-generations 1200"
 
 PROBLEM="clojush.problems.software.$NAMESPACE"
 

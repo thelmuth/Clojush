@@ -14,13 +14,13 @@
   (concat (list
             ;;; end constants
             ;;; end ERCs
-            (tag-instruction-erc [:integer :boolean :exec :string :char :vector_string] 1000)
+            (tag-instruction-erc [:integer :exec :string :char :vector_string] 1000)
             (tagged-instruction-erc 1000)
             ;;; end tag ERCs
             'in1
             ;;; end input instructions
             )
-          (registered-for-stacks [:integer :boolean :exec :string :char :vector_string])))
+          (registered-for-stacks [:integer :exec :string :char :vector_string])))
 
 
 ;; Define test cases

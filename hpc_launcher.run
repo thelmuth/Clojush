@@ -2,12 +2,12 @@
 #PBS -l nodes=1:ppn=8
 #PBS -l mem=20GB
 #PBS -q una
-#PBS -M thelmuth@hamilton.edu
+#PBS -M pxkelly@hamilton.edu
 #PBS -m n
 #PBS -j oe
 #PBS -l walltime=72:00:00
 #PBS -r y
-#PBS -o /usr/local/research/compsci/helmuth/thelmuth/Results/HPC-files/
+#PBS -o /usr/local/research/compsci/helmuth/pxkelly/Results/HPC-files/
 #PBS -t 0-99
 # This last line is the range of the number of jobs to start, inclusive
 
@@ -21,14 +21,15 @@ NP=`cat $PBS_NODEFILE | wc -l`  # Bash syntax
 
 #NAMESPACE="replace-space-with-newline"
 #NAMESPACE="syllables"
-NAMESPACE="number-io"
+#NAMESPACE="number-io"
+NAMESPACE="tic_tac_toe"
 
-SELECTION="tournament"
+SELECTION="lexicase"
 
 # Results will go to our shared results directory (helmuth). You may have a symlink to this directory called Collab.
 # Make sure the correct subdirectory follows helmuth -- the first subdirectory should be
 # your username (in my case, thelmuth).
-DIRECTORY="/usr/local/research/compsci/helmuth/thelmuth/Results/parent-selection-v2/$SELECTION/$NAMESPACE"
+DIRECTORY="/usr/local/research/compsci/helmuth/pxkelly/Results/Problem-files/$NAMESPACE"
 
 PUSHARGS=":parent-selection :$SELECTION :print-timings true"
 

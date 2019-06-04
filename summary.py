@@ -730,7 +730,7 @@ if len(sys.argv) > 1 and sys.argv[1] != "brief":
 
 
 outputFilePrefix = "Num-IO-tourney"
-outputFileSuffix = ".o3555203"
+outputFileSuffix = ".txt"
 
 
 

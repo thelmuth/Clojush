@@ -18,7 +18,7 @@ NP=`cat $PBS_NODEFILE | wc -l`  # Bash syntax
 #setenv NP `cat $PBS_NODEFILE | wc -l` # tcsh/csh syntax
 
 
-NAMESPACE="smallest"
+NAMESPACE="scrabble-score"
 
 SELECTION="lexicase"
 

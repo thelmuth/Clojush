@@ -729,8 +729,8 @@ if len(sys.argv) > 1 and sys.argv[1] != "brief":
     outputDirectory = sys.argv[1]
 
 
-outputFilePrefix = "log"
-outputFileSuffix = ".txt"
+outputFilePrefix = "Num-IO-tourney"
+outputFileSuffix = ".o3555203"
 
 
 
@@ -801,7 +801,7 @@ errorThreshold = maxint
 errorThresholdPerCase = maxint
 numCases = maxint
 
-fileName0 = (outputFilePrefix + str(i) + outputFileSuffix)
+fileName0 = (outputFilePrefix  + outputFileSuffix + '-' + str(i))
 f0 = open(outputDirectory + fileName0)
 
 for line in f0:
@@ -820,14 +820,14 @@ for line in f0:
     if errorThresholdPerCase != maxint and numCases != maxint:
         break
 
-while (outputFilePrefix + str(i) + outputFileSuffix) in dirList:
+while (outputFilePrefix  + outputFileSuffix + '-' + str(i)) in dirList:
     sys.stdout.write("%4i" % i)
     sys.stdout.flush()
     if i % 25 == 24:
         print
 
     runs = i + 1 # After this loop ends, runs should be correct
-    fileName = (outputFilePrefix + str(i) + outputFileSuffix)
+    fileName = (outputFilePrefix  + outputFileSuffix + '-' + str(i))
 #    f = open(outputDirectory + fileName)
 
     #final = False

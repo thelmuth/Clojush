@@ -1,0 +1,28 @@
+Running on node(s):
+una0013.hpc.hamilton.edu
+una0013.hpc.hamilton.edu
+una0013.hpc.hamilton.edu
+una0013.hpc.hamilton.edu
+una0013.hpc.hamilton.edu
+una0013.hpc.hamilton.edu
+una0013.hpc.hamilton.edu
+una0013.hpc.hamilton.edu
+
+Changing to directory /usr/local/research/compsci/helmuth/aabdelha/Clojush/scripts
+Making directory and copying hpc_launcher.run into it: /usr/local/research/compsci/helmuth/aabdelha/results/smallest10p/lexicase/smallest
+cp: cannot stat 'hpc_launcher.run': No such file or directory
+Executing program at: Mon Jun  3 13:24:15 EDT 2019
+
+lein command: lein with-profiles production trampoline run clojush.problems.software.smallest :parent-selection :lexicase :print-timings true :down-sample-factor 0.1 :max-generations 2000
+
+Warning: cider-nrepl requires Leiningen 2.8.3 or greater.
+Warning: cider-nrepl will not be included in your project.
+Warning: cider-nrepl requires Leiningen 2.8.3 or greater.
+Warning: cider-nrepl will not be included in your project.
+
+real	6m6.172s
+user	35m32.534s
+sys	0m7.011s
+
+Finished program at: Mon Jun  3 13:30:21 EDT 2019
+

@@ -18,13 +18,13 @@
             "No winner"
             ;;; end constants
             ;;; end ERCs
-            (tag-instruction-erc [:exec :boolean :string :char :vector_string] 1000)
+            (tag-instruction-erc [:exec :integer :boolean :string :char :vector_string] 1000)
             (tagged-instruction-erc 1000)
             ;;; end tag ERCs
             'in1
             ;;; end input instructions
             )
-          (registered-for-stacks [:boolean :string :char :exec :vector_string :print])))
+          (registered-for-stacks [:boolean :integer :string :char :exec :vector_string])))
 
 
 ;; Define test cases
@@ -154,8 +154,10 @@
                            (println (format "| Correct output: %s\n| Program output: %s\n" (pr-str correct-output) (pr-str printed-result))))
                          ; Record the behavior
                          (swap! behavior conj printed-result)
-                         ; Error is Levenshtein distance
-                         (levenshtein-distance correct-output printed-result))))]
+                         ; Error is boolean error
+                         (if (= result correct-output)
+                           0
+                           1))))]
         (if (= data-cases :train)
           (assoc individual :behaviors @behavior :errors errors)
           (assoc individual :test-errors errors))))))

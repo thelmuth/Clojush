@@ -8,7 +8,7 @@
         [clojush pushstate interpreter random util globals]
         clojush.instructions.tag
         clojure.math.numeric-tower)
-    (:require [clojure.string :as string]))
+    (:require [clojure.string :as str]))
 
 ;; Define test cases
 (defn camel-case-input
@@ -33,7 +33,7 @@
             'in1
             ;;; end input instructions
             )
-          (registered-for-stacks [:integer :boolean :string :char :exec])))
+          (registered-for-stacks [:integer :boolean :string :char :exec :print])))
 
 
 ;; A list of data domains for the problem. Each domain is a vector containing
@@ -61,17 +61,17 @@
    [input output]."
   [inputs]
   (map (fn [in]
-            (if (= in "") ""
-                (let [full-string (str/join (map str/capitalize (str/split in #"-")))]
-                     (apply str (str/lower-case (first full-string)) (drop 1 full-string)))))
+          (vector in
+            (if (or (= (str in) "") (every? #{\-} (str in))) ""
+                (let [full-string (str/join (map str/capitalize (str/split (str in) #"-")))]
+                     (apply str (str/lower-case (first full-string)) (drop 1 full-string))))))
        inputs))
 
 (defn get-camel-case-train-and-test
   "Returns the train and test cases."
   [data-domains]
-  (map #(sort-by (comp count first) %)
        (map camel-case-test-cases
-            (test-and-train-data-from-domains data-domains))))
+            (test-and-train-data-from-domains data-domains)))
 
 ; Define train and test cases
 (def camel-case-train-and-test-cases
@@ -119,8 +119,7 @@
 (defn camel-case-report
   "Custom generational report."
   [best population generation error-function report-simplifications]
-  (let [best-with-test (error-function best :test)
-        best-test-errors (:test-errors best-with-test)
+  (let [best-test-errors (:test-errors (error-function best :test))
         best-total-test-error (apply +' best-test-errors)]
     (println ";;******************************")
     (printf ";; -*- Camel Case problem report - generation %s\n" generation)(flush)
@@ -133,16 +132,9 @@
         (println (format "Test Case  %3d | Error: %s" i (str error)))))
     (println ";;------------------------------")
     (println "Outputs of best individual on training cases:")
-    (doseq [[[correct-output correct-int] [printed-result int-result]]
-            (map vector
-                 (map second (first camel-case-train-and-test-cases))
-                 (partition 2 (:behaviors best)))]
-      (println (format "\n| Correct output: %s\n| Program output: %s" (pr-str correct-output) (pr-str printed-result)))
-      (println (format "| Correct integer: %2d | Program integer: %s" correct-int (str int-result))))
+    (error-function best :train true)
     (println ";;******************************")
-    ;; return best individual with tests errors added so that those are recorded
-    best-with-test))
-       ;; To do validation, could have this function return an altered best individual
+    )) ;; To do validation, could have this function return an altered best individual
        ;; with total-error > 0 if it had error of zero on train but not on validation
        ;; set. Would need a third category of data cases, or a defined split of training cases.
 

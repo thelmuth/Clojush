@@ -26,7 +26,7 @@
 ; Atom generators
 (def roman-numerals-atom-generators
   (concat (list
-            roman-numeral-letter-values
+            roman-numeral-values
             ;;; end constants
             ;;; end ERCs
             (tag-instruction-erc [:string :char :integer :boolean :vector_integer :exec] 1000)
@@ -78,7 +78,7 @@
           "IX"
           "XI"
           "MMMCMXCIX") 13 0] ; Special edge cases
-    [(fn [] (map roman-numerals-input (inc (lrand-int 4000)))) 87 1000]
+    [(fn [] (roman-numerals-input (inc (lrand-int 4000)))) 87 1000]
    ;[(fn [] (map roman-numerals-input (remove #(contains? #{1 5 10 50 100 500 1000 4 6 9 11 3999} %) (range 1 4000)))) 0 3987] ; The rest of the possible numbers 1-3999
    ])
 
@@ -90,6 +90,7 @@
   "Takes a sequence of inputs and gives IO test cases of the form
    [input output]."
   [inputs]
+  (println inputs)
   (map (fn [in]
           (vector in
               (loop [roman in number 0]
@@ -144,9 +145,8 @@
 (defn get-roman-numerals-train-and-test
   "Returns the train and test cases."
   [data-domains]
-  (map #(sort-by (comp count first) %)
-       (map roman-numerals-test-cases
-            (test-and-train-data-from-domains data-domains))))
+     (map roman-numerals-test-cases
+          (test-and-train-data-from-domains data-domains)))
 
 ; Define train and test cases
 (def roman-numerals-train-and-test-cases

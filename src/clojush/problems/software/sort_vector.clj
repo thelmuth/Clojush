@@ -5,7 +5,7 @@
 ;;
 ;;
 
-(ns clojush.problems.software.sort_vector
+(ns clojush.problems.software.sort-vector
   (:use clojush.pushgp.pushgp
         [clojush pushstate interpreter random util globals]
         clojush.instructions.tag

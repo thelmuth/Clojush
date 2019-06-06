@@ -51,11 +51,12 @@
    [input output]."
   [inputs]
   (map (fn [in]
+          (vector in
             (loop [leaders [] elements in]
               (cond
                 (= (count elements) 0) leaders
                 (= (apply max elements) (first elements)) (recur (conj leaders (first elements)) (rest elements))
-                :else (recur leaders (rest elements)))))
+                :else (recur leaders (rest elements))))))
        inputs))
 
 (defn make-leaders-error-function-from-cases
@@ -68,7 +69,7 @@
     ([individual data-cases print-outputs]
       (let [behavior (atom '())
             errors (doall
-                     (for [[[input1 input2 input3] correct-output] (case data-cases
+                     (for [[input correct-output] (case data-cases
                                                                     :train train-cases
                                                                     :test test-cases
                                                                     [])]
@@ -77,7 +78,7 @@
                                                      (push-item input :input)))
                              result (top-item :vector_integer final-state)]
                          (when print-outputs
-                           (println (format "Correct output: %2d | Program output: %s" (str correct-output) (str result))))
+                           (println (format "Correct output: %2s | Program output: %s" (str correct-output) (str result))))
                          ; Record the behavior
                          (swap! behavior conj result)
                          ; Error is integer error at each position in the vectors, with additional penalties for incorrect size vector

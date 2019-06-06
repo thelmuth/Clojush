@@ -1,5 +1,5 @@
 ;; sort_vector.clj
-;; Tom Helmuth, thelmuth@cs.umass.edu
+;; Peter Kelly, pxkelly@hamilton.edu
 ;;
 ;; Given a vector of integers, return a sorted version of the vector
 ;;
@@ -19,13 +19,13 @@
             ;;; end constants
             (fn [] (- (lrand-int 2001) 1000)) ;Integer ERC [-1000,1000]
             ;;; end ERCs
-            (tag-instruction-erc [:vector_integer :integer :exec] 1000)
+            (tag-instruction-erc [:vector_integer :integer :boolean :exec] 1000)
             (tagged-instruction-erc 1000)
             ;;; end tag ERCs
             'in1
             ;;; end input instructions
             )
-          (registered-for-stacks [:vector_integer :integer :exec])))
+          (registered-for-stacks [:vector_integer :integer :boolean :exec])))
 
 
 ;; Define test cases
@@ -51,7 +51,7 @@
    [(fn [] (sort-vector-input 2)) 45 500] ;; Random Length-2 vectors
    [(fn [] (sort-vector-input (+ 3 (lrand-int 3)))) 50 500] ;; Random Length-3, -4, and -5 vectors
    [(fn [] (sort-vector-input 50)) 5 50] ;; Random Length-50 vectors
-   [(fn [] (sort-vector-input (inc (lrand-int 50)))) 95 1000] ;; Random length, random floats
+   [(fn [] (sort-vector-input (inc (lrand-int 50)))) 95 1000] ;; Random length, random ints
    ])
 
 ;;Can make Sort Vector test data like this:

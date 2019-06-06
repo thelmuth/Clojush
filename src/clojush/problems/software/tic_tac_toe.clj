@@ -1,5 +1,5 @@
 ;; tic_tac_toe.clj
-;; Tom Helmuth, thelmuth@cs.umass.edu
+;; Peter Kelly, pxkelly@hamilton.edu
 ;;
 ;;
 

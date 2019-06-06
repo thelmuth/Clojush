@@ -1,4 +1,4 @@
-#PBS -N Tic-Tac-Toe
+#PBS -N Camel-Case
 #PBS -l nodes=1:ppn=8
 #PBS -l mem=20GB
 #PBS -q una
@@ -22,7 +22,7 @@ NP=`cat $PBS_NODEFILE | wc -l`  # Bash syntax
 #NAMESPACE="replace-space-with-newline"
 #NAMESPACE="syllables"
 #NAMESPACE="number-io"
-NAMESPACE="tic-tac-toe"
+NAMESPACE="camel-case"
 
 SELECTION="lexicase"
 

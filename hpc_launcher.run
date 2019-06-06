@@ -19,9 +19,6 @@ NP=`cat $PBS_NODEFILE | wc -l`  # Bash syntax
 #setenv NP `cat $PBS_NODEFILE | wc -l` # tcsh/csh syntax
 
 
-#NAMESPACE="replace-space-with-newline"
-#NAMESPACE="syllables"
-#NAMESPACE="number-io"
 NAMESPACE="camel-case"
 
 SELECTION="lexicase"

@@ -52,36 +52,37 @@
   "Takes a sequence of inputs and gives IO test cases of the form
    [[input1 input2 input3] output]."
   [inputs]
-  (map (fn [row col dungeon]
-          (loop [start-health 1 health-remain 1 current-spot 0]
-            (cond
-              (<= (+ health-remain (nth dungeon current-spot -1000)) 0) (recur (inc start-health) (inc start-health) 0) ; if the current spot kills you, then restart
-              (= current-spot (dec (* row col))) (if (<= (+ health-remain (nth dungeon current-spot -1000)) 0) ; if the knight made it to the end, check if the final spot kills him
-                                                (recur (inc start-health)
-                                                       (inc start-health)
-                                                       0)
-                                                start-health) ; if it does, restart, otherwise, return the health
-              (and (> (+ (+ health-remain (nth dungeon current-spot -1000)) (nth dungeon (+ current-spot 1) -1000)) 0)  ; if the knight could survive both directions
-                   (> (+ (+ health-remain (nth dungeon current-spot -1000)) (nth dungeon (+ current-spot col) -1000)) 0)) (if (> (+ (+ health-remain (nth dungeon current-spot -1000)) (nth dungeon (+ current-spot 1) -1000))
-                                                                                                                                 (+ (+ health-remain (nth dungeon current-spot -1000)) (nth dungeon (+ current-spot col) -1000)))
-                                                                                                                          (recur   ; If going right results in having more health, go right
-                                                                                                                            start-health
-                                                                                                                            (+ health-remain (nth dungeon current-spot -1000))
-                                                                                                                            (+ current-spot 1))
-                                                                                                                          (recur  ; otherwise, go down
-                                                                                                                            start-health
-                                                                                                                            (+ health-remain (nth dungeon current-spot -1000))
-                                                                                                                            (+ current-spot col)))
-              (> (+ (+ health-remain (nth dungeon current-spot -1000)) (nth dungeon (+ current-spot 1) -1000)) 0) (recur
-                                                                                                                    start-health
-                                                                                                                    (+ health-remain (nth dungeon current-spot -1000))
-                                                                                                                    (+ current-spot 1)) ; The knight can survive a step right, so it goes right
-              (> (+ (+ health-remain (nth dungeon current-spot -1000)) (nth dungeon (+ current-spot col) -1000)) 0) (recur
+  (map (fn [[row col dungeon]]
+          (vector [row col dungeon]
+            (loop [start-health 1 health-remain 1 current-spot 0]
+              (cond
+                (<= (+ health-remain (nth dungeon current-spot -1000)) 0) (recur (inc start-health) (inc start-health) 0) ; if the current spot kills you, then restart
+                (= current-spot (dec (* row col))) (if (<= (+ health-remain (nth dungeon current-spot -1000)) 0) ; if the knight made it to the end, check if the final spot kills him
+                                                  (recur (inc start-health)
+                                                         (inc start-health)
+                                                         0)
+                                                  start-health) ; if it does, restart, otherwise, return the health
+                (and (> (+ (+ health-remain (nth dungeon current-spot -1000)) (nth dungeon (+ current-spot 1) -1000)) 0)  ; if the knight could survive both directions
+                     (> (+ (+ health-remain (nth dungeon current-spot -1000)) (nth dungeon (+ current-spot col) -1000)) 0)) (if (> (+ (+ health-remain (nth dungeon current-spot -1000)) (nth dungeon (+ current-spot 1) -1000))
+                                                                                                                                   (+ (+ health-remain (nth dungeon current-spot -1000)) (nth dungeon (+ current-spot col) -1000)))
+                                                                                                                            (recur   ; If going right results in having more health, go right
+                                                                                                                              start-health
+                                                                                                                              (+ health-remain (nth dungeon current-spot -1000))
+                                                                                                                              (+ current-spot 1))
+                                                                                                                            (recur  ; otherwise, go down
+                                                                                                                              start-health
+                                                                                                                              (+ health-remain (nth dungeon current-spot -1000))
+                                                                                                                              (+ current-spot col)))
+                (> (+ (+ health-remain (nth dungeon current-spot -1000)) (nth dungeon (+ current-spot 1) -1000)) 0) (recur
                                                                                                                       start-health
                                                                                                                       (+ health-remain (nth dungeon current-spot -1000))
-                                                                                                                      (+ current-spot col)) ; The knight goes down
-              :else (recur (inc start-health) (inc start-health) 0) ; if the knight would die either direction, reset at the top of the dungeon with 1 additional health
-              )))
+                                                                                                                      (+ current-spot 1)) ; The knight can survive a step right, so it goes right
+                (> (+ (+ health-remain (nth dungeon current-spot -1000)) (nth dungeon (+ current-spot col) -1000)) 0) (recur
+                                                                                                                        start-health
+                                                                                                                        (+ health-remain (nth dungeon current-spot -1000))
+                                                                                                                        (+ current-spot col)) ; The knight goes down
+                :else (recur (inc start-health) (inc start-health) 0) ; if the knight would die either direction, reset at the top of the dungeon with 1 additional health
+                ))))
        inputs))
 
 (defn make-dungeon-error-function-from-cases
@@ -105,7 +106,7 @@
                                                      (push-item input1 :input)))
                              result (top-item :integer final-state)]
                          (when print-outputs
-                           (println (format "Correct output: %2d | Program output: %s" (str correct-output) (str result))))
+                           (println (format "Correct output: %2d | Program output: %s" correct-output result)))
                          ; Record the behavior
                          (swap! behavior conj result)
                          ; Error is absolute distance from correct number

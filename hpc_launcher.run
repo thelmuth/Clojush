@@ -1,4 +1,4 @@
-#PBS -N Sort-String
+#PBS -N Word-Search
 #PBS -l nodes=1:ppn=8
 #PBS -l mem=20GB
 #PBS -q una
@@ -19,7 +19,7 @@ NP=`cat $PBS_NODEFILE | wc -l`  # Bash syntax
 #setenv NP `cat $PBS_NODEFILE | wc -l` # tcsh/csh syntax
 
 
-NAMESPACE="sort-string"
+NAMESPACE="word-search"
 
 SELECTION="lexicase"
 

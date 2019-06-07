@@ -11,11 +11,30 @@
         clojure.math.numeric-tower)
     (:require [clojure.string :as string]))
 
+; Helper function 1 for input
+(defn puzzle-word-creation
+  [row col direction puzzle]
+  (cond
+    (= direction 0) (take col (drop (+ row col) puzzle))
+    :else (loop [current col word ""]
+                (cond
+                  (< current (* row col)) (recur (+ current col) (str word (nth puzzle current)))
+                  :else word))))
+
+; Helper function 2 for input
+(defn make-word
+  [row col puzzle use-puzzle]
+  (if (= use-puzzle 1)
+      (puzzle-word-creation row col (lrand-int 2) puzzle)
+      (apply str (repeatedly row #(char (+ 97 (lrand-int 26)))))))
+
 ;; Define test cases
 (defn word-search-input
-  "Makes a word search input of length len."
+  "Makes a word search input of size row col."
   [row col]
-  (apply str (repeatedly (* row col) #(char (+ 97 (lrand-int 26))))))
+  (let [puzzle (apply str (repeatedly (* row col) #(char (+ 97 (lrand-int 26)))))
+        word (apply str (make-word row col puzzle (lrand-int 2)))]
+        (vector word puzzle row col)))
 
 ; Atom generators
 (def word-search-atom-generators
@@ -48,25 +67,9 @@
           ["nothere" "amvkelavi" 3 3]
           ["hello" "shellopeuakvldqapdkflgjelabz" 4 7]
           ["hello" "asdhpeovmnelskquelieovnclqsudouozjb" 5 7]) 8 0] ;; "Special" inputs covering some base cases
-   [(fn [] (word-search-input (+ 3 (lrand-int 48)))) 192 2000]
+   [(fn [] (let [row (inc (lrand-int 20)) col (inc (lrand-int 20))]
+                (word-search-input row col))) 192 2000]
    ])
-
-; (def word-search-data-domains
-;   [[(list "", "a", "b", "c", "d", "e", "i", "m", "o", "u", "y", "z"
-;           "hello", "there", "world", "eat", "apple", "yellow", "orange", "umbrella", "ouch", "in",
-;           "hello there world"
-;           "out at the plate"
-;           "nap time on planets"
-;           "supercalifragilistic"
-;           "expialidocious"
-;           (apply str (repeat 50 \u))
-;           (apply str (repeat 50 \s))
-;           (apply str (take 49 (cycle (list \w \space))))
-;           (apply str (take 49 (cycle (list \e \space))))
-;           (apply str (take 50 (cycle (list \h \a \space))))
-;           (apply str (take 49 (cycle (list \x \space \y \space))))) 33 0] ;; "Special" inputs covering some base cases
-;    [(fn [] (word-search-input (+ 3 (lrand-int 48)))) 167 1000]
-;    ])
 
 ;;Can make Word Search test data like this:
 ;(test-and-train-data-from-domains word-search-data-domains)
@@ -76,13 +79,23 @@
   "Takes a sequence of inputs and gives IO test cases of the form
    [input output]."
   [inputs]
-  (map (fn [in]
-         (vector in
-                 (apply str (interpose \space
-                                       (map #(if (some #{(first %)} "aeiou")
-                                               (str % "ay")
-                                               (str (apply str (rest %)) (first %) "ay"))
-                                           (remove empty? (string/split in #" ")))))))
+  (map (fn [[word puzzle row col]]
+         (vector [word puzzle row col]
+           (loop [current "" letter 0 pos 0 startpos 0 samepos false direction ""]
+             (cond
+               (= current word) true ; if the word is found, return true
+               (and
+                    (= startpos (dec (* row col)))
+                    (not= current word)) false   ; if the word isn't in the puzzle, return false
+               (and (= samepos false)
+                    (= (nth word letter) (nth puzzle pos))) (recur (str current (nth puzzle pos)) (inc letter) pos startpos true direction) ; if the current letter is correct
+               (and (not= (mod (inc pos) col) 0)  ; if the next letter to the right is correct and it isn't out of bounds
+                    (= (nth word letter) (nth puzzle (inc pos)))
+                    (or (= direction "") (= direction "right"))) (recur current letter (inc pos) startpos false "right")
+               (and (< (+ pos col) (* row col))  ; if the next letter is down and it isn't out of bounds
+                    (= (nth word letter) (nth puzzle (+ pos col)))
+                    (or (= direction "") (= direction "down"))) (recur current letter (+ pos col) startpos false "down")
+               :else (recur "" 0 (inc startpos) (inc startpos) false "")))))
        inputs))
 
 (defn make-word-search-error-function-from-cases
@@ -95,22 +108,25 @@
     ([individual data-cases print-outputs]
       (let [behavior (atom '())
             errors (doall
-                     (for [[input correct-output] (case data-cases
-                                                    :train train-cases
-                                                    :test test-cases
-                                                    [])]
+                     (for [[[input1 input2 input3 input4] correct-output] (case data-cases
+                                                                          :train train-cases
+                                                                          :test test-cases
+                                                                          [])]
                        (let [final-state (run-push (:program individual)
                                                    (->> (make-push-state)
-                                                     (push-item input :input)
-                                                     (push-item "" :output)))
-                             result (stack-ref :output 0 final-state)]
+                                                     (push-item input4 :input)
+                                                     (push-item input3 :input)
+                                                     (push-item input2 :input)
+                                                     (push-item input1 :input)))
+                             result (top-item :boolean final-state)]
                          (when print-outputs
-                           (println (format "\n| Correct output: %s\n| Program output: %s" (pr-str correct-output) (pr-str result))))
+                           (println (format "\n| Correct output: %b\n| Program output: %b" (pr-str correct-output) (pr-str result))))
                          ; Record the behavior
                          (swap! behavior conj result)
                          ; Error is Levenshtein distance for printed string
-                         (levenshtein-distance correct-output result)
-                         )))]
+                         (if (= result correct-output)
+                           0
+                           1))))]
         (if (= data-cases :train)
           (assoc individual :behaviors @behavior :errors errors)
           (assoc individual :test-errors errors))))))
@@ -118,9 +134,8 @@
 (defn get-word-search-train-and-test
   "Returns the train and test cases."
   [data-domains]
-  (map #(sort-by (comp count first) %)
-       (map word-search-test-cases
-            (test-and-train-data-from-domains data-domains))))
+    (map word-search-test-cases
+        (test-and-train-data-from-domains data-domains)))
 
 ; Define train and test cases
 (def word-search-train-and-test-cases

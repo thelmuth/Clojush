@@ -1,5 +1,5 @@
 ;; sudoku.clj
-;; Tom Helmuth, thelmuth@cs.umass.edu
+;; Peter Kelly, pxkelly@hamilton.edu
 ;;
 
 (ns clojush.problems.software.sudoku
@@ -14,13 +14,17 @@
   (concat (list
             ;;; end constants
             ;;; end ERCs
-            (tag-instruction-erc [:integer :exec :string :char :vector_string] 1000)
+            (tag-instruction-erc [:integer :exec :boolean :vector_integer] 1000)
             (tagged-instruction-erc 1000)
             ;;; end tag ERCs
             'in1
             ;;; end input instructions
             )
-          (registered-for-stacks [:integer :exec :string :char :vector_string])))
+          (registered-for-stacks [:integer :exec :boolean :vector_integer])))
+
+(defn sudoku-input
+  [correct-board]
+  )
 
 
 ;; A list of data domains for the problem. Each domain is a vector containing
@@ -29,30 +33,55 @@
 ;; inputs is either a list or a function that, when called, will create a
 ;; random element of the set.
 (def sudoku-data-domains
-  [[(list [0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0] ; All gutter balls
-          [10 10 10 10 10 10 10 10 10 10 10 10] ; All strikes
-          [5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5] ; All spares
-          [7 1 1 5 10 10 10 5 4 8 2 2 7 9 0 10 5 3] ; Ending with a strike
-          [5 3 2 8 4 3 6 2 10 1 7 9 0 4 1 4 4 7 3 5]  ; Ending with a spare
-          [2 4 8 1 5 3 6 1 3 5 6 2 1 2 8 1 3 5 8 1]   ; No strikes, no spares
-          [0 0 0 0 0 0 10 0 0 0 0 0 0 0 0 0 0 0 0]  ; One strike, nothing else
-          [0 0 0 0 0 0 0 0 0 0 3 7 0 0 0 0 0 0 0 0]) 8 0] ; One spare, nothing else
-   [(fn [] (vec (repeatedly 81 #(inc (lrand-int 10))))) 92 1000]
+  [[(list []  ; empty
+          [1 2 3 4 5 6
+           2 3 4 5 6 7] ; too small
+          [2 9 5 7 4 3 8 6 1
+           4 3 1 8 6 5 9 2 7
+           8 7 6 1 9 2 5 4 3
+           3 8 7 4 5 9 2 1 6
+           6 1 2 3 8 7 4 9 5
+           5 4 9 2 1 6 7 3 8
+           7 6 3 5 2 4 1 8 9
+           9 2 8 6 7 1 3 5 4
+           1 5 4 9 3 8 6 7 2] ; correct
+          [1 1 1 1 1 1 1 1 1
+           1 1 1 1 1 1 1 1 1
+           1 1 1 1 1 1 1 1 1
+           1 1 1 1 1 1 1 1 1
+           1 1 1 1 1 1 1 1 1
+           1 1 1 1 1 1 1 1 1
+           1 1 1 1 1 1 1 1 1
+           1 1 1 1 1 1 1 1 1
+           1 1 1 1 1 1 1 1 1] ; all same number
+          [2 9 5 7 4 3 8 6 1
+           4 3 1 8 6 5 9 2 7
+           8 7 6 1 9 2 5 4 3
+           3 8 7 4 5 9 2 1 6
+           6 1 2 3 8 7 4 9 5
+           5 4 9 2 1 1 7 3 8
+           7 6 3 5 2 4 1 8 9
+           9 2 8 6 7 1 3 5 4
+           1 5 4 9 3 8 6 7 2] ; almost correct
+          [1 5 2 4 8 9 3 7 6  ; correct
+           7 3 9 2 5 6 8 4 1
+           4 6 8 3 7 1 2 9 5
+           3 8 7 1 2 4 6 5 9
+           5 9 1 7 6 3 4 2 8
+           2 4 6 8 9 5 7 1 3
+           9 1 4 6 3 7 5 8 2
+           6 2 5 9 4 8 1 3 7
+           8 7 3 5 1 2 9 6 4]) 6 0]
+   [(fn [] (vec (repeatedly 81 #(inc (lrand-int 9))))) 194 2000]
   ])
 
 ;;Can make sudoku test data like this:
 ;(test-and-train-data-from-domains sudoku-data-domains)
 
-
-; Helper function for the below helper function
-; Cite: Some code from https://gist.github.com/keelerm84/9037640
-(defn make-frames [rolls]
- (let [must-take (if (or (= 10 (reduce + (take 2 rolls))) (= 10 (first rolls))) 3 2)
-       must-drop (if (= 10 (first rolls)) 1 2)]
-   (lazy-seq
-    (cons
-     (take must-take rolls)
-     (make-frames (drop must-drop rolls))))))
+; Helper function for the helper function below
+(defn check
+  [block]
+  (clojure.set/subset? #{1 2 3 4 5 6 7 8 9} (set block)))
 
 ; Helper function for error function
 (defn sudoku-test-cases
@@ -61,7 +90,15 @@
   [inputs]
   (map (fn [in]
          (vector in
-           (reduce + (map #(reduce + %) (take 10 (make-frames in))))))
+           (if (not= (count in) 81)
+               false
+               (if (and (every? true?
+                              (map check (partition 9 (flatten (vector
+                                         (partition 9 (vec (apply concat (apply map vector (take 3 (partition 9 in))))))
+                                         (partition 9 (vec (apply concat (apply map vector (partition 9 (subvec in 27 54))))))
+                                         (partition 9 (vec (apply concat (apply map vector (nthrest (partition 9 in) 6)))))))))) ; squares
+                        (every? true? (map check (apply map vector (partition 9 in)))) ; columns
+                        (every? true? (map check (partition 9 in)))) true false))))
        inputs))
 
 (defn make-sudoku-error-function-from-cases
@@ -74,23 +111,23 @@
     ([individual data-cases print-outputs]
       (let [behavior (atom '())
             errors (doall
-                     (for [[input1 correct-output] (case data-cases
+                     (for [[input correct-output] (case data-cases
                                                      :train train-cases
                                                      :test test-cases
                                                      [])]
                        (let [final-state (run-push (:program individual)
                                                    (->> (make-push-state)
-                                                     (push-item input1 :input)))
-                             result (stack-ref :integer 0 final-state)]
+                                                     (push-item input :input)))
+                             result (stack-ref :boolean final-state)]
                          (when print-outputs
-                           (println (format "Correct output: %6d | Program output: %s" correct-output (str result))))
+                           (println (format "Correct output: %5b | Program output: %s" correct-output (str result))))
                          ; Record the behavior
                          (swap! behavior conj result)
                          ; Error is integer distance
-                         (if (number? result)
-                           (abs (- result correct-output)) ;distance from correct integer
-                           1000000000) ;penalty for no return value
-                         )))]
+                         ; Error is boolean error
+                         (if (= result correct-output)
+                           0
+                           1))))]
         (if (= data-cases :train)
           (assoc individual :behaviors @behavior :errors errors)
           (assoc individual :test-errors errors))))))

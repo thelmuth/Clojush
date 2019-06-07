@@ -1,4 +1,4 @@
-#PBS -N Sort-Vector
+#PBS -N Sort-String
 #PBS -l nodes=1:ppn=8
 #PBS -l mem=20GB
 #PBS -q una
@@ -19,7 +19,7 @@ NP=`cat $PBS_NODEFILE | wc -l`  # Bash syntax
 #setenv NP `cat $PBS_NODEFILE | wc -l` # tcsh/csh syntax
 
 
-NAMESPACE="sort-vector"
+NAMESPACE="sort-string"
 
 SELECTION="lexicase"
 

@@ -1,0 +1,25 @@
+Command line args: clojush.problems.software.small-or-large :parent-selection :lexicase :print-timings true :down-sample-factor 0.1 :max-generations 3000 :genetic-operator-probabilities {:uniform-addition-and-deletion,1.0} :uniform-addition-and-deletion-rate 0.09
+######################################
+Parameters set at command line or in problem file argmap; may or may not be default:
+alignment-deviation = 5
+alternation-rate = 0.01
+atom-generators = (small large #object[clojush.problems.software.small_or_large$fn__7479 0x7cec3975 clojush.problems.software.small_or_large$fn__7479@7cec3975] #object[clojush.instructions.tag$tag_instruction_erc$fn__2160 0x205f52ea clojush.instructions.tag$tag_instruction_erc$fn__2160@205f52ea] #object[clojush.instructions.tag$tagged_instruction_erc$fn__2166 0x29ccab93 clojush.instructions.tag$tagged_instruction_erc$fn__2166@29ccab93] in1 print_newline integer_sub integer_inc boolean_stackdepth boolean_pop exec_yankdup integer_yankdup string_flush boolean_swap exec_shove exec_y boolean_yank integer_eq string_butlast string_substring integer_mult boolean_or boolean_empty exec_s_when_autoconstructing exec_do*while integer_fromstring exec_dup_items boolean_dup_items exec_empty string_shove exec_rot exec_dup boolean_flush string_reverse exec_k boolean_xor integer_gte boolean_dup_times string_replacefirst boolean_shove print_boolean boolean_rot integer_div integer_lte integer_mod string_concat exec_do*count integer_rot exec_k_when_autoconstructing integer_add integer_shove string_dup_times integer_max string_eq integer_stackdepth string_take integer_dup_times boolean_dup exec_dup_times exec_eq string_emptystring string_swap integer_yank exec_while integer_min exec_swap string_stackdepth string_pop integer_dup_items exec_do*range exec_if boolean_invert_first_then_and print_string integer_fromboolean boolean_frominteger print_integer boolean_eq integer_flush string_replace exec_y_when_autoconstructing integer_gt boolean_not exec_do*times string_empty exec_pop string_yankdup exec_s integer_lt string_yank exec_noop integer_swap string_split string_fromboolean integer_dup string_rest string_rot exec_yank string_parse_to_chars integer_pop integer_empty print_exec integer_dec string_contains string_dup_items exec_stackdepth boolean_and string_length string_frominteger exec_flush exec_when boolean_invert_second_then_and string_dup boolean_yankdup)
+down-sample-factor = 0.1
+error-function = #object[clojush.problems.software.small_or_large$make_small_or_large_error_function_from_cases$the_actual_small_or_large_error_function__7486 0x6c49ea0c clojush.problems.software.small_or_large$make_small_or_large_error_function_from_cases$the_actual_small_or_large_error_function__7486@6c49ea0c]
+evalpush-limit = 300
+final-report-simplifications = 5000
+genetic-operator-probabilities = {:uniform-addition-and-deletion 1.0}
+max-error = 5000
+max-generations = 3000
+max-genome-size-in-initial-program = 100
+max-points = 800
+parent-selection = :lexicase
+population-size = 1000
+print-timings = true
+problem-specific-initial-report = #object[clojush.problems.software.small_or_large$small_or_large_initial_report 0x9763e61 clojush.problems.software.small_or_large$small_or_large_initial_report@9763e61]
+problem-specific-report = #object[clojush.problems.software.small_or_large$small_or_large_report 0x44c27b8b clojush.problems.software.small_or_large$small_or_large_report@44c27b8b]
+report-simplifications = 0
+training-cases = ([-10000 small] [-9800 small] [-9561 small] [-9560 small] [-9514 small] [-9502 small] [-9364 small] [-9228 small] [-9165 small] [-8949 small] [-8812 small] [-8663 small] [-8056 small] [-7621 small] [-7597 small] [-7581 small] [-7339 small] [-7337 small] [-6956 small] [-6814 small] [-6649 small] [-6419 small] [-5391 small] [-4559 small] [-4515 small] [-4193 small] [-4136 small] [-3730 small] [-3238 small] [-2779 small] [-2642 small] [-2100 small] [-1815 small] [-1715 small] [-1600 small] [-1499 small] [-1221 small] [-1048 small] [-656 small] [-570 small] [-537 small] [-301 small] [-49 small] [0 small] [1 small] [85 small] [356 small] [756 small] [980 small] [995 small] [996 small] [997 small] [998 small] [999 small] [1000 ] [1001 ] [1002 ] [1003 ] [1004 ] [1020 ] [1301 ] [1307 ] [1527 ] [1544 ] [1563 ] [1732 ] [1775 ] [1980 ] [1995 ] [1996 ] [1997 ] [1998 ] [1999 ] [2000 large] [2001 large] [2002 large] [2003 large] [2004 large] [2020 large] [2322 large] [2828 large] [3042 large] [3142 large] [3402 large] [4481 large] [5012 large] [5295 large] [5318 large] [5417 large] [6277 large] [6343 large] [6723 large] [7272 large] [7283 large] [8080 large] [8336 large] [9403 large] [9415 large] [9820 large] [10000 large])
+uniform-addition-and-deletion-rate = 0.09
+uniform-mutation-rate = 0.01
+######################################

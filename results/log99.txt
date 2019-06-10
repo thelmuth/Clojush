@@ -1,0 +1,40 @@
+Command line args: clojush.problems.software.scrabble-score :parent-selection :lexicase :print-timings true :down-sample-factor 0.25 :max-generations 1200 :genetic-operator-probabilities {:uniform-addition-and-deletion,1.0} :uniform-addition-and-deletion-rate 0.09
+######################################
+Parameters set at command line or in problem file argmap; may or may not be default:
+alignment-deviation = 10
+alternation-rate = 0.01
+atom-generators = ([0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 3 3 2 1 4 2 4 1 8 5 1 3 1 1 3 10 1 1 1 1 4 4 8 4 10 0 0 0 0 0 0 1 3 3 2 1 4 2 4 1 8 5 1 3 1 1 3 10 1 1 1 1 4 4 8 4 10 0 0 0 0] #object[clojush.instructions.tag$tag_instruction_erc$fn__2160 0x1feb76b9 clojush.instructions.tag$tag_instruction_erc$fn__2160@1feb76b9] #object[clojush.instructions.tag$tagged_instruction_erc$fn__2166 0x32298473 clojush.instructions.tag$tagged_instruction_erc$fn__2166@32298473] in1 integer_sub integer_inc boolean_stackdepth vector_integer_eq boolean_pop string_fromchar exec_yankdup vector_integer_shove integer_yankdup string_flush boolean_swap exec_shove exec_y boolean_yank integer_eq string_butlast string_conjchar string_substring integer_mult vector_integer_dup boolean_or boolean_empty exec_s_when_autoconstructing char_dup_items char_iswhitespace exec_do*vector_integer string_first exec_do*while exec_string_iterate string_indexofchar integer_fromstring char_frominteger vector_integer_emptyvector exec_dup_items boolean_dup_items exec_empty string_shove exec_rot vector_integer_swap char_pop exec_dup vector_integer_butlast boolean_flush char_isdigit vector_integer_empty string_reverse exec_k vector_integer_yank char_rot vector_integer_dup_times vector_integer_stackdepth boolean_xor integer_gte vector_integer_take boolean_dup_times string_replacefirst vector_integer_yankdup boolean_shove vector_integer_replace string_last boolean_rot integer_div integer_lte vector_integer_rot integer_mod string_concat exec_do*count integer_rot exec_k_when_autoconstructing integer_add vector_integer_occurrencesof integer_shove string_dup_times char_swap integer_max vector_integer_flush vector_integer_subvec char_dup_times vector_integer_contains vector_integer_conj string_eq integer_stackdepth string_take char_stackdepth vector_integer_replacefirst integer_dup_times boolean_dup exec_dup_times vector_integer_indexof exec_eq string_emptystring string_swap integer_yank exec_while integer_min exec_swap integer_fromchar string_stackdepth string_replacechar char_allfromstring vector_integer_rest char_yank string_pop integer_dup_items string_nth vector_integer_nth exec_do*range vector_integer_dup_items exec_if char_shove vector_integer_remove boolean_invert_first_then_and integer_fromboolean char_yankdup boolean_frominteger string_setchar vector_integer_last char_isletter vector_integer_concat boolean_eq string_occurrencesofchar string_replacefirstchar integer_flush string_replace char_dup exec_y_when_autoconstructing char_eq integer_gt vector_integer_length boolean_not vector_integer_pop exec_do*times string_empty char_empty exec_pop vector_integer_set string_yankdup string_removechar char_flush exec_s vector_integer_reverse integer_lt string_containschar string_yank exec_noop vector_integer_pushall integer_swap string_split string_fromboolean integer_dup string_rest string_rot exec_yank string_parse_to_chars integer_pop integer_empty integer_dec string_contains vector_integer_first string_dup_items exec_stackdepth boolean_and string_length string_frominteger exec_flush exec_when boolean_invert_second_then_and string_dup boolean_yankdup)
+down-sample-factor = 0.25
+error-function = #object[clojush.problems.software.scrabble_score$make_scrabble_score_error_function_from_cases$the_actual_scrabble_score_error_function__7506 0x38394dc3 clojush.problems.software.scrabble_score$make_scrabble_score_error_function_from_cases$the_actual_scrabble_score_error_function__7506@38394dc3]
+evalpush-limit = 2000
+final-report-simplifications = 5000
+genetic-operator-probabilities = {:uniform-addition-and-deletion 1.0}
+max-error = 1000
+max-generations = 1200
+max-genome-size-in-initial-program = 500
+max-points = 4000
+parent-selection = :lexicase
+population-size = 1000
+print-timings = true
+problem-specific-initial-report = #object[clojush.problems.software.scrabble_score$scrabble_score_initial_report 0x75f65d54 clojush.problems.software.scrabble_score$scrabble_score_initial_report@75f65d54]
+problem-specific-report = #object[clojush.problems.software.scrabble_score$scrabble_score_report 0x5b4d9bda clojush.problems.software.scrabble_score$scrabble_score_report@5b4d9bda]
+report-simplifications = 0
+training-cases = ([ 0] [a 1] [b 3] [c 3] [d 2] [e 1] [f 4] [g 2] [h 4] [i 1] [j 8] [k 5] [l 1] [m 3] [n 1] [o 1] [p 3] [q 10] [r 1] [s 1] [t 1] [u 1] [v 4] [w 4] [x 8] [y 4] [z 10] [* 0] [  0] [Q  10] [zx 18] [ef 5] [!! 0] [p& 3] [%2 0] [o1 1] [+w 4] [(@ 0] [Dv 6] [d< 2] [/H 4] [LC 4] [(L 1] [ Dw 6] [ F@ 4] [ydp 9] [4ps 4] [nN| 2] [~Qh 14] [i
+2 1] [L8u 2] [X<? 8] [U!h 5] [";0 0] [`a' 1] [4#_ 0] []	c 3] [6#9 0] [|4$ 0] [Kb&4 8] [K>g1 7] [S?WB 8] [P*!C 6] [x!P? 11] [?-&T 1] [2"RR 2] [2#_S 1] [A}"g 3] [wynPA 13] [r[ Ka 7] [D.,;) 2] [T2a)% 2] [9C+?4 3] [A:/!3 1] [Lq~N. 12] [bk9^B 11] [0qmCD 18] [r@	Rv 6] [&wQ'_ 14] [S.z=z 21] [kLFwf. 18] [zq7Jad 31] [p,N~pz 17] [{0mIM# 7] [$ZL?&n 12] [0m:Fa2 8] [
+_,@oj 9] [u!^7cp 7] [B'>!#"_ 3] [p>F^	0e 8] [J
+:2GH& 14] [y	O>L*% 6] [G,*iFtR 9] [|7)\l@X 9] [@#uU/E=" 3] [XbAt<.u% 14] [:oA] 5BZ 15] [##7aVarI 8] [ZnoW	SFJ 29] [XC`QF8n\; 26] [b9[w2pt	_ 11] [/:bO'^\uP 8] [f-nDte6}d 11] [D'aMG$u4N 10] [)/OT+.@{*- 2] [/P?]:/g	\E 6] [Yel%L),Q\M 20] [J3D]v6L>Eq 26] [hC-
+9(`Y^D 13] [H 2!RC9qEJ 27] [QzCHLpEpIj 44] [T3c~'q.C$b 20] [6!
+-"@?/]V 4] [q!0C1!\B;/ 16] [rVJ4gE"6cQ 29] [6z2m<u6&;3v 18] [-fQ!$E?U2w3 20] [J_hg7-v
+b4z 31] [\\,%&/kroKV 16] [oTc4\u&7\=~ 6] [n7,0T[*B,+T 6] [@~uphFpeWMQ 33] [mp`K=!&;QRB 25] [vUh9%$7eSng 14] [	YR_B#gA$6R 12] [\d~KhZzLG,%I 35] [
+cN\ O]`wls+ 11] [6m+.Up&s)*e[ 9] [=\\G)ua~Z>J# 22] [{gQ,X\*x3DA? 31] [i !i !i !i !i 5] [omY5iV(9P5ro~ 18] [f$,c7hk_EcV	M 27] [8B3;f1q\t#TOE 21] [Pk]t5YU9|UMr~ 19] [j,N-<n2?MLb]% 17] [7,\}4<"OWJo3G 16] [1
+[05`i%]9RXt 11] [:(7Vk+&-H;6:e 14] [+_h@5144OvGK+< 16] [,7`lz	S@+`>_># 12] [T)2GMI49@F0UCj 23] [$Z+rJ%e}NmYwop 36] [>m|J%_'
+bLyi	v 24] [o [%#i	abgq)fq 32] [!wwVr.2sq?K/l5 30] [;,=H60CAzlsR=!B 24] [}r&)Vb/H4ddcG*> 21] [Q C[#|<0K3-)fC+ 25] [`|Ju#Nr)Y4p'4), 18] [/gx	!F:o
+_ZVq%Y 43] [A][o
+#[@~1#}!1f 6] [L%g>~cD`cleu2Q* 24] [S}<O3dfhgJlO<7T 25] [PvPEs#F"(Z6,oU1/ 28] [d_(+AgTVs ?>2VIY 20] [""XO^7[[H[X.:/HK 30] [Q}1qr,W=>+*.$<VY 33] [YHb.gJtNf.E	5z4q 48] [xU/MB1#(5g*U}u
+z 29] [3pEjI}s?$?VDis&t@ 23] [5xxM%E~)+<dd }3O< 25] [Ex#.IE/f:	$c\/"[q 28] [H9Z94Hlgx%*_BC@dZ 47] [kMHHZVv)0	fx0L*p4 50] [hej68QxU^ xN\exE0 51] [~2[Y`ja-yC\?y,'F+ 28] [h w h j##r##r
++JJL 39] [_,ac$NyN2O6co$%!Y9 19] [6?}]$	D-dsm6#<b!
+	 11] [rk!j8$#_%pFlcj;XvJ 53] [Ajc1`w19t0O$I,#]TG 22] [c%|f^?W 5V1IGSmz8T 33] [yv6@r@o;C&rqGnrdgh 36] [zxyzxyqQQZXYqqjjawp 140] [S@H=Ro8[c3g+<U7Pf/2 20] [YLzMP@+R^EBq6#gVv^b 49] [kOJhvZ(rN+fB#8@YL7A 47] [>&EvvN'w/C7ZA{|L~@U 30] [-x\t?CL!2-IEw>jEM~R 32] [ap
+5{b**(|svq)E+I+O 25] [abcdefghijklmnopqrst 56] [ghijklmnopqrstuvwxyz 73] [QQQQQQQQQQQQQQQQQQQQ 200] [$$$$$$$$$$$$$$$$$$$$ 0] [wwwwwwwwwwwwwwwwwwww 80] [1 1 1 1 1 1 1 1 1 1  0] [ v v v v v v v v v v 40] [Ha Ha Ha Ha Ha Ha Ha 35] [x y!x y!x y!x y!x y! 60] [G5G5G5G5G5G5G5G5G5G5 20] [>-AWtWen'l'j1(NnoUC& 28] [:9IgED1LBz5|Rq$|&ivv 40] [w\$Kcc];}@"7]M}}^_!! 18] [)I/C|6PY#+Wa&j6XO%Eh 38] [a("m]]0_ytFnW-iOj$!O 29] [XI^#e?zyd"pN'nD! ]rA 35] [,8g;	Ind	cekn+/]NPh? 24] [UCU,c~P`r+o2.h@;{C71 20] [UkJ.~1e*qVcDdgeig@== 42])
+uniform-addition-and-deletion-rate = 0.09
+uniform-mutation-rate = 0.01
+######################################

@@ -3,7 +3,7 @@
 ;;
 ;;
 
-(ns clojush.problems.software.tic_tac_toe
+(ns clojush.problems.software.tic-tac-toe
   (:use clojush.pushgp.pushgp
         [clojush pushstate interpreter random util globals]
         clojush.instructions.tag
@@ -155,7 +155,7 @@
                          ; Record the behavior
                          (swap! behavior conj printed-result)
                          ; Error is boolean error
-                         (if (= result correct-output)
+                         (if (= printed-result correct-output)
                            0
                            1))))]
         (if (= data-cases :train)

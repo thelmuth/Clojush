@@ -24,7 +24,7 @@
             'in1
             ;;; end input instructions
             )
-          (registered-for-stacks [:boolean :integer :string :char :exec :vector_string])))
+          (registered-for-stacks [:boolean :integer :string :char :exec :vector_string :print])))
 
 
 ;; Define test cases

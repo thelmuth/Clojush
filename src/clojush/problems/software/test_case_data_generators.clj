@@ -177,7 +177,7 @@
     (write-data-to-json (concat header random) (str output-filename-prefix "-random.json"))))
 
 
-(let [namespace "collatz-numbers"]
+(let [namespace "vectors-summed"]
   (generate-data-for-data-sets namespace (str "data/" namespace)))
 
 

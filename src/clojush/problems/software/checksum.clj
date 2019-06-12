@@ -63,9 +63,9 @@
           (apply str (take 50 (cycle (list \x \newline \y \space))))
           (apply str (take 50 (cycle (list \space \newline))))) 11 0] ;; "Special" inputs covering some base cases
    [(map str (map char (range 32 127))) 95 0] ; All visible characters once
-   [(fn [] (checksum-input 2)) 0 25] ; Random length-2 inputs
-   [(fn [] (checksum-input 3)) 0 25] ; Random length-3 inputs
-   [(fn [] (checksum-input (+ 2 (lrand-int 49)))) 0 5] ; Random >= 2 length inputs
+   [(fn [] (checksum-input 2)) 0 250000] ; Random length-2 inputs
+   [(fn [] (checksum-input 3)) 0 250000] ; Random length-3 inputs
+   [(fn [] (checksum-input (+ 2 (lrand-int 49)))) 0 500000] ; Random >= 2 length inputs
    ])
 
 ; The real data domains; uncomment later

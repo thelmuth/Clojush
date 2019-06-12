@@ -19,8 +19,7 @@
         [clojush pushstate interpreter random util globals]
         clojush.instructions.tag
         clojure.math.numeric-tower
-        )
-  (:require [clojure.edn :as edn]))
+        ))
 
 ; Atom generators
 (def checksum-atom-generators
@@ -39,49 +38,6 @@
             ;;; end input instructions
             )
           (registered-for-stacks [:integer :boolean :string :char :exec :print])))
-
-
-;; Define test cases
-(defn checksum-input
-  "Makes a checksum input of length len."
-  [len]
-  (apply str
-         (repeatedly len
-                     #(lrand-nth (concat [\newline \tab]
-                                         (map char (range 32 127)))))))
-
-;; A list of data domains for the problem. Each domain is a vector containing
-;; a "set" of inputs and two integers representing how many cases from the set
-;; should be used as training and testing cases respectively. Each "set" of
-;; inputs is either a list or a function that, when called, will create a
-;; random element of the set.
-(def checksum-data-domains
-  [[(list "", "\t", "\n", "B\n", "\n\n",
-          (apply str (repeat 50 \newline))
-          (apply str (repeat 50 \space))
-          (apply str (repeat 50 \s))
-          (apply str (take 50 (cycle (list \C \D \newline))))
-          (apply str (take 50 (cycle (list \x \newline \y \space))))
-          (apply str (take 50 (cycle (list \space \newline))))) 11 0] ;; "Special" inputs covering some base cases
-   [(map str (map char (range 32 127))) 95 0] ; All visible characters once
-   [(fn [] (checksum-input 2)) 55 500] ; Random length-2 inputs
-   [(fn [] (checksum-input 3)) 50 500] ; Random length-3 inputs
-   [(fn [] (checksum-input (+ 2 (lrand-int 49)))) 89 1000] ; Random >= 2 length inputs
-   ])
-
-;;Can make checksum test data like this:
-;(test-and-train-data-from-domains checksum-data-domains)
-
-; Helper function for error function
-(defn checksum-test-cases
-  "Takes a sequence of inputs and gives IO test cases of the form
-   [input output]."
-  [inputs]
-  (map #(vector %
-                (format "Check sum is %c"
-                        (char (+ (mod (apply + (map int %)) 64)
-                                 (int \space)))))
-       inputs))
 
 (defn make-checksum-error-function-from-cases
   [train-cases test-cases]
@@ -117,25 +73,6 @@
         (if (= data-cases :train)
           (assoc individual :behaviors @behavior :errors errors)
           (assoc individual :test-errors errors))))))
-
-(defn get-checksum-train-and-test
-  "Returns the train and test cases."
-  [data-domains]
-  (map #(sort-by (comp count first) %)
-       (map checksum-test-cases
-            (test-and-train-data-from-domains data-domains))))
-
-(defn train-and-test-cases-from-dataset
-  [namespace number-random-train number-random-test]
-  (let [edge-train (edn/read-string (slurp (str "data/program-synthesis-benchmark-datasets/datasets/" namespace "/" namespace "-edge.edn")))
-        edge-train-header (first edge-train)
-        edge-train-cases (rest edge-train)
-        random-cases (edn/read-string (slurp (str "data/program-synthesis-benchmark-datasets/datasets/" namespace "/" namespace "-random.edn")))
-         ; This should be faster than (take number-random-train (shuffle (rest (random-cases))))
-        random-train-cases (repeatedly number-random-train #(rand-nth (rest random-cases)))
-        train-cases (concat edge-train-cases random-train-cases)
-        test-cases (repeatedly number-random-test #(rand-nth (rest random-cases)))]
-    [train-cases test-cases]))
 
 ; Define train and test cases
 (def checksum-train-and-test-cases

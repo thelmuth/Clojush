@@ -1,8 +1,8 @@
-;; hero_to_zero.clj
+;; bouncing_balls.clj
 ;; Peter Kelly, pxkelly@hamilton.edu
 ;;
 
-(ns clojush.problems.software.hero-to-zero
+(ns clojush.problems.software.bouncing-balls
   (:use clojush.pushgp.pushgp
         [clojush pushstate interpreter random util globals]
         clojush.instructions.tag
@@ -10,7 +10,7 @@
         ))
 
 ; Atom generators
-(def hero-to-zero-atom-generators
+(def bouncing-balls-atom-generators
   (concat (list
             (tag-instruction-erc [:exec :integer :boolean] 1000)
             (tagged-instruction-erc 1000)
@@ -21,12 +21,12 @@
             )
           (registered-for-stacks [:integer :boolean :exec])))
 
-;; A list of data domains for the hero-to-zero problem. Each domain is a vector containing
+;; A list of data domains for the bouncing-balls problem. Each domain is a vector containing
 ;; a "set" of inputs and two integers representing how many cases from the set
 ;; should be used as training and testing cases respectively. Each "set" of
 ;; inputs is either a list or a function that, when called, will create a
 ;; random element of the set.
-(def hero-to-zero-data-domains
+(def bouncing-balls-data-domains
   [#_[(list [1 2]
             [10000 10000]
             [59 3]
@@ -34,11 +34,11 @@
    [(fn [] (list (inc (rand-int 10000)) (+ (rand-int 10000) 2))) 196 2000]
    ])
 
-;;Can make hero-to-zero test data like this:
-;(test-and-train-data-from-domains hero-to-zero-data-domains)
+;;Can make bouncing-balls test data like this:
+;(test-and-train-data-from-domains bouncing-balls-data-domains)
 
 ; Helper function for error function
-(defn hero-to-zero-test-cases
+(defn bouncing-balls-test-cases
   "Takes a sequence of inputs and gives IO test cases of the form
    [[input1 input2] output]."
   [inputs]
@@ -51,13 +51,13 @@
                 :else (recur (dec n) k (inc steps))))))
        inputs))
 
-(defn make-hero-to-zero-error-function-from-cases
+(defn make-bouncing-balls-error-function-from-cases
   [train-cases test-cases]
-  (fn the-actual-hero-to-zero-error-function
+  (fn the-actual-bouncing-balls-error-function
     ([individual]
-      (the-actual-hero-to-zero-error-function individual :train))
+      (the-actual-bouncing-balls-error-function individual :train))
     ([individual data-cases] ;; data-cases should be :train or :test
-     (the-actual-hero-to-zero-error-function individual data-cases false))
+     (the-actual-bouncing-balls-error-function individual data-cases false))
     ([individual data-cases print-outputs]
       (let [behavior (atom '())
             errors (doall
@@ -83,32 +83,32 @@
           (assoc individual :behaviors @behavior :errors errors)
           (assoc individual :test-errors errors))))))
 
-(defn get-hero-to-zero-train-and-test
+(defn get-bouncing-balls-train-and-test
   "Returns the train and test cases."
   [data-domains]
-  (map hero-to-zero-test-cases
+  (map bouncing-balls-test-cases
        (test-and-train-data-from-domains data-domains)))
 
 ; Define train and test cases
-(def hero-to-zero-train-and-test-cases
-  (get-hero-to-zero-train-and-test hero-to-zero-data-domains))
+(def bouncing-balls-train-and-test-cases
+  (get-bouncing-balls-train-and-test bouncing-balls-data-domains))
 
-(defn hero-to-zero-initial-report
+(defn bouncing-balls-initial-report
   [argmap]
   (println "Train and test cases:")
-  (doseq [[i case] (map vector (range) (first hero-to-zero-train-and-test-cases))]
+  (doseq [[i case] (map vector (range) (first bouncing-balls-train-and-test-cases))]
     (println (format "Train Case: %3d | Input/Output: %s" i (str case))))
-  (doseq [[i case] (map vector (range) (second hero-to-zero-train-and-test-cases))]
+  (doseq [[i case] (map vector (range) (second bouncing-balls-train-and-test-cases))]
     (println (format "Test Case: %3d | Input/Output: %s" i (str case))))
   (println ";;******************************"))
 
-(defn hero-to-zero-report
+(defn bouncing-balls-report
   "Custom generational report."
   [best population generation error-function report-simplifications]
   (let [best-test-errors (:test-errors (error-function best :test))
         best-total-test-error (apply +' best-test-errors)]
     (println ";;******************************")
-    (printf ";; -*- Hero to Zero problem report - generation %s\n" generation)(flush)
+    (printf ";; -*- Bouncing Balls problem report - generation %s\n" generation)(flush)
     (println "Test total error for best:" best-total-test-error)
     (println (format "Test mean error for best: %.5f" (double (/ best-total-test-error (count best-test-errors)))))
     (when (zero? (:total-error best))
@@ -127,9 +127,9 @@
 
 ; Define the argmap
 (def argmap
-  {:error-function (make-hero-to-zero-error-function-from-cases (first hero-to-zero-train-and-test-cases)
-                                                          (second hero-to-zero-train-and-test-cases))
-   :atom-generators hero-to-zero-atom-generators
+  {:error-function (make-bouncing-balls-error-function-from-cases (first bouncing-balls-train-and-test-cases)
+                                                          (second bouncing-balls-train-and-test-cases))
+   :atom-generators bouncing-balls-atom-generators
    :max-points 800
    :max-genome-size-in-initial-program 100
    :evalpush-limit 200
@@ -145,8 +145,8 @@
    :alternation-rate 0.01
    :alignment-deviation 5
    :uniform-mutation-rate 0.01
-   :problem-specific-report hero-to-zero-report
-   :problem-specific-initial-report hero-to-zero-initial-report
+   :problem-specific-report bouncing-balls-report
+   :problem-specific-initial-report bouncing-balls-initial-report
    :report-simplifications 0
    :final-report-simplifications 5000
    :max-error 1000000

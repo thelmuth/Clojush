@@ -31,43 +31,6 @@
             )
           (registered-for-stacks [:integer :float :boolean :exec])))
 
-
-;; A list of data domains for the problem. Each domain is a vector containing
-;; a "set" of inputs and two integers representing how many cases from the set
-;; should be used as training and testing cases respectively. Each "set" of
-;; inputs is either a list or a function that, when called, will create a
-;; random element of the set.
-(def collatz-numbers-data-domains
-  [[(concat (range 1 11) '(9999 10000)) 12 0] ; Small and large cases
-   [(list 6171 6943 7963 9257) 4 0] ; Cases with the largest answers in range: ([6171 262] [6943 257] [7963 252] [9257 260])
-   [(fn [] (+ 11 (lrand-int 9988))) 184 2000] ; Random cases [11,9998]
-   ])
-
-;;Can make Collatz Numbers test data like this:
-;(test-and-train-data-from-domains collatz-numbers-data-domains)
-
-; Helper function for error function
-(defn tail-collatz-sequence
-  "Given a starting integer n, gives the number of steps in the Collatz sequence
-   starting at n."
-  [n]
-  (loop [n n
-         len 1]
-    (if (>= 1 n)
-      len
-      (if (even? n)
-        (recur (/ n 2) (inc len))
-        (recur (inc (*' 3 n)) (inc len))))))
-
-(defn collatz-numbers-test-cases
-  "Takes a sequence of inputs and gives IO test cases of the form
-   [input output]."
-  [inputs]
-  (map (fn [in]
-         (vector in
-                 (tail-collatz-sequence in)))
-       inputs))
-
 (defn make-collatz-numbers-error-function-from-cases
   [train-cases test-cases]
   (fn the-actual-collatz-numbers-error-function
@@ -99,15 +62,9 @@
           (assoc individual :behaviors @behavior :errors errors)
           (assoc individual :test-errors errors))))))
 
-(defn get-collatz-numbers-train-and-test
-  "Returns the train and test cases."
-  [data-domains]
-  (map sort (map collatz-numbers-test-cases
-                 (test-and-train-data-from-domains data-domains))))
-
 ; Define train and test cases
 (def collatz-numbers-train-and-test-cases
-  (get-collatz-numbers-train-and-test collatz-numbers-data-domains))
+  (train-and-test-cases-from-dataset "collatz-numbers" 184 2000))
 
 (defn collatz-numbers-initial-report
   [argmap]

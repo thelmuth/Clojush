@@ -19,7 +19,8 @@
         [clojush pushstate interpreter random util globals]
         clojush.instructions.tag
         clojure.math.numeric-tower
-        ))
+        )
+  (:require [clojure.edn :as edn]))
 
 ; Atom generators
 (def checksum-atom-generators
@@ -124,9 +125,22 @@
        (map checksum-test-cases
             (test-and-train-data-from-domains data-domains))))
 
+(defn train-and-test-cases-from-dataset
+  [namespace number-random-train number-random-test]
+  (let [edge-train (edn/read-string (slurp (str "data/program-synthesis-benchmark-datasets/datasets/" namespace "/" namespace "-edge.edn")))
+        edge-train-header (first edge-train)
+        edge-train-cases (rest edge-train)
+        random-cases (edn/read-string (slurp (str "data/program-synthesis-benchmark-datasets/datasets/" namespace "/" namespace "-random.edn")))
+         ; This should be faster than (take number-random-train (shuffle (rest (random-cases))))
+        random-train-cases (repeatedly number-random-train #(rand-nth (rest random-cases)))
+        train-cases (concat edge-train-cases random-train-cases)
+        test-cases (repeatedly number-random-test #(rand-nth (rest random-cases)))]
+    [train-cases test-cases]))
+
 ; Define train and test cases
 (def checksum-train-and-test-cases
-  (get-checksum-train-and-test checksum-data-domains))
+  (map #(sort-by (comp count first) %)
+       (train-and-test-cases-from-dataset "checksum" 194 2000)))
 
 (defn checksum-initial-report
   [argmap]

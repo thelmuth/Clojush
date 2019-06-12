@@ -88,9 +88,12 @@
                            (println (format "Correct output: %s\n| Program output: %s\n" (pr-str correct-output) (pr-str result))))
                        ; Record the behavior
                        (swap! behavior conj result)
-                       ; Error is levenshtein distance plus a large penalty if the sizes of the vectors are different
+                       ; Error is integer error at each position in the vectors, with additional penalties for incorrect size vector
                        (if (vector? result)
-                         (+' (levenshtein-distance correct-output result)
+                         (+' (apply +' (map (fn [cor res]
+                                              (abs (- cor res)))
+                                            correct-output
+                                            result))
                              (*' 10000 (abs (- (count correct-output) (count result))))) ; penalty of 10000 times difference in sizes of vectors
                          1000000000) ; penalty for no return value
                        )))]

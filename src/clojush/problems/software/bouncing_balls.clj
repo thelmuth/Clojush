@@ -17,9 +17,10 @@
             ;;; end ERCs
             'in1
             'in2
+            'in3
             ;;; end input instructions
             )
-          (registered-for-stacks [:integer :boolean :exec])))
+          (registered-for-stacks [:integer :boolean :exec :float])))
 
 ;; A list of data domains for the bouncing-balls problem. Each domain is a vector containing
 ;; a "set" of inputs and two integers representing how many cases from the set
@@ -27,11 +28,12 @@
 ;; inputs is either a list or a function that, when called, will create a
 ;; random element of the set.
 (def bouncing-balls-data-domains
-  [#_[(list [1 2]
-            [10000 10000]
-            [59 3]
-            [532 1432]) 4 0]
-   [(fn [] (list (inc (rand-int 10000)) (+ (rand-int 10000) 2))) 196 2000]
+  [#_[(list [0 0 0]
+            [100 0.99 50]
+            [3 0.66 1.5]
+            [3 0.5 3]
+            [1 0.3 10]) 5 0]
+   [(fn [] (list (inc (rand 100)) (rand) (inc (rand 50)))) 195 2000]
    ])
 
 ;;Can make bouncing-balls test data like this:
@@ -42,13 +44,13 @@
   "Takes a sequence of inputs and gives IO test cases of the form
    [[input1 input2] output]."
   [inputs]
-  (map (fn [[in1 in2]]
-          (vector [in1 in2]
-            (loop [n in1 k in2 steps 0]
-              (cond
-                (= n 0) steps
-                (= (mod n k) 0) (recur (/ n k) k (inc steps))
-                :else (recur (dec n) k (inc steps))))))
+  (map (fn [[in1 in2 in3]]
+          (vector [in1 in2 in3]
+            (if (<= in1 in3) -1
+              (loop [h in1 times 0]
+                (cond
+                  (<= h in3) (inc times)
+                  :else (recur (* h in2) (inc times)))))))
        inputs))
 
 (defn make-bouncing-balls-error-function-from-cases
@@ -61,16 +63,16 @@
     ([individual data-cases print-outputs]
       (let [behavior (atom '())
             errors (doall
-                     (for [[[input1 input2] out-int] (case data-cases
+                     (for [[[input1 input2 input3] out-int] (case data-cases
                                                               :train train-cases
                                                               :test test-cases
                                                               [])]
                        (let [final-state (run-push (:program individual)
                                                    (->> (make-push-state)
+                                                     (push-item input3 :input)
                                                      (push-item input2 :input)
-                                                     (push-item input1 :input)
-                                                     (push-item "" :output)))
-                             printed-result (stack-ref :integer 0 final-state)]
+                                                     (push-item input1 :input)))
+                             printed-result (top-item :integer final-state)]
                          (when print-outputs
                            (println (format "Correct output: %-19s | Program output: %-19s" (str out-int) printed-result)))
                          ; Record the behavior

@@ -46,80 +46,6 @@
             )
           (registered-for-stacks [:integer :boolean :string :exec :print])))
 
-;; A list of data domains for the problem. Each domain is a vector containing
-;; a "set" of inputs and two integers representing how many cases from the set
-;; should be used as training and testing cases respectively. Each "set" of
-;; inputs is either a list or a function that, when called, will create a
-;; random element of the set.
-(def grade-data-domains
-  [[(list '(80 70 60 50 85)
-          '(80 70 60 50 80)
-          '(80 70 60 50 79)
-          '(80 70 60 50 75)
-          '(80 70 60 50 70)
-          '(80 70 60 50 69)
-          '(80 70 60 50 65)
-          '(80 70 60 50 60)
-          '(80 70 60 50 59)
-          '(80 70 60 50 55)
-          '(80 70 60 50 50)
-          '(80 70 60 50 49)
-          '(80 70 60 50 45)) 13 0] ;; Cases from Repair Benchmark paper
-   [(list '(90 80 70 60 100)
-          '(90 80 70 60 0)
-          '(4 3 2 1 5)
-          '(4 3 2 1 4)
-          '(4 3 2 1 3)
-          '(4 3 2 1 2)
-          '(4 3 2 1 1)
-          '(4 3 2 1 0)
-          '(100 99 98 97 100)
-          '(100 99 98 97 99)
-          '(100 99 98 97 98)
-          '(100 99 98 97 97)
-          '(100 99 98 97 96)
-          '(98 48 27 3 55)
-          '(98 48 27 3 14)
-          '(98 48 27 3 1)
-          '(45 30 27 0 1)
-          '(45 30 27 0 0)
-          '(48 46 44 42 40)
-          '(48 46 44 42 41)
-          '(48 46 44 42 42)
-          '(48 46 44 42 43)
-          '(48 46 44 42 44)
-          '(48 46 44 42 45)
-          '(48 46 44 42 46)
-          '(48 46 44 42 47)
-          '(48 46 44 42 48)
-          '(48 46 44 42 49)) 28 0] ;; Hand-written cases
-   [(fn []
-      (let [thresholds (sort > (repeatedly 4 #(lrand-int 101)))]
-        (if (apply distinct? thresholds)
-          (concat thresholds (list (lrand-int 101)))
-          (recur)))) 159 2000] ;; Random cases, which make sure that first 4 integers are distinct
-   ])
-
-;;Can make Grade test data like this:
-;(test-and-train-data-from-domains grade-data-domains)
-
-; Helper function for error function
-(defn grade-test-cases
-  "Takes a sequence of inputs and gives IO test cases of the form
-   [[input1 input2 input3 input4 input5] output]."
-  [inputs]
-  (map #(vector %
-                (str "Student has a "
-                     (let [score (last %)]
-                       (cond
-                         (>= score (first %)) \A
-                         (>= score (second %)) \B
-                         (>= score (nth % 2)) \C
-                         (>= score (nth % 3)) \D
-                         :else \F))
-                     " grade."))
-       inputs))
-
 (defn make-grade-error-function-from-cases
   [train-cases test-cases]
   (fn the-actual-grade-error-function
@@ -162,15 +88,9 @@
           (assoc individual :behaviors @behavior :errors errors)
           (assoc individual :test-errors errors))))))
 
-(defn get-grade-train-and-test
-  "Returns the train and test cases."
-  [data-domains]
-  (map grade-test-cases
-       (test-and-train-data-from-domains data-domains)))
-
 ; Define train and test cases
 (def grade-train-and-test-cases
-  (get-grade-train-and-test grade-data-domains))
+  (train-and-test-cases-from-dataset "grade" 159 2000))
 
 (defn grade-initial-report
   [argmap]

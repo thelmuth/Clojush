@@ -19,7 +19,7 @@
      :vector_float (fn [thing] (and (vector? thing) (float? (first thing))))
      :vector_string (fn [thing] (and (vector? thing) (string? (first thing))))
      :vector_boolean (fn [thing] (and (vector? thing) (or (= (first thing) true) (= (first thing) false))))}))
-     
+
 (defn recognize-literal
   "If thing is a literal, return its type -- otherwise return false."
   [thing]
@@ -99,43 +99,43 @@
   [tree]
   (loop [remaining tree
          total 0]
-    (cond (not (seq? remaining)) 
+    (cond (not (seq? remaining))
           total
-          ;; 
-          (empty? remaining) 
+          ;;
+          (empty? remaining)
           (inc total)
           ;;
-          (not (seq? (first remaining))) 
-          (recur (rest remaining) 
+          (not (seq? (first remaining)))
+          (recur (rest remaining)
                  total)
           ;;
-          :else 
-          (recur (list-concat (first remaining) 
-                              (rest remaining)) 
+          :else
+          (recur (list-concat (first remaining)
+                              (rest remaining))
                  (inc total)))))
 
 (defn count-points
-  "Returns the number of points in tree, where each atom and each pair of parentheses 
+  "Returns the number of points in tree, where each atom and each pair of parentheses
    counts as a point."
   [tree]
   (loop [remaining tree
          total 0]
-    (cond (not (seq? remaining)) 
-          (inc total)
-          ;; 
-          (empty? remaining) 
+    (cond (not (seq? remaining))
           (inc total)
           ;;
-          (not (seq? (first remaining))) 
-          (recur (rest remaining) 
+          (empty? remaining)
+          (inc total)
+          ;;
+          (not (seq? (first remaining)))
+          (recur (rest remaining)
                  (inc total))
           ;;
-          :else 
-          (recur (list-concat (first remaining) 
-                              (rest remaining)) 
+          :else
+          (recur (list-concat (first remaining)
+                              (rest remaining))
                  (inc total)))))
 
-(defn code-at-point 
+(defn code-at-point
   "Returns a subtree of tree indexed by point-index in a depth first traversal."
   [tree point-index]
   (let [index (mod (math/abs point-index) (count-points tree))
@@ -177,7 +177,7 @@
 
 ; Note: Well, I (Tom) think I figured out why truncate was there. When I tried running
 ; the change problem, it threw an exception trying to cast into an int a number
-; that was too big. Maybe there's a different principled way to use casting, but 
+; that was too big. Maybe there's a different principled way to use casting, but
 ; I'm just going to add truncate back for now!
 (defn truncate
   "Returns a truncated integer version of n."
@@ -213,7 +213,7 @@
   (postwalklist (fn [x] (if (contains? smap x) (smap x) x)) form))
 
 (defn subst
-  "Returns the given list but with all instances of that (at any depth)                                   
+  "Returns the given list but with all instances of that (at any depth)
    replaced with this. Read as 'subst this for that in list'. "
   [this that lst]
   (postwalklist-replace {that this} lst))
@@ -222,7 +222,7 @@
   "Returns true if tree contains subtree at any level. Inefficient but
    functional implementation."
   [tree subtree]
-  (or 
+  (or
     (= tree subtree)
     (not (= tree (subst (gensym) subtree tree)))))
 
@@ -232,7 +232,7 @@
    subtree. For example, (contining-subtree '(b (c (a)) (d (a))) '(a)) => (c (a)).
    Returns nil if tree does not contain subtree."
   [tree subtree]
-  (cond 
+  (cond
     (not (seq? tree)) nil
     (empty? tree) nil
     (some #{subtree} tree) tree
@@ -295,9 +295,9 @@
    cases."
   [domains]
   (vec
-    (apply 
-      mapv 
-      concat 
+    (apply
+      mapv
+      concat
       (map (fn [[input-set n-train n-test]]
              (if (fn? input-set)
                (vector (repeatedly n-train input-set)
@@ -309,7 +309,7 @@
                      test-inputs (if (= n-test (count input-set))
                                    input-set ; NOTE: input-set is not shuffled if the same size as n-test
                                    (drop n-train shuffled-inputs))]
-                 (assert (= (+ n-train n-test) (count input-set)) 
+                 (assert (= (+ n-train n-test) (count input-set))
                          "Sizes of train and test sets don't add up to the size of the input set.")
                  (vector train-inputs test-inputs))))
            domains))))
@@ -335,7 +335,7 @@
                          ;; or it could be a case of insertion, then the value is above+1, and we chose
                          ;; the minimum of the three
                          (inc (min diagonal above (peek row))))]
-                         
+
         (conj row update-val)))
     ;; we need to initialize the reduce function with the value of a row, since we are
     ;; constructing this row from the previous one, the row is a vector of 1 element which
@@ -417,4 +417,3 @@
             bottom-val (nth sorted bottom)
             top-val (nth sorted halfway)]
            (mean [bottom-val top-val])))))
-

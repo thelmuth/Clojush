@@ -34,39 +34,6 @@
             )
           (registered-for-stacks [:integer :boolean :string :char :exec :print])))
 
-(defn my-rand-long
-  "replaces rand-int when need longs"
-  [end]
-  (long (* (lrand) end)))
-
-;; A list of data domains for the problem. Each domain is a vector containing
-;; a "set" of inputs and two integers representing how many cases from the set
-;; should be used as training and testing cases respectively. Each "set" of
-;; inputs is either a list or a function that, when called, will create a
-;; random element of the set.
-(def digits-data-domains
-  [[(list -9495969798 -20008000 -777777 -9876 -482 -97 -20 0 19 620 24068 512000 8313227 30000000 9998887776) 15 0] ;; Edge cases by hand
-   [(fn []
-      (let [digs (inc (lrand-int 10))
-            start (expt 10 (dec digs))
-            end (expt 10 digs)]
-        ((if (< (lrand) 0.5) - +)
-          (+ (my-rand-long (- end start)) start)))) 85 1000] ;; Random cases such that each number of digits between 1 and 10 will be represented evenly, as will negatives and positives
-   ])
-
-;;Can make Digits test data like this:
-;(test-and-train-data-from-domains digits-data-domains)
-
-; Helper function for error function
-(defn digits-test-cases
-  "Takes a sequence of inputs and gives IO test cases of the form
-   [input output]."
-  [inputs]
-  (map (fn [in] (vector in
-                        (apply str ((if (< in 0) #(concat (butlast %) [\- (last %)]) identity)
-                                     (interpose \newline (reverse (str (abs in))))))))
-       inputs))
-
 (defn make-digits-error-function-from-cases
   [train-cases test-cases]
   (fn the-actual-digits-error-function
@@ -96,15 +63,9 @@
           (assoc individual :behaviors @behavior :errors errors)
           (assoc individual :test-errors errors))))))
 
-(defn get-digits-train-and-test
-  "Returns the train and test cases."
-  [data-domains]
-  (map sort (map digits-test-cases
-                 (test-and-train-data-from-domains data-domains))))
-
 ; Define train and test cases
 (def digits-train-and-test-cases
-  (get-digits-train-and-test digits-data-domains))
+  (train-and-test-cases-from-dataset "digits" 85 1000))
 
 (defn digits-initial-report
   [argmap]

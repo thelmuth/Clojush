@@ -31,54 +31,6 @@
             )
           (registered-for-stacks [:integer :boolean :string :char :exec :print])))
 
-
-;; Define test cases
-(defn double-letters-input
-  "Makes a Double Letters input of length len."
-  [len]
-  (apply str
-         (repeatedly len
-                     #(lrand-nth (concat [\newline \tab]
-                                         (map char (range 32 127)))))))
-
-;; A list of data domains for the problem. Each domain is a vector containing
-;; a "set" of inputs and two integers representing how many cases from the set
-;; should be used as training and testing cases respectively. Each "set" of
-;; inputs is either a list or a function that, when called, will create a
-;; random element of the set.
-(def double-letters-data-domains
-  [[(list "", "A", "!", " ", "*", "\t", "\n", "B\n", "\n\n", "CD", "ef", "!!", "q!", "!R", "!#", "@!", "!F!", "T$L", "4ps", "q\t ", "!!!"
-          (apply str (take 13 (cycle (list \i \: \!))))
-          (apply str (repeat 20 \8))
-          (apply str (repeat 20 \space))
-          (apply str (repeat 20 \s))
-          (apply str (repeat 20 \!))
-          (apply str (take 20 (cycle (list \H \a \space))))
-          (apply str (take 20 (cycle (list \x \newline \y \!))))
-          (apply str (take 20 (cycle (list \1 \!))))
-          (apply str (take 20 (cycle (list \G \5))))
-          (apply str (take 20 (cycle (list \> \_ \= \]))))
-          (apply str (take 20 (cycle (list \k \! \!))))) 32 0] ;; "Special" inputs covering some base cases
-   [(fn [] (double-letters-input (inc (lrand-int 20)))) 68 1000]
-   ])
-
-;;Can make Double Letters test data like this:
-;(test-and-train-data-from-domains double-letters-data-domains)
-
-; Helper function for error function
-(defn double-letters-test-cases
-  "Takes a sequence of inputs and gives IO test cases of the form
-   [input output]."
-  [inputs]
-  (map (fn [in]
-         (vector in
-                 (apply str (flatten (map #(cond
-                                             (Character/isLetter %) (list % %)
-                                             (= % \!) (list % % %)
-                                             :else %)
-                                          in)))))
-       inputs))
-
 (defn make-double-letters-error-function-from-cases
   [train-cases test-cases]
   (fn the-actual-double-letters-error-function
@@ -108,16 +60,10 @@
           (assoc individual :behaviors @behavior :errors errors)
           (assoc individual :test-errors errors))))))
 
-(defn get-double-letters-train-and-test
-  "Returns the train and test cases."
-  [data-domains]
-  (map #(sort-by (comp count first) %)
-       (map double-letters-test-cases
-            (test-and-train-data-from-domains data-domains))))
-
 ; Define train and test cases
 (def double-letters-train-and-test-cases
-  (get-double-letters-train-and-test double-letters-data-domains))
+  (map #(sort-by (comp count first) %)
+    (train-and-test-cases-from-dataset "double-letters" 68 1000)))
 
 (defn double-letters-initial-report
   [argmap]

@@ -27,35 +27,6 @@
             )
           (registered-for-stacks [:integer :boolean :exec :print])))
 
-
-;; A list of data domains for the problem. Each domain is a vector containing
-;; a "set" of inputs and two integers representing how many cases from the set
-;; should be used as training and testing cases respectively. Each "set" of
-;; inputs is either a list or a function that, when called, will create a
-;; random element of the set.
-(def even-squares-data-domains
-  [[(list 1 2 3 4 5 6 15 16 17 18 36 37 64 65) 14 0] ;; Small edge cases
-   [(list 9600 9700 9999) 3 0] ;; Large edge cases
-   [(fn [] (+ 20 (lrand-int 9980))) 83 1000] ;; Random cases
-   ])
-
-;;Can make Even Squares test data like this:
-;(test-and-train-data-from-domains even-squares-data-domains)
-
-; Helper function for error function
-(defn even-squares-test-cases
-  "Takes a sequence of inputs and gives IO test cases of the form
-   [input output]."
-  [inputs]
-  (map (fn [in]
-         (let [nums (rest (take-while #(< % in)
-                                                 (map #(* 4 % %)
-                                                      (range))))]
-               (vector in
-                       (vector (apply str (interpose \newline nums))
-                               nums))))
-       inputs))
-
 (defn make-even-squares-error-function-from-cases
   [train-cases test-cases]
   (fn the-actual-even-squares-error-function
@@ -110,16 +81,10 @@
           (assoc individual :behaviors @behavior :errors errors)
           (assoc individual :test-errors errors))))))
 
-(defn get-even-squares-train-and-test
-  "Returns the train and test cases."
-  [data-domains]
-  (map #(sort-by first %)
-       (map even-squares-test-cases
-            (test-and-train-data-from-domains data-domains))))
-
 ; Define train and test cases
 (def even-squares-train-and-test-cases
-  (get-even-squares-train-and-test even-squares-data-domains))
+  (map #(sort-by first %)
+    (train-and-test-cases-from-dataset "even-squares" 83 1000)))
 
 (defn even-squares-initial-report
   [argmap]

@@ -34,43 +34,6 @@
             )
           (registered-for-stacks [:integer :boolean :exec :print])))
 
-
-;; Define test cases
-(defn loop-input
-  "Makes a For Loop Index input vector = [start, finish, step-size] with start < finish."
-  [& {:keys [neg-pos] :or {neg-pos false}}]
-  (if (not neg-pos)
-    (let [step-size (inc (lrand-int 10))
-          start (- (lrand-int 1000) 500)
-          finish (+ start 1 (lrand-int (* 20 step-size)))]
-      [start finish step-size])
-    (let [step-size (inc (lrand-int 10))
-          start (dec (- (lrand-int (* 10 step-size))))
-          finish (lrand-int (* 10 step-size))]
-      [start finish step-size])))
-
-;; A list of data domains for the problem. Each domain is a vector containing
-;; a "set" of inputs and two integers representing how many cases from the set
-;; should be used as training and testing cases respectively. Each "set" of
-;; inputs is either a list or a function that, when called, will create a
-;; random element of the set.
-(def loop-data-domains
-  [[(fn [] (loop-input :neg-pos true)) 10 100] ;; Cases where start < 0 and finish > 0
-   [(fn [] (loop-input)) 90 900] ;; Random cases
-   ])
-
-;;Can make For Loop Index test data like this:
-;(test-and-train-data-from-domains loop-data-domains)
-
-; Helper function for error function
-(defn loop-test-cases
-  "Takes a sequence of inputs and gives IO test cases of the form
-   [input output]."
-  [inputs]
-  (map #(vector %
-                (apply str (interpose \newline (apply range %))))
-       inputs))
-
 (defn make-for-loop-index-error-function-from-cases
   [train-cases test-cases]
   (fn the-actual-loop-error-function
@@ -102,15 +65,9 @@
           (assoc individual :behaviors @behavior :errors errors)
           (assoc individual :test-errors errors))))))
 
-(defn get-for-loop-index-train-and-test
-  "Returns the train and test cases."
-  [data-domains]
-  (map loop-test-cases
-       (test-and-train-data-from-domains data-domains)))
-
 ; Define train and test cases
 (def for-loop-index-train-and-test-cases
-  (get-for-loop-index-train-and-test loop-data-domains))
+  (train-and-test-cases-from-dataset "for-loop-index" 90 1000))
 
 (defn for-loop-index-initial-report
   [argmap]

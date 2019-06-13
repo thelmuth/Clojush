@@ -28,11 +28,11 @@
 ;; inputs is either a list or a function that, when called, will create a
 ;; random element of the set.
 (def bouncing-balls-data-domains
-  [#_[(list [0 0 0]
-            [100 0.99 50]
-            [3 0.66 1.5]
-            [3 0.5 3]
-            [1 0.3 10]) 5 0]
+  [[(list [0 0 0]
+          [100 0.99 50]
+          [3 0.66 1.5]
+          [3 0.5 3]
+          [1 0.3 10]) 5 0]
    [(fn [] (list (inc (rand 100)) (rand) (inc (rand 50)))) 195 2000]
    ])
 

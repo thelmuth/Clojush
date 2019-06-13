@@ -32,48 +32,6 @@
             )
           (registered-for-stacks [:integer :boolean :vector_integer :exec])))
 
-
-;; Define test cases
-(defn count-odds-input
-  "Makes a Count Odds input vector of length len with probability prob of being odd."
-  [len prob]
-  (vec (repeatedly len
-                   #(if (< (lrand) prob)
-                      (inc (* 2 (- (lrand-int 1000) 500)))
-                      (* 2 (- (lrand-int 1001) 500))))))
-
-;; A list of data domains for the problem. Each domain is a vector containing
-;; a "set" of inputs and two integers representing how many cases from the set
-;; should be used as training and testing cases respectively. Each "set" of
-;; inputs is either a list or a function that, when called, will create a
-;; random element of the set.
-(def count-odds-data-domains
-  [[(list []) 1 0] ;; Empty vector
-   [(concat (map vector (range -10 11))
-            (list [-947] [-450] [303] [886])) 25 0] ;; Length 1 vectors
-   [(list [0 0]
-          [0 1]
-          [7 1]
-          [-9 -1]
-          [-11 40]
-          [944 77]) 6 0] ;; Length 2 vectors
-   [(fn [] (count-odds-input (inc (lrand-int 50)) 1.0)) 9 100] ;; Random length, all odd
-   [(fn [] (count-odds-input (inc (lrand-int 50)) 0.0)) 9 100] ;; Random length, all even
-   [(fn [] (count-odds-input (inc (lrand-int 50)) (lrand))) 150 1800] ;; Random length, random prob of odd
-   ])
-
-;;Can make Count Odds test data like this:
-;(test-and-train-data-from-domains count-odds-data-domains)
-
-; Helper function for error function
-(defn count-odds-test-cases
-  "Takes a sequence of inputs and gives IO test cases of the form
-   [input output]."
-  [inputs]
-  (map #(vector %
-                (count (filter odd? %)))
-       inputs))
-
 (defn make-count-odds-error-function-from-cases
   [train-cases test-cases]
   (fn the-actual-count-odds-error-function
@@ -105,15 +63,8 @@
           (assoc individual :behaviors @behavior :errors errors)
           (assoc individual :test-errors errors))))))
 
-(defn get-count-odds-train-and-test
-  "Returns the train and test cases."
-  [data-domains]
-  (map count-odds-test-cases
-       (test-and-train-data-from-domains data-domains)))
-
-; Define train and test cases
 (def count-odds-train-and-test-cases
-  (get-count-odds-train-and-test count-odds-data-domains))
+  (train-and-test-cases-from-dataset "count-odds" 168 2000))
 
 (defn count-odds-initial-report
   [argmap]

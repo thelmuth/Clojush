@@ -30,43 +30,6 @@
             )
           (registered-for-stacks [:integer :boolean :string :exec])))
 
-
-;; Define test cases
-(defn csl-input
-  "Makes a Compare String Lengths input string of length len."
-  [len]
-  (apply str
-         (repeatedly len
-                     #(lrand-nth (concat [\newline \tab]
-                                         (map char (range 32 127)))))))
-
-;; A list of data domains for the problem. Each domain is a vector containing
-;; a "set" of inputs and two integers representing how many cases from the set
-;; should be used as training and testing cases respectively. Each "set" of
-;; inputs is either a list or a function that, when called, will create a
-;; random element of the set.
-(def csl-data-domains
-  [[(list ["" "" ""]) 1 0] ;; All empty strings
-   [(permutations ["" "a" "bc"]) 6 0] ;; Permutations of three small strings
-   [(apply concat (repeatedly 2 #(permutations ["" "" (csl-input (inc (lrand-int 49)))]))) 6 0] ;; Cases with 2 empties and a non-empty
-   [(apply concat (repeatedly 3 #(permutations (conj (repeat 2 (csl-input (inc (lrand-int 49)))) (csl-input (inc (lrand-int 49))))))) 9 0] ;; Cases with 2 strings repeated
-   [(fn [] (repeat 3 (csl-input (lrand-int 50)))) 3 100] ;; Cases where all are the same
-   [(fn [] (sort-by count (repeatedly 3 #(csl-input (lrand-int 50))))) 25 200] ;; Cases forced to be in order (as long as two aren't same size randomly, will be true)
-   [(fn [] (repeatedly 3 #(csl-input (lrand-int 50)))) 50 700] ;; Cases in random order
-   ])
-
-;;Can make Compare String Lengths test data like this:
-;(test-and-train-data-from-domains csl-data-domains)
-
-; Helper function for error function
-(defn csl-test-cases
-  "Takes a sequence of inputs and gives IO test cases of the form
-   [input output]."
-  [inputs]
-  (map #(vector %
-                (apply < (map count %)))
-       inputs))
-
 (defn make-compare-string-lengths-error-function-from-cases
   [train-cases test-cases]
   (fn the-actual-csl-error-function
@@ -98,16 +61,10 @@
         (if (= data-cases :train)
           (assoc individual :behaviors @behavior :errors errors)
           (assoc individual :test-errors errors))))))
-  
-(defn get-compare-string-lengths-train-and-test
-  "Returns the train and test cases."
-  [data-domains]
-  (map csl-test-cases
-       (test-and-train-data-from-domains data-domains)))
 
 ; Define train and test cases
 (def compare-string-lengths-train-and-test-cases
-  (get-compare-string-lengths-train-and-test csl-data-domains))
+  (train-and-test-cases-from-dataset "compare-string-lengths" 78 1000))
 
 (defn compare-string-lengths-initial-report
   [argmap]

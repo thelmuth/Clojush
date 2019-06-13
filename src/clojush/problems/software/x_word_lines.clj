@@ -34,92 +34,6 @@
             )
           (registered-for-stacks [:integer :boolean :string :char :exec :print])))
 
-
-;; Define test cases
-(defn x-word-lines-input
-  "Makes a X-Word Lines input of length len."
-  [len]
-  (apply str
-         (repeatedly len
-                     (fn []
-                       (let [r (lrand)]
-                         (cond
-                           (< r 0.15) \space
-                           (< r 0.2) \newline
-                           :else (lrand-nth (map char (range 32 127)))))))))
-
-;; A list of data domains for the problem. Each domain is a vector containing
-;; a "set" of inputs and two integers representing how many cases from the set
-;; should be used as training and testing cases respectively. Each "set" of
-;; inputs is either a list or a function that, when called, will create a
-;; random element of the set.
-(def x-word-lines-data-domains
-  [[(list ["" 1]
-          ["" 4]
-          ["A" 1]
-          ["*" 6]
-          [" " 7]
-          ["\n" 1]
-          ["s" 2]
-          ["B " 1]
-          ["  " 1]
-          [" D" 2]
-          ["2\n" 1]
-          ["ef" 1]
-          ["!!" 1]
-          [" F " 1]
-          ["T L" 1]
-          ["4 s" 2]
-          ["o\n&" 1]
-          ["e\ne" 2]
-          ["q  " 1]
-          ["\n e" 1]
-          ["hi " 4]
-          ["q e\n" 1]
-          ["  $  " 3]
-          ["\n\n\nr\n" 1]
-          ["9r 2 33 4" 1]
-          ["9 22 3d 4r" 2]
-          ["9 2a 3 4 g" 2]
-          ["9 2a 3 4 g" 10]
-          ["  hi   there  \n  world  lots    of\nspace         here !   \n \n" 3]
-          ["Well well, what is this?\n211 days in a row that you've stopped by to see ME?\nThen, go away!" 3]
-          [(apply str (take 76 (cycle (list \i \space \!)))) 4]
-          [(apply str (repeat 100 \space)) 6]
-          [(apply str (repeat 100 \newline)) 1]
-          [(apply str (repeat 100 \s)) 7]
-          [(apply str (take 100 (cycle (list \$ \space)))) 1]
-          [(apply str (take 100 (cycle (list \1 \space)))) 4]
-          [(apply str (take 100 (cycle (list \newline \r)))) 1]
-          [(apply str (take 100 (cycle (list \newline \v)))) 10]
-          [(apply str (take 100 (cycle (list \d \newline \space)))) 10]
-          [(apply str (take 100 (cycle (list \H \a \space)))) 9]
-          [(apply str (take 100 (cycle (list \x \space \y \!)))) 5]
-          [(apply str (take 100 (cycle (list \K \space \h \newline)))) 1]
-          [(apply str (take 100 (cycle (list \G \space \w \newline)))) 8]
-          [(apply str (take 100 (cycle (list \space \space \3 \space \space \newline \newline \space \space)))) 3]
-          [(apply str (take 100 (cycle (list \> \_ \= \])))) 2]
-          [(apply str (take 100 (cycle (list \^ \_ \^ \space)))) 1]) 46 0] ; Edge case inputs
-   [(fn [] [(x-word-lines-input (inc (lrand-int 100)))
-            (lrand-nth (concat (range 1 11) (range 1 6) (range 1 4)))]) 104 2000] ; Random inputs. For X, [1,3] will have 1/6 chance each, [4,5] will have 1/9 chance each, and [6,10] will have 1/18 chance each
-   ])
-
-;;Can make X-Word Lines test data like this:
-;(test-and-train-data-from-domains x-word-lines-data-domains)
-
-; Helper function for error function
-(defn x-word-lines-test-cases
-  "Takes a sequence of inputs and gives IO test cases of the form
-   [input output]."
-  [inputs]
-  (map (fn [[in-str in-int]]
-         (vector [in-str in-int]
-                 (apply str
-                        (flatten (interpose (list \newline)
-                                           (map #(interpose \space %)
-                                                (partition-all in-int (string/split (string/trim in-str) #"\s+"))))))))
-       inputs))
-
 (defn make-x-word-lines-error-function-from-cases
   [train-cases test-cases]
   (fn the-actual-x-word-lines-error-function
@@ -164,16 +78,9 @@
           (assoc individual :behaviors @behavior :errors errors)
           (assoc individual :test-errors errors))))))
 
-(defn get-x-word-lines-train-and-test
-  "Returns the train and test cases."
-  [data-domains]
-  (map #(sort-by (comp count first first) %)
-       (map x-word-lines-test-cases
-            (test-and-train-data-from-domains data-domains))))
-
 ; Define train and test cases
 (def x-word-lines-train-and-test-cases
-  (get-x-word-lines-train-and-test x-word-lines-data-domains))
+  (train-and-test-cases-from-dataset "x-word-lines" 104 2000))
 
 (defn x-word-lines-initial-report
   [argmap]

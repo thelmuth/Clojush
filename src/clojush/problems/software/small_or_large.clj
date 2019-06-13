@@ -31,34 +31,6 @@
             )
           (registered-for-stacks [:integer :boolean :exec :string :print])))
 
-
-;; A list of data domains for the problem. Each domain is a vector containing
-;; a "set" of inputs and two integers representing how many cases from the set
-;; should be used as training and testing cases respectively. Each "set" of
-;; inputs is either a list or a function that, when called, will create a
-;; random element of the set.
-(def small-or-large-data-domains
-  [[(concat (list -10000 0 980) (range 995 1005) (list 1020 1980)
-            (range 1995 2005) (list 2020 10000)) 27 0] ;; "Special" inputs covering most base cases.
-   [(concat (range 980 1020) (range 1980 2020)) 0 80] ;; Some cases to test generality.
-   [(fn [] (- (lrand-int 20001) 10000)) 73 920] ;; Inputs between -10,000 and 10,000
-   ])
-
-;;Can make Small Or Large test data like this:
-;(test-and-train-data-from-domains small-or-large-data-domains)
-
-; Helper function for error function
-(defn small-or-large-test-cases
-  "Takes a sequence of inputs and gives IO test cases of the form
-   [input output]."
-  [inputs]
-  (map (fn [in]
-         (vector in
-                 (cond (< in 1000) "small"
-                       (>= in 2000) "large"
-                       :else "")))
-       inputs))
-
 (defn make-small-or-large-error-function-from-cases
   [train-cases test-cases]
   (fn the-actual-small-or-large-error-function
@@ -88,15 +60,9 @@
           (assoc individual :behaviors @behavior :errors errors)
           (assoc individual :test-errors errors))))))
 
-(defn get-small-or-large-train-and-test
-  "Returns the train and test cases."
-  [data-domains]
-  (map sort (map small-or-large-test-cases
-                 (test-and-train-data-from-domains data-domains))))
-
 ; Define train and test cases
 (def small-or-large-train-and-test-cases
-  (get-small-or-large-train-and-test small-or-large-data-domains))
+  (train-and-test-cases-from-dataset "small-or-large" 73 920))
 
 (defn small-or-large-initial-report
   [argmap]

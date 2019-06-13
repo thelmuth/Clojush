@@ -31,32 +31,6 @@
             )
           (registered-for-stacks [:integer :boolean :exec])))
 
-
-;; A list of data domains for the problem. Each domain is a vector containing
-;; a "set" of inputs and two integers representing how many cases from the set
-;; should be used as training and testing cases respectively. Each "set" of
-;; inputs is either a list or a function that, when called, will create a
-;; random element of the set.
-(def sum-of-squares-data-domains
-  [[(range 1 6) 5 0] ; Small cases
-   [(list 100) 1 0] ; Last case
-   [(fn [] (+ 6 (lrand-int 94))) 44 0] ; Random cases [6,99]
-   [(range 1 101) 0 100] ; Test all integers in [1,100]
-   ])
-
-;;Can make Sum Of Squares test data like this:
-;(test-and-train-data-from-domains sum-of-squares-data-domains)
-
-; Helper function for error function
-(defn sum-of-squares-test-cases
-  "Takes a sequence of inputs and gives IO test cases of the form
-   [input output]."
-  [inputs]
-  (map (fn [in]
-         (vector in
-                 (apply +' (map #(*' % %) (range (inc in))))))
-       inputs))
-
 (defn make-sum-of-squares-error-function-from-cases
   [train-cases test-cases]
   (fn the-actual-sum-of-squares-error-function
@@ -88,15 +62,9 @@
           (assoc individual :behaviors @behavior :errors errors)
           (assoc individual :test-errors errors))))))
 
-(defn get-sum-of-squares-train-and-test
-  "Returns the train and test cases."
-  [data-domains]
-  (map sort (map sum-of-squares-test-cases
-                 (test-and-train-data-from-domains data-domains))))
-
 ; Define train and test cases
 (def sum-of-squares-train-and-test-cases
-  (get-sum-of-squares-train-and-test sum-of-squares-data-domains))
+  (train-and-test-cases-from-dataset "sum-of-squares" 44 100))
 
 (defn sum-of-squares-initial-report
   [argmap]

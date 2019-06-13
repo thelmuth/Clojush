@@ -111,85 +111,6 @@
             )
           (registered-for-stacks [:string :vector_string :char :integer :vector_integer :float :vector_float :boolean :exec :print])))
 
-
-;; Define test cases
-(defn word-stats-input
-  "Makes a Word Stats input of length len."
-  [len]
-  (let [candidate (apply str
-                         (repeatedly len
-                                     (fn []
-                                       (let [rand-cond (lrand)
-                                             tab-prob (+ 0.01 (* 0.02 (lrand))) ;prob of tab is between 0.01 and 0.03
-                                             newline-prob (+ 0.02 (* 0.05 (lrand))) ;prob of newline is between 0.02 and 0.07
-                                             space-prob (+ 0.05 (* 0.3 (lrand))) ;prob of space is between 0.05 and 0.35
-                                             terminator-prob (+ 0.01 (* 0.19 (lrand))) ;prob of sentence terminator is between 0.01 and 0.20
-                                             ]
-                                         (cond
-                                           (< rand-cond tab-prob) \tab
-                                           (< rand-cond (+ tab-prob newline-prob)) \newline
-                                           (< rand-cond (+ tab-prob newline-prob space-prob)) \space
-                                           (< rand-cond (+ tab-prob newline-prob space-prob terminator-prob)) (lrand-nth [\. \! \?])
-                                           :else (lrand-nth (map char (range 33 127))))))))]
-    (if (some #{\. \! \?} candidate)
-      candidate
-      (apply str (assoc (vec candidate)
-                        (lrand-int (count candidate))
-                        (lrand-nth [\. \! \?]))))))
-
-;; A list of data domains for the problem. Each domain is a vector containing
-;; a "set" of inputs and two integers representing how many cases from the set
-;; should be used as training and testing cases respectively. Each "set" of
-;; inputs is either a list or a function that, when called, will create a
-;; random element of the set.
-(def word-stats-data-domains
-  [[(list ".", "!", "?", "\t.", "\n!", " ?", ".#", "A.\n", "! \n", "?\t\n", "\n?\n",
-          ".!?.!?", ".txt", "!RACECAR!", "www.google.com"
-          "Pirate basketball? Envelope WARS!"
-          ".hello there wo.RLD"
-          "out. at. the. plate."
-          "nap time on planets!"
-          "supercalifragilisticexpialidocious?"
-          (apply str (concat (repeat 99 \newline) [\.]))
-          (apply str (concat (repeat 99 \=) [\?]))
-          (apply str (concat [\!] (repeat 99 \space)))
-          (apply str (concat [\.] (repeat 99 \h)))
-          (apply str (concat (repeat 99 \tab) [\?]))
-          (apply str (concat (repeat 99 \@) [\!]))
-          (apply str (repeat 100 \.))
-          (apply str (repeat 100 \!))
-          (apply str (repeat 100 \?))
-          (apply str (take 100 (cycle (list \. \newline))))
-          (apply str (take 100 (cycle (list \? \newline \newline))))
-          (apply str (take 100 (cycle (list \! \D \newline))))
-          (apply str (take 100 (cycle (list \! \space))))
-          (apply str (take 100 (cycle (list \. \tab))))
-          (apply str (take 100 (cycle (list \? \newline \y \space))))
-          (apply str (take 100 (cycle (list \5 \!))))) 36 0] ;; "Special" inputs covering most base cases
-   [(fn [] (word-stats-input (inc (lrand-int 100)))) 64 1000] ;; Random inputs
-   ])
-
-;;Can make Word Stats test data like this:
-;(test-and-train-data-from-domains word-stats-data-domains)
-
-; Helper function for error function
-(defn word-stats-test-cases
-  "Takes a sequence of inputs and gives IO test cases of the form
-   [input output]."
-  [inputs]
-  (map (fn [in]
-         (let [words (filter not-empty (string/split in #"\s+"))
-               word-lengths (map count words)
-               num-sentences (count (filter #(some #{%} ".?!") in))]
-           (vector in
-                   (vector (str (apply str (for [n (range 1 (inc (apply max word-lengths)))]
-                                             (format "words of length %d: %d\n" n (count (filter #(= % n) word-lengths)))))
-                                (format "number of sentences: %d\n" num-sentences)
-                                (format "average sentence length: %s" (pr-str (round-to-n-decimal-places (* 1.0 (/ (count words) num-sentences)) 10))))
-                           num-sentences
-                           (float (/ (count words) num-sentences))))))
-       inputs))
-
 (defn make-word-stats-error-function-from-cases
   [train-cases test-cases]
   (fn the-actual-word-stats-error-function
@@ -234,16 +155,10 @@
           (assoc individual :behaviors @behavior :errors errors)
           (assoc individual :test-errors errors))))))
 
-(defn get-word-stats-train-and-test
-  "Returns the train and test cases."
-  [data-domains]
-  (map #(sort-by (comp count first) %)
-       (map word-stats-test-cases
-            (test-and-train-data-from-domains data-domains))))
-
 ; Define train and test cases
 (def word-stats-train-and-test-cases
-  (get-word-stats-train-and-test word-stats-data-domains))
+  (map #(sort-by (comp count first) %)
+    (train-and-test-cases-from-dataset "word-stats" 64 1000)))
 
 (defn word-stats-initial-report
   [argmap]
@@ -303,4 +218,3 @@
    :error-threshold 0.02
    :max-error 10000
    })
-

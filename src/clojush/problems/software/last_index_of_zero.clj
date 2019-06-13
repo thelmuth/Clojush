@@ -29,53 +29,6 @@
             )
           (registered-for-stacks [:integer :boolean :vector_integer :exec])))
 
-;; Define test cases
-(defn random-sequence-with-at-least-one-zero
-  [max-extra-zeros max-additional-values]
-  (shuffle
-   (concat
-    [0] ; To ensure at least one zero
-    (repeat (lrand-int (inc max-extra-zeros)) 0)
-    (repeatedly (lrand-int (inc max-additional-values)) #(- (lrand-int 101) 50)))))
-
-;; A list of data domains for the problem. Each domain is a vector containing
-;; a "set" of inputs and two integers representing how many cases from the set
-;; should be used as training and testing cases respectively. Each "set" of
-;; inputs is either a list or a function that, when called, will create a
-;; random element of the set.
-(def last-index-of-zero-data-domains
-  [^{:domain-label "length 2 vectors"}
-   [(list [0 1]
-          [1 0]
-          [7 0]
-          [0 8]
-          [0 -1]
-          [-1 0]
-          [-7 0]
-          [0 -8]) 8 0]
-   ^{:domain-label "vectors of all zeros"}
-   [(map #(vec (repeat (inc %) 0)) (range 50)) 30 20]
-   ^{:domain-label "permutations of a 4 item vector with one zero"}
-   [(map vec (permutations [0 5 -8 9])) 20 4]
-   ^{:domain-label "permutations of a 4 item vector with two zeros"}
-   [(map vec (permutations [0 0 -8 9])) 10 2]
-   ^{:domain-label "permutations of a 4 item vector with three zeros"}
-   [(map vec (permutations [0 0 0 9])) 4 0]
-   ^{:domain-label "random cases"}
-   [(fn [] (random-sequence-with-at-least-one-zero 5 44)) 78 974]
-   ])
-
-;;Can make Last Index of Zero test data like this:
-;(test-and-train-data-from-domains last-index-of-zero-data-domains)
-
-; Helper function for error function
-(defn last-index-of-zero-test-cases
-  "Takes a sequence of inputs and gives IO test cases of the form
-   [input output]."
-  [inputs]
-  (map #(vector % (.lastIndexOf % 0))
-       inputs))
-
 (defn make-last-index-of-zero-error-function-from-cases
   [train-cases test-cases]
   (fn the-actual-last-index-of-zero-error-function
@@ -109,15 +62,9 @@
           (assoc individual :behaviors @behavior :errors errors)
           (assoc individual :test-errors errors))))))
 
-(defn get-last-index-of-zero-train-and-test
-  "Returns the train and test cases."
-  [data-domains]
-  (map last-index-of-zero-test-cases
-       (test-and-train-data-from-domains data-domains)))
-
 ; Define train and test cases
 (def last-index-of-zero-train-and-test-cases
-  (get-last-index-of-zero-train-and-test last-index-of-zero-data-domains))
+  (train-and-test-cases-from-dataset "last-index-of-zero" 78 1000))
 
 (defn last-index-of-zero-initial-report
   [argmap]

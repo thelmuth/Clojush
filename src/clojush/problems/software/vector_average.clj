@@ -28,46 +28,6 @@
             )
           (registered-for-stacks [:vector_float :float :integer :exec])))
 
-
-;; Define test cases
-(defn vector-average-input
-  "Makes a Vector Average input vector of length len."
-  [len]
-  (vec (repeatedly len
-                   #(- (* (lrand) 2000.0) 1000.0))))
-
-;; A list of data domains for the problem. Each domain is a vector containing
-;; a "set" of inputs and two integers representing how many cases from the set
-;; should be used as training and testing cases respectively. Each "set" of
-;; inputs is either a list or a function that, when called, will create a
-;; random element of the set.
-(def vector-average-data-domains
-  [[(list [0.0] [100.0] [-100.0] [1000.0] [-1000.0]) 5 0] ;; Length-1 vectors
-   [(fn [] (vector-average-input 1)) 45 500] ;; Random Length-1 vectors
-   [(list [2.0 129.0]
-          [0.12345 -4.678]
-          [999.99 74.113]
-          [987.654321 995.0003]
-          [-788.788 -812.19]) 5 0] ;; Length-2 vectors
-   [(fn [] (vector-average-input 2)) 45 500] ;; Random Length-2 vectors
-   [(fn [] (vector-average-input (+ 3 (lrand-int 3)))) 50 500] ;; Random Length-3, -4, and -5 vectors
-   [(fn [] (vector-average-input 50)) 5 50] ;; Random Length-50 vectors
-   [(fn [] (vector-average-input (inc (lrand-int 50)))) 95 1000] ;; Random length, random floats
-   ])
-
-;;Can make Vector Average test data like this:
-;(test-and-train-data-from-domains vector-average-data-domains)
-
-; Helper function for error function
-(defn vector-average-test-cases
-  "Takes a sequence of inputs and gives IO test cases of the form
-   [input output]."
-  [inputs]
-  (map #(vector %
-                (/ (apply + %)
-                   (count %)))
-       inputs))
-
 (defn make-vector-average-error-function-from-cases
   [train-cases test-cases]
   (fn the-actual-vector-average-error-function
@@ -104,15 +64,9 @@
          (assoc individual :behaviors @behavior :errors errors)
          (assoc individual :test-errors errors))))))
 
-(defn get-vector-average-train-and-test
-  "Returns the train and test cases."
-  [data-domains]
-  (map vector-average-test-cases
-       (test-and-train-data-from-domains data-domains)))
-
 ; Define train and test cases
 (def vector-average-train-and-test-cases
-  (get-vector-average-train-and-test vector-average-data-domains))
+  (train-and-test-cases-from-dataset "vector-average" 240 2550))
 
 (defn vector-average-initial-report
   [argmap]

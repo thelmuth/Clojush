@@ -1,4 +1,4 @@
-;; syllables.clj
+;; checksum.clj
 ;; Tom Helmuth, thelmuth@cs.umass.edu
 ;;
 ;; Problem Source:
@@ -6,43 +6,30 @@
 ;;   in IEEE Transactions on Software Engineering, vol. 41, no. 12, pp. 1236-1256, Dec. 1 2015.
 ;;   doi: 10.1109/TSE.2015.2454513
 ;;
-;; Given a string (max length 20, containing symbols, spaces, digits, and
-;; lowercase letters), count the number of occurrences of vowels (a,e,i,o,u,y)
-;; in the string and print that number as X in "The number of syllables is X"
+;; Given a string (max length 50), compute the integer values of the characters
+;; in the string, sum them, take the sum modulo 64, add the value of the \space 
+;; character, and then convert that integer back into its corresponding character
+;; (the checksum). Program must print "Check sum is X", where X is replaced by
+;; the correct checksum.
 ;;
 ;; input stack has the input string
 
-(ns clojush.problems.software.syllables
+(ns clojush.problems.software.checksum
   (:use clojush.pushgp.pushgp
         [clojush pushstate interpreter random util globals]
         clojush.instructions.tag
-        clojure.math.numeric-tower)
-    (:require [clojure.string :as string]))
-
-;; Define test cases
-(defn syllables-input
-  "Makes a Syllables input of length len."
-  [len]
-  (apply str
-         (repeatedly len
-                     #(if (< (lrand) 0.2)
-                        (lrand-nth "aeiouy")
-                        (lrand-nth (map char (concat (range 32 65) (range 91 127))))))))
+        clojure.math.numeric-tower
+        ))
 
 ; Atom generators
-(def syllables-atom-generators
+(def checksum-atom-generators
   (concat (list
-            "The number of syllables is "
-            \a
-            \e
-            \i
-            \o
-            \u
-            \y
-            "aeiouy"
+            "Check sum is "
+            \space
+            64
             ;;; end constants
+            (fn [] (- (lrand-int 257) 128)) ;Integer ERC [-128,128]
             (fn [] (lrand-nth (concat [\newline \tab] (map char (range 32 127))))) ;Visible character ERC
-            (fn [] (syllables-input (lrand-int 21))) ;String ERC
             ;;; end ERCs
             (tag-instruction-erc [:exec :integer :boolean :string :char] 1000)
             (tagged-instruction-erc 1000)
@@ -52,13 +39,13 @@
             )
           (registered-for-stacks [:integer :boolean :string :char :exec :print])))
 
-(defn make-syllables-error-function-from-cases
+(defn make-checksum-error-function-from-cases
   [train-cases test-cases]
-  (fn the-actual-syllables-error-function
+  (fn the-actual-checksum-error-function
     ([individual]
-      (the-actual-syllables-error-function individual :train))
+      (the-actual-checksum-error-function individual :train))
     ([individual data-cases] ;; data-cases should be :train or :test
-     (the-actual-syllables-error-function individual data-cases false))
+     (the-actual-checksum-error-function individual data-cases false))
     ([individual data-cases print-outputs]
       (let [behavior (atom '())
             errors (flatten
@@ -73,43 +60,41 @@
                                                        (push-item "" :output)))
                                printed-result (stack-ref :output 0 final-state)]
                            (when print-outputs
-                             (println (format "\n| Correct output: %s\n| Program output: %s" (pr-str correct-output) (pr-str printed-result))))
+                             (println (format "Correct output: %-19s | Program output: %-19s" correct-output printed-result)))
                            ; Record the behavior
                            (swap! behavior conj printed-result)
-                           ; Error is Levenshtein distance and, if ends in an integer, distance from correct integer
+                           ; Error is Levenshtein distance and, if correct format, distance from correct character
                            (vector
                              (levenshtein-distance correct-output printed-result)
-                             (if-let [num-result (try (Integer/parseInt (last (string/split printed-result #"\s+")))
-                                                   (catch Exception e nil))]
-                               (abs (- (Integer/parseInt (last (string/split correct-output #"\s+")))
-                                       num-result)) ;distance from correct integer
-                               1000)
+                             (if (not (empty? printed-result))
+                               (abs (- (int (last correct-output)) (int (last printed-result)))) ;distance from correct last character
+                               1000) ;penalty for wrong format
                              )))))]
         (if (= data-cases :train)
           (assoc individual :behaviors @behavior :errors errors)
           (assoc individual :test-errors errors))))))
 
 ; Define train and test cases
-(def syllables-train-and-test-cases
+(def checksum-train-and-test-cases
   (map #(sort-by (comp count first) %)
-    (train-and-test-cases-from-dataset "syllables" 83 1000)))
+       (train-and-test-cases-from-dataset "checksum" 194 2000)))
 
-(defn syllables-initial-report
+(defn checksum-initial-report
   [argmap]
   (println "Train and test cases:")
-  (doseq [[i case] (map vector (range) (first syllables-train-and-test-cases))]
+  (doseq [[i case] (map vector (range) (first checksum-train-and-test-cases))]
     (println (format "Train Case: %3d | Input/Output: %s" i (str case))))
-  (doseq [[i case] (map vector (range) (second syllables-train-and-test-cases))]
+  (doseq [[i case] (map vector (range) (second checksum-train-and-test-cases))]
     (println (format "Test Case: %3d | Input/Output: %s" i (str case))))
   (println ";;******************************"))
 
-(defn syllables-report
+(defn checksum-report
   "Custom generational report."
   [best population generation error-function report-simplifications]
   (let [best-test-errors (:test-errors (error-function best :test))
         best-total-test-error (apply +' best-test-errors)]
     (println ";;******************************")
-    (printf ";; -*- Syllables problem report - generation %s\n" generation)(flush)
+    (printf ";; -*- Checksum problem report - generation %s\n" generation)(flush)
     (println "Test total error for best:" best-total-test-error)
     (println (format "Test mean error for best: %.5f" (double (/ best-total-test-error (count best-test-errors)))))
     (when (zero? (:total-error best))
@@ -128,12 +113,12 @@
 
 ; Define the argmap
 (def argmap
-  {:error-function (make-syllables-error-function-from-cases (first syllables-train-and-test-cases)
-                                                             (second syllables-train-and-test-cases))
-   :atom-generators syllables-atom-generators
+  {:error-function (make-checksum-error-function-from-cases (first checksum-train-and-test-cases)
+                                                            (second checksum-train-and-test-cases))
+   :atom-generators checksum-atom-generators
    :max-points 3200
    :max-genome-size-in-initial-program 400
-   :evalpush-limit 1600
+   :evalpush-limit 1500
    :population-size 1000
    :max-generations 300
    :parent-selection :lexicase
@@ -145,9 +130,9 @@
    :alternation-rate 0.01
    :alignment-deviation 10
    :uniform-mutation-rate 0.01
-   :problem-specific-report syllables-report
-   :problem-specific-initial-report syllables-initial-report
+   :problem-specific-report checksum-report
+   :problem-specific-initial-report checksum-initial-report
    :report-simplifications 0
    :final-report-simplifications 5000
-   :max-error 5000
+   :max-error 1000
    })

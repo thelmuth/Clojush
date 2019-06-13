@@ -61,54 +61,6 @@
             )
           (registered-for-stacks [:string :char :integer :boolean :vector_integer :exec])))
 
-;; Define test cases
-(defn scrabble-score-input
-  "Makes a Scrabble Score input of length len."
-  [len]
-  (apply str
-         (repeatedly len
-                     (fn []
-                       (lrand-nth (concat (list \newline \tab)
-                                          (map char (range 32 127))))))))
-
-;; A list of data domains for the problem. Each domain is a vector containing
-;; a "set" of inputs and two integers representing how many cases from the set
-;; should be used as training and testing cases respectively. Each "set" of
-;; inputs is either a list or a function that, when called, will create a
-;; random element of the set.
-(def scrabble-score-data-domains
-  [[(map (comp str char) (range 97 123)) 26 0] ;; Lowercase single letters
-   [(map (comp str char) (range 65 91)) 0 26] ;; Uppercase single letters
-   [(list "", "*", " ", "Q ", "zx", " Dw", "ef", "!!", " F@", "ydp", "4ps"
-          "abcdefghijklmnopqrst"
-          "ghijklmnopqrstuvwxyz"
-          "zxyzxyqQQZXYqqjjawp"
-          "h w h j##r##r\n+JJL"
-          (apply str (take 13 (cycle (list \i \space \!))))
-          (apply str (repeat 20 \Q))
-          (apply str (repeat 20 \$))
-          (apply str (repeat 20 \w))
-          (apply str (take 20 (cycle (list \1 \space))))
-          (apply str (take 20 (cycle (list \space \v))))
-          (apply str (take 20 (cycle (list \H \a \space))))
-          (apply str (take 20 (cycle (list \x \space \y \!))))
-          (apply str (take 20 (cycle (list \G \5))))) 24 0] ;; "Special" inputs covering some base cases
-   [(fn [] (scrabble-score-input (+ 2 (lrand-int 19)))) 150 974] ;; Random strings with at least 2 characters
-   ])
-
-;;Can make Scrabble Score test data like this:
-;(test-and-train-data-from-domains scrabble-score-data-domains)
-
-; Helper function for error function
-(defn scrabble-score-test-cases
-  "Takes a sequence of inputs and gives IO test cases of the form
-   [input output]."
-  [inputs]
-  (map (fn [in]
-         (vector in
-                 (apply + (map #(nth scrabble-letter-values (int %)) in))))
-       inputs))
-
 (defn make-scrabble-score-error-function-from-cases
   [train-cases test-cases]
   (fn the-actual-scrabble-score-error-function
@@ -140,16 +92,10 @@
           (assoc individual :behaviors @behavior :errors errors)
           (assoc individual :test-errors errors))))))
 
-(defn get-scrabble-score-train-and-test
-  "Returns the train and test cases."
-  [data-domains]
-  (map #(sort-by (comp count first) %)
-       (map scrabble-score-test-cases
-            (test-and-train-data-from-domains data-domains))))
-
 ; Define train and test cases
 (def scrabble-score-train-and-test-cases
-  (get-scrabble-score-train-and-test scrabble-score-data-domains))
+  (map #(sort-by (comp count first) %)
+    (train-and-test-cases-from-dataset "scrabble-score" 150 974)))
 
 (defn scrabble-score-initial-report
   [argmap]

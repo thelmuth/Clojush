@@ -35,86 +35,6 @@
             )
           (registered-for-stacks [:string :char :integer :boolean :exec])))
 
-
-;; Define test cases
-(defn super-anagrams-input
-  "Makes a pair of Super Anagrams inputs."
-  []
-  (let [len (inc (lrand-int 20))
-        input1 (apply str
-                      (repeatedly len
-                                  (fn []
-                                    (lrand-nth (map char (range 97 123))))))
-        change-char-sometimes-fn (fn [c]
-                                   "Each char has 10% chance of being replaced"
-                                   (if (< (lrand) 0.1)
-                                     (lrand-nth (map char (range 97 123)))
-                                     c))
-        num-chars-to-drop (lrand-int len)
-        input2 (apply str (drop num-chars-to-drop
-                                (shuffle (map change-char-sometimes-fn input1))))]
-    (if (< (lrand) 0.2) ;;Choose random order (biased towad input2 first) since len(input1) >= len(input2)
-      [input1 input2]
-      [input2 input1])))
-
-;; A list of data domains for the problem. Each domain is a vector containing
-;; a "set" of inputs and two integers representing how many cases from the set
-;; should be used as training and testing cases respectively. Each "set" of
-;; inputs is either a list or a function that, when called, will create a
-;; random element of the set.
-(def super-anagrams-data-domains
-  [[(list ["" ""]
-          ["" "h"]
-          ["i" ""]
-          ["a" "a"]
-          ["b" "c"]
-          ["n" "nn"]
-          ["abcde" "c"]
-          ["c" "abcde"]
-          ["r" "mnbvccxz"]
-          ["abc" "aabc"]
-          ["aabc" "abcde"]
-          ["abcde" "edcba"]
-          ["mo" "moo"]
-          ["moo" "mo"]
-          ["tree" "though"]
-          ["rip" "zipper"]
-          ["flipper" "rip"]
-          ["hi" "zipper"]
-          ["dealer" "dollars"]
-          ["loud" "louder"]
-          ["ccccccccc" "ccccc"]
-          ["clinteastwood" "oldwestaction"]
-          ["clinteastwood" "ldwestaction"]
-          ["verificationcomplete" "verificationcomplete"]
-          ["hahahahahahahahahaha" "hhhhhhhhhhaaaaaaaaaa"]
-          ["hahahahahahahahahaha" "aahhhh"]
-          ["" "qwqeqrqtqyquqiqoqpqs"]
-          ["wxyz" "qazwsxedcrfvtgbyhnuj"]
-          ["dddeeefffgggg" "gggffggfefeededdd"]
-          ["gggffggfefeededdd" "dddeeefffgggg"]) 30 0] ; hand-written cases
-   [super-anagrams-input 170 2000] ; Random inputs designed to be close to anagrams
-   ])
-
-;;Can make test data like this:
-;(test-and-train-data-from-domains super-anagrams-data-domains)
-
-; Helper function for error function
-(defn super-anagrams-test-cases
-  "Takes a sequence of inputs and gives IO test cases of the form
-   [input output]."
-  [inputs]
-  (map (fn [[in1 in2]]
-         (vector [in1 in2]
-                 (loop [i1 in1
-                        i2 in2]
-                   (cond
-                     (empty? i1) true
-                     (> 0 (.indexOf i2 (str (first i1)))) false
-                     :else (recur (rest i1)
-                                  (string/replace-first i2 (first i1) \space))))))
-       inputs))
-
 (defn make-super-anagrams-error-function-from-cases
   [train-cases test-cases]
   (fn the-actual-super-anagrams-error-function
@@ -147,16 +67,10 @@
           (assoc individual :behaviors @behavior :errors errors)
           (assoc individual :test-errors errors))))))
 
-(defn get-super-anagrams-train-and-test
-  "Returns the train and test cases."
-  [data-domains]
-  (map #(sort-by second %)
-       (map super-anagrams-test-cases
-            (test-and-train-data-from-domains data-domains))))
-
 ; Define train and test cases
 (def super-anagrams-train-and-test-cases
-  (get-super-anagrams-train-and-test super-anagrams-data-domains))
+  (map #(sort-by second %)
+    (train-and-test-cases-from-dataset "super-anagrams" 170 2000)))
 
 (defn super-anagrams-initial-report
   [argmap]

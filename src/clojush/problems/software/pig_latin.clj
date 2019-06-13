@@ -17,7 +17,6 @@
         clojure.math.numeric-tower)
     (:require [clojure.string :as string]))
 
-;; Define test cases
 (defn pig-latin-input
   "Makes a Pig Latin input of length len."
   [len]
@@ -49,46 +48,6 @@
             )
           (registered-for-stacks [:string :char :integer :boolean :exec :print])))
 
-
-;; A list of data domains for the problem. Each domain is a vector containing
-;; a "set" of inputs and two integers representing how many cases from the set
-;; should be used as training and testing cases respectively. Each "set" of
-;; inputs is either a list or a function that, when called, will create a
-;; random element of the set.
-(def pig-latin-data-domains
-  [[(list "", "a", "b", "c", "d", "e", "i", "m", "o", "u", "y", "z"
-          "hello", "there", "world", "eat", "apple", "yellow", "orange", "umbrella", "ouch", "in",
-          "hello there world"
-          "out at the plate"
-          "nap time on planets"
-          "supercalifragilistic"
-          "expialidocious"
-          (apply str (repeat 50 \u))
-          (apply str (repeat 50 \s))
-          (apply str (take 49 (cycle (list \w \space))))
-          (apply str (take 49 (cycle (list \e \space))))
-          (apply str (take 50 (cycle (list \h \a \space))))
-          (apply str (take 49 (cycle (list \x \space \y \space))))) 33 0] ;; "Special" inputs covering some base cases
-   [(fn [] (pig-latin-input (+ 3 (lrand-int 48)))) 167 1000]
-   ])
-
-;;Can make Pig Latin test data like this:
-;(test-and-train-data-from-domains pig-latin-data-domains)
-
-; Helper function for error function
-(defn pig-latin-test-cases
-  "Takes a sequence of inputs and gives IO test cases of the form
-   [input output]."
-  [inputs]
-  (map (fn [in]
-         (vector in
-                 (apply str (interpose \space
-                                       (map #(if (some #{(first %)} "aeiou")
-                                               (str % "ay")
-                                               (str (apply str (rest %)) (first %) "ay"))
-                                           (remove empty? (string/split in #" ")))))))
-       inputs))
-
 (defn make-pig-latin-error-function-from-cases
   [train-cases test-cases]
   (fn the-actual-pig-latin-error-function
@@ -119,16 +78,10 @@
           (assoc individual :behaviors @behavior :errors errors)
           (assoc individual :test-errors errors))))))
 
-(defn get-pig-latin-train-and-test
-  "Returns the train and test cases."
-  [data-domains]
-  (map #(sort-by (comp count first) %)
-       (map pig-latin-test-cases
-            (test-and-train-data-from-domains data-domains))))
-
 ; Define train and test cases
 (def pig-latin-train-and-test-cases
-  (get-pig-latin-train-and-test pig-latin-data-domains))
+  (map #(sort-by (comp count first) %)
+    (train-and-test-cases-from-dataset "pig-latin" 167 1000)))
 
 (defn pig-latin-initial-report
   [argmap]

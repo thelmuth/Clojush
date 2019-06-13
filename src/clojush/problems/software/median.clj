@@ -31,33 +31,6 @@
             )
           (registered-for-stacks [:integer :boolean :exec :print])))
 
-;; A list of data domains for the median problem. Each domain is a vector containing
-;; a "set" of inputs and two integers representing how many cases from the set
-;; should be used as training and testing cases respectively. Each "set" of
-;; inputs is either a list or a function that, when called, will create a
-;; random element of the set.
-(def median-data-domains
-  [#_[(list [2 6 8] [2 8 6] [6 2 8] [6 8 2] [8 2 6] [8 6 2] ; Permutations of [2 6 8]
-           [-5 0 5] [-5 5 0] [0 -5 5] [0 5 -5] [5 -5 0] [5 0 -5] ; Permutations of [-5 0 5]
-           [23 0 0] [0 23 0] [0 0 23] [-31 0 0] [0 -31 0] [0 0 -31]) 18 0] ; Two zeroes
-   [(fn [] (repeatedly 3 #(- (lrand-int 201) 100))) 60 600] ;; Each input includes 3 integers in range [-100,100]
-   [(fn [] (shuffle (conj (repeat 2 (- (lrand-int 201) 100))
-                          (- (lrand-int 201) 100)))) 30 300] ;; Edge cases where two of three are the same
-   [(fn [] (repeat 3 (- (lrand-int 201) 100))) 10 100] ;; Edge cases where all are the same
-   ])
-
-;;Can make median test data like this:
-;(test-and-train-data-from-domains median-data-domains)
-
-; Helper function for error function
-(defn median-test-cases
-  "Takes a sequence of inputs and gives IO test cases of the form
-   [[input1 input2 input3] output]."
-  [inputs]
-  (map #(vector %
-                (second (sort %)))
-       inputs))
-
 (defn make-median-error-function-from-cases
   [train-cases test-cases]
   (fn the-actual-median-error-function
@@ -91,15 +64,9 @@
           (assoc individual :behaviors @behavior :errors errors)
           (assoc individual :test-errors errors))))))
 
-(defn get-median-train-and-test
-  "Returns the train and test cases."
-  [data-domains]
-  (map median-test-cases
-       (test-and-train-data-from-domains data-domains)))
-
 ; Define train and test cases
 (def median-train-and-test-cases
-  (get-median-train-and-test median-data-domains))
+  (train-and-test-cases-from-dataset "median" 100 1000))
 
 (defn median-initial-report
   [argmap]

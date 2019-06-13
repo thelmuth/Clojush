@@ -31,50 +31,6 @@
             )
           (registered-for-stacks [:integer :vector_integer :exec])))
 
-
-;; Define test cases
-(defn vectors-summed-input
-  "Makes a pair of Vectors Summed input vectors of length len."
-  [len]
-  (vector (vec (repeatedly len
-                           #(- (lrand-int 2001) 1000)))
-          (vec (repeatedly len
-                           #(- (lrand-int 2001) 1000)))))
-
-;; A list of data domains for the problem. Each domain is a vector containing
-;; a "set" of inputs and two integers representing how many cases from the set
-;; should be used as training and testing cases respectively. Each "set" of
-;; inputs is either a list or a function that, when called, will create a
-;; random element of the set.
-(def vectors-summed-data-domains
-  [[(list [[] []]) 1 0] ;; Empty vectors
-   [(concat (list [[0] [0]]
-                  [[0] [10]]
-                  [[3] [5]]
-                  [[7] [-9]]
-                  [[-432] [-987]])
-            (repeatedly 5 #(vectors-summed-input 1))) 10 0] ;; Length 1 vectors
-   [(list [[0 0] [0 0]]
-          [[0 1] [-4 2]]
-          [[-1 0] [-3 0]]
-          [[-90 -6] [-323 49]]) 4 0] ;; Length 2 vectors
-   [(fn [] (vectors-summed-input 50)) 10 100] ;; Length 50 vectors
-   [(fn [] (vectors-summed-input (inc (lrand-int 50)))) 125 1400] ;; Random length vectors
-   ])
-
-;;Can make Vectors Summed test data like this:
-;(test-and-train-data-from-domains vectors-summed-data-domains)
-
-; Helper function for error function
-(defn vectors-summed-test-cases
-  "Takes a sequence of inputs and gives IO test cases of the form
-   [input output]."
-  [inputs]
-  (map (fn [in]
-         (vector in
-                 (vec (map + (first in) (second in)))))
-       inputs))
-
 (defn make-vectors-summed-error-function-from-cases
   [train-cases test-cases]
   (fn the-actual-vectors-summed-error-function
@@ -111,15 +67,9 @@
           (assoc individual :behaviors @behavior :errors errors)
           (assoc individual :test-errors errors))))))
 
-(defn get-vectors-summed-train-and-test
-  "Returns the train and test cases."
-  [data-domains]
-  (map vectors-summed-test-cases
-       (test-and-train-data-from-domains data-domains)))
-
 ; Define train and test cases
 (def vectors-summed-train-and-test-cases
-  (get-vectors-summed-train-and-test vectors-summed-data-domains))
+  (train-and-test-cases-from-dataset "vectors-summed" 135 1500))
 
 (defn vectors-summed-initial-report
   [argmap]

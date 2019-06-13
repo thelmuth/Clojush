@@ -31,27 +31,6 @@
             )
           (registered-for-stacks [:float :integer :print])))
 
-;; A list of data domains for the number IO problem. Each domain is a vector containing
-;; a "set" of inputs and two integers representing how many cases from the set
-;; should be used as training and testing cases respectively. Each "set" of
-;; inputs is either a list or a function that, when called, will create a
-;; random element of the set.
-(def num-io-data-domains
-  [[(fn [] (vector (- (* (lrand) 200) 100.0) (- (lrand-int 201) 100))) 25 1000] ;; Each input is a float and an int, both from range [-100,100]
-   ])
-
-;;Can make number-IO test data like this:
-;(test-and-train-data-from-domains num-io-data-domains)
-
-; Helper function for error function
-(defn num-io-test-cases
-  "Takes a sequence of inputs and gives IO test cases of the form
-   [[float-input int-input] output]."
-  [inputs]
-  (map #(vector %
-                (apply + %))
-       inputs))
-
 (defn make-number-io-error-function-from-cases
   [train-cases test-cases]
   (fn the-actual-num-io-error-function
@@ -91,15 +70,9 @@
           (assoc individual :behaviors @behavior :errors errors)
           (assoc individual :test-errors errors))))))
 
-(defn get-number-io-train-and-test
-  "Returns the train and test cases."
-  [data-domains]
-  (map num-io-test-cases
-       (test-and-train-data-from-domains data-domains)))
-
 ; Define train and test cases
 (def number-io-train-and-test-cases
-  (get-number-io-train-and-test num-io-data-domains))
+  (train-and-test-cases-from-dataset "number-io" 25 1000))
 
 (defn number-io-initial-report
   [argmap]

@@ -17,17 +17,6 @@
         clojure.math.numeric-tower)
     (:require [clojure.string :as string]))
 
-;; Define test cases
-(defn replace-space-with-newline-input
-  "Makes a Replace Space With Newline input of length len."
-  [len]
-  (apply str
-         (repeatedly len
-                     (fn []
-                       (if (< (lrand) 0.2)
-                         \space
-                         (lrand-nth (map char (range 32 127))))))))
-
 ; Atom generators
 (def replace-space-with-newline-atom-generators
   (concat (list
@@ -35,7 +24,6 @@
             \newline
             ;;; end constants
             (fn [] (lrand-nth (concat [\newline \tab] (map char (range 32 127))))) ;Visible character ERC
-            (fn [] (replace-space-with-newline-input (lrand-int 21))) ;String ERC
             ;;; end ERCs
             (tag-instruction-erc [:exec :integer :boolean :string :char] 1000)
             (tagged-instruction-erc 1000)
@@ -44,54 +32,11 @@
             ;;; end input instructions
             )
           (registered-for-stacks [:integer :boolean :string :char :exec :print])))
-
-
-;; A list of data domains for the problem. Each domain is a vector containing
-;; a "set" of inputs and two integers representing how many cases from the set
-;; should be used as training and testing cases respectively. Each "set" of
-;; inputs is either a list or a function that, when called, will create a
-;; random element of the set.
-(def replace-space-with-newline-data-domains
-  [[(list "", "A", "*", " ", "s", "B ", "  ", " D", "ef", "!!", " F ", "T L", "4ps", "q  ", "   ", "  e", "hi ",
-          "  $  ", "      9",
-          (apply str (take 13 (cycle (list \i \space \!))))
-          (apply str (repeat 20 \8))
-          (apply str (repeat 20 \space))
-          (apply str (repeat 20 \s))
-          (apply str (take 20 (cycle (list \1 \space))))
-          (apply str (take 20 (cycle (list \space \v))))
-          (apply str (take 20 (cycle (list \H \a \space))))
-          (apply str (take 20 (cycle (list \x \space \y \!))))
-          (apply str (take 20 (cycle (list \G \5))))
-          (apply str (take 20 (cycle (list \> \_ \= \]))))
-          (apply str (take 20 (cycle (list \^ \_ \^ \space))))) 30 0] ;; "Special" inputs covering some base cases
-   [(fn [] (replace-space-with-newline-input (+ 2 (lrand-int 19)))) 70 1000]
-   ])
-
-;;Can make Replace Space With Newline test data like this:
-;(test-and-train-data-from-domains replace-space-with-newline-data-domains)
-
-; Helper function for error function
-(defn replace-space-with-newline-test-cases
-  "Takes a sequence of inputs and gives IO test cases of the form
-   [input output]."
-  [inputs]
-  (map (fn [in]
-         (vector in
-                 [(string/replace in \space \newline)
-                  (count (filter #(not= \space %) in))]))
-       inputs))
-
-(defn get-replace-space-with-newline-train-and-test
-  "Returns the train and test cases."
-  [data-domains]
-  (map #(sort-by (comp count first) %)
-       (map replace-space-with-newline-test-cases
-            (test-and-train-data-from-domains data-domains))))
-
+          
 ; Define train and test cases
 (def replace-space-with-newline-train-and-test-cases
-  (get-replace-space-with-newline-train-and-test replace-space-with-newline-data-domains))
+  (map #(sort-by (comp count first) %)
+    (train-and-test-cases-from-dataset "replace-space-with-newline" 70 1000)))
 
 (defn replace-space-with-newline-evaluate-program-for-behaviors
   "Evaluates the program on the given list of cases.

@@ -34,50 +34,6 @@
             )
           (registered-for-stacks [:integer :boolean :vector_integer :exec])))
 
-
-;; Define test cases
-(defn negative-to-zero-input
-  "Makes a Negative To Zero input vector of length len with probability prob of being negative."
-  [len prob]
-  (vec (repeatedly len
-                   #(if (< (lrand) prob)
-                      (- (inc (lrand-int 1000)))
-                      (lrand-int 1001)))))
-
-;; A list of data domains for the problem. Each domain is a vector containing
-;; a "set" of inputs and two integers representing how many cases from the set
-;; should be used as training and testing cases respectively. Each "set" of
-;; inputs is either a list or a function that, when called, will create a
-;; random element of the set.
-(def negative-to-zero-data-domains
-  [[(list []) 1 0] ;; Empty vector
-   [(concat (list [-10] [-1] [0] [1] [10])
-            (repeatedly 5 #(vector (- (lrand-int 2001) 1000)))) 10 0] ;; Length 1 vectors
-   [(list [0 0]
-          [0 1]
-          [-1 0]
-          [-90 -6]
-          [-16 33]
-          [412 111]) 6 0] ;; Length 2 vectors
-   [(fn [] (negative-to-zero-input (inc (lrand-int 50)) 1.0)) 9 100] ;; Random length, all negative
-   [(fn [] (negative-to-zero-input (inc (lrand-int 50)) 0.0)) 9 100] ;; Random length, all positive
-   [(fn [] (negative-to-zero-input (inc (lrand-int 50)) (lrand))) 165 1800] ;; Random length, random prob of negative
-   ])
-
-;;Can make Negative To Zero test data like this:
-;(test-and-train-data-from-domains negative-to-zero-data-domains)
-
-; Helper function for error function
-(defn negative-to-zero-test-cases
-  "Takes a sequence of inputs and gives IO test cases of the form
-   [input output]."
-  [inputs]
-  (map (fn [in]
-         (vector in
-                 (vec (map #(if (< % 0) 0 %)
-                           in))))
-       inputs))
-
 (defn make-negative-to-zero-error-function-from-cases
   [train-cases test-cases]
   (fn the-actual-negative-to-zero-error-function
@@ -109,15 +65,9 @@
           (assoc individual :behaviors @behavior :errors errors)
           (assoc individual :test-errors errors))))))
 
-(defn get-negative-to-zero-train-and-test
-  "Returns the train and test cases."
-  [data-domains]
-  (map negative-to-zero-test-cases
-       (test-and-train-data-from-domains data-domains)))
-
 ; Define train and test cases
 (def negative-to-zero-train-and-test-cases
-  (get-negative-to-zero-train-and-test negative-to-zero-data-domains))
+  (train-and-test-cases-from-dataset "negative-to-zero" 183 2000))
 
 (defn negative-to-zero-initial-report
   [argmap]

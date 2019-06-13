@@ -34,32 +34,6 @@
             )
           (registered-for-stacks [:integer :boolean :exec :print])))
 
-;; A list of data domains for the problem. Each domain is a vector containing
-;; a "set" of inputs and two integers representing how many cases from the set
-;; should be used as training and testing cases respectively. Each "set" of
-;; inputs is either a list or a function that, when called, will create a
-;; random element of the set.
-(def smallest-data-domains
-  [[['(0 0 0 0) '(-44 -44 -7 -13) '(0 4 -99 -33) '(-22 -22 -22 -22) '(99 100 99 100)] 5 0] ;; Edge cases by hand
-   [(fn [] (shuffle (conj (repeat 3 (- (lrand-int 201) 100))
-                          (- (lrand-int 201) 100)))) 10 100] ;; Edge cases where 3 of 4 are the same
-   [(fn [] (repeat 4 (- (lrand-int 201) 100))) 5 100] ;; Edge cases where all are the same
-   [(fn [] (repeatedly 4 #(lrand-int 101))) 20 200] ;; Each input includes 4 integers in range [0,100]
-   [(fn [] (repeatedly 4 #(- (lrand-int 201) 100))) 60 600] ;; Each input includes 4 integers in range [-100,100]
-   ])
-
-;;Can make Smallest test data like this:
-;(test-and-train-data-from-domains smallest-data-domains)
-
-; Helper function for error function
-(defn smallest-test-cases
-  "Takes a sequence of inputs and gives IO test cases of the form
-   [[input1 input2 input3] output]."
-  [inputs]
-  (map #(vector %
-                (apply min %))
-       inputs))
-
 (defn make-smallest-error-function-from-cases
   [train-cases test-cases]
   (fn the-actual-smallest-error-function
@@ -94,15 +68,9 @@
           (assoc individual :behaviors @behavior :errors errors)
           (assoc individual :test-errors errors))))))
 
-(defn get-smallest-train-and-test
-  "Returns the train and test cases."
-  [data-domains]
-  (map smallest-test-cases
-       (test-and-train-data-from-domains data-domains)))
-
 ; Define train and test cases
 (def smallest-train-and-test-cases
-  (get-smallest-train-and-test smallest-data-domains))
+  (train-and-test-cases-from-dataset "smallest" 95 1000))
 
 (defn smallest-initial-report
   [argmap]

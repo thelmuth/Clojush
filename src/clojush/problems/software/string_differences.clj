@@ -46,87 +46,6 @@
             )
           (registered-for-stacks [:integer :boolean :string :char :exec :print])))
 
-
-;; Define test cases
-(defn string-differences-input
-  "Makes a pair of String Differences inputs."
-  [min-length]
-  (let [len (+ min-length (lrand-int (- 11 min-length)))
-        input1 (apply str
-                      (repeatedly len
-                                  (fn []
-                                    (lrand-nth (map char (range 33 127))))))
-        change-char-sometimes-fn (fn [c]
-                                   "Each char has 40% chance of being replaced"
-                                   (if (< (lrand) 0.4)
-                                     (lrand-nth (map char (range 33 127)))
-                                     c))
-        num-chars-to-drop-last (lrand-nth (list 0 0 0 1 1 (lrand-int (inc (count input1)))))
-        input2 (apply str (drop-last num-chars-to-drop-last
-                                     (map change-char-sometimes-fn input1)))]
-    (if (< (lrand) 0.5) ;;Choose random order since len(input1) >= len(input2)
-      [input1 input2]
-      [input2 input1])))
-
-;; A list of data domains for the problem. Each domain is a vector containing
-;; a "set" of inputs and two integers representing how many cases from the set
-;; should be used as training and testing cases respectively. Each "set" of
-;; inputs is either a list or a function that, when called, will create a
-;; random element of the set.
-(def string-differences-data-domains
-  [[(list ["" ""]
-          ["" "hi"]
-          ["ThereWorld" ""]
-          ["A" "A"]
-          ["B" "C"]
-          ["&" "#"]
-          ["4" "456789"]
-          ["rat" "hat"]
-          ["new" "net"]
-          ["big" "bag"]
-          ["STOP" "SIGN"]
-          ["abcde" "a"]
-          ["abcde" "abcde"]
-          ["abcde" "edcba"]
-          ["2n" "nn"]
-          ["hi" "zipper"]
-          ["dealer" "dollars"]
-          ["nacho" "cheese"]
-          ["loud" "louder"]
-          ["qwertyuiop" "asdfghjkl;"]
-          ["LALALALALA" "LLLLLLLLLL"]
-          ["!!!!!!" ".?."]
-          ["9r2334" "9223d4r"]
-          ["WellWell" "wellwell"]
-          ["TakeThat!" "TAKETHAT!!"]
-          ["CHOCOLATE^" "CHOCOLATE^"]
-          [(apply str (repeat 10 \s)) (apply str (repeat 10 \~))]
-          [(apply str (take 10 (cycle (list \> \_ \= \])))) (apply str (take 10 (cycle (list \q \_))))]
-          [(apply str (take 10 (cycle (list \( \))))) (apply str (take 10 (cycle (list \p \p \)))))]
-          [(apply str (take 10 (cycle (list \H \a)))) (apply str (take 10 (cycle (list \H \i))))]) 30 0] ; Edge case inputs
-   [#(string-differences-input 2) 170 0] ; Random inputs. Length 1 strings are covered by hand-coded cases
-   [#(string-differences-input 1) 0 2000]
-   ])
-
-;;Can make test data like this:
-;(test-and-train-data-from-domains string-differences-data-domains)
-
-; Helper function for error function
-(defn string-differences-test-cases
-  "Takes a sequence of inputs and gives IO test cases of the form
-   [input output]."
-  [inputs]
-  (map (fn [[in1 in2]]
-         (vector [in1 in2]
-                 (apply str
-                        (interpose \newline
-                                   (map #(apply str (interpose \space (rest %)))
-                                       (filter first (map #(vector (not= %1 %2) %3 %1 %2)
-                                                          in1
-                                                          in2
-                                                          (range))))))))
-       inputs))
-
 (defn make-string-differences-error-function-from-cases
   [train-cases test-cases]
   (fn the-actual-string-differences-error-function
@@ -165,15 +84,9 @@
           (assoc individual :behaviors @behavior :errors errors)
           (assoc individual :test-errors errors))))))
 
-(defn get-string-differences-train-and-test
-  "Returns the train and test cases."
-  [data-domains]
-  (map string-differences-test-cases
-       (test-and-train-data-from-domains data-domains)))
-
 ; Define train and test cases
 (def string-differences-train-and-test-cases
-  (get-string-differences-train-and-test string-differences-data-domains))
+  (train-and-test-cases-from-dataset "string-differences" 170 2000))
 
 (defn string-differences-initial-report
   [argmap]

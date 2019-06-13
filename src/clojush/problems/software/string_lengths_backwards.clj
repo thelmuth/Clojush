@@ -29,52 +29,6 @@
             )
           (registered-for-stacks [:string :vector_string :integer :boolean :exec :print])))
 
-;; Define test cases
-(defn string-generator
-  "Makes a random string of length len."
-  [len]
-  (apply str
-         (repeatedly len
-                     #(lrand-nth (concat [\newline \tab]
-                                         (map char (range 32 127)))))))
-
-(defn string-lengths-input
-  "Makes a String Lengths input vector of length len."
-  [len]
-  (vec (repeatedly len
-                   #(string-generator (lrand-int 51)))))
-
-;; A list of data domains for the problem. Each domain is a vector containing
-;; a "set" of inputs and two integers representing how many cases from the set
-;; should be used as training and testing cases respectively. Each "set" of
-;; inputs is either a list or a function that, when called, will create a
-;; random element of the set.
-(def string-lengths-data-domains
-  [[(list []) 1 0] ;; Empty input vector
-   [(list [""]
-          ["" ""]
-          ["" "" ""]
-          ["" "" "" "" "" "" "" "" "" ""]) 4 0] ;; Vectors with empty strings
-   [(list ["abcde"]
-          ["1"]
-          ["abc" "hi there"]
-          ["!@#" "\n\n\t\t" "5552\na r"]
-          ["tt" "333" "1" "ccc"]) 5 0] ;; Vectors with small numbers of inputs
-   [(fn [] (string-lengths-input (inc (lrand-int 50)))) 90 1000] ;; Random vectors
-   ])
-
-;;Can make String Lengths test data like this:
-(test-and-train-data-from-domains string-lengths-data-domains)
-
-; Helper function for error function
-(defn string-lengths-test-cases
-  "Takes a sequence of inputs and gives IO test cases of the form
-   [input output]."
-  [inputs]
-  (map #(vector %
-                (apply str (interpose \newline (reverse (map count %)))))
-       inputs))
-
 (defn make-string-lengths-backwards-error-function-from-cases
   [train-cases test-cases]
   (fn the-actual-string-lengths-error-function
@@ -104,15 +58,9 @@
           (assoc individual :behaviors @behavior :errors errors)
           (assoc individual :test-errors errors))))))
 
-(defn get-string-lengths-backwards-train-and-test
-  "Returns the train and test cases."
-  [data-domains]
-  (map string-lengths-test-cases
-       (test-and-train-data-from-domains data-domains)))
-
 ; Define train and test cases
 (def string-lengths-backwards-train-and-test-cases
-  (get-string-lengths-backwards-train-and-test string-lengths-data-domains))
+  (train-and-test-cases-from-dataset "string-lengths-backwards" 90 1000))
 
 (defn string-lengths-backwards-initial-report
   [argmap]

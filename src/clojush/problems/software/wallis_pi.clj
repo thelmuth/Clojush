@@ -34,41 +34,6 @@
             )
           (registered-for-stacks [:integer :float :boolean :exec])))
 
-
-;; A list of data domains for the problem. Each domain is a vector containing
-;; a "set" of inputs and two integers representing how many cases from the set
-;; should be used as training and testing cases respectively. Each "set" of
-;; inputs is either a list or a function that, when called, will create a
-;; random element of the set.
-(def wallis-pi-data-domains
-  [[(concat (range 1 13) '(198 199 200)) 15 0] ; Small and large cases
-   [(shuffle (range 13 198)) 135 50] ; Random cases [13,197]
-   ])
-
-;;Can make Wallis Pi test data like this:
-(map sort (test-and-train-data-from-domains wallis-pi-data-domains))
-
-; Helper function for error function
-(defn wallis-pi-approximation
-  "The Wallis pi approximation to n terms."
-  [n]
-  (round-to-n-decimal-places (apply *' (map #(apply / %)
-                                            (take n (iterate (fn [[x1 x2]]
-                                                               (if (> x1 x2)
-                                                                 [x1 (+' 2 x2)]
-                                                                 [(+' 2 x1) x2]))
-                                                             [2 3]))))
-                             5))
-
-(defn wallis-pi-test-cases
-  "Takes a sequence of inputs and gives IO test cases of the form
-   [input output]."
-  [inputs]
-  (map (fn [in]
-         (vector in
-                 (wallis-pi-approximation in)))
-       inputs))
-
 (defn make-wallis-pi-error-function-from-cases
   [train-cases test-cases]
   (fn the-actual-wallis-pi-error-function
@@ -110,15 +75,9 @@
           (assoc individual :behaviors @behavior :errors errors)
           (assoc individual :test-errors errors))))))
 
-(defn get-wallis-pi-train-and-test
-  "Returns the train and test cases."
-  [data-domains]
-  (map sort (map wallis-pi-test-cases
-                 (test-and-train-data-from-domains data-domains))))
-
 ; Define train and test cases
 (def wallis-pi-train-and-test-cases
-  (get-wallis-pi-train-and-test wallis-pi-data-domains))
+  (train-and-test-cases-from-dataset "wallis-pi" 135 50))
 
 (defn wallis-pi-initial-report
   [argmap]

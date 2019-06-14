@@ -42,7 +42,7 @@
       (let [behavior (atom '())
             errors (flatten
                      (doall
-                       (for [[[in-float in-int] out-float] (case data-cases
+                       (for [[in-float in-int out-float] (case data-cases
                                                              :train train-cases
                                                              :test test-cases
                                                              [])]

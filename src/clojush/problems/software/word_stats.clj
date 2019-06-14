@@ -122,7 +122,7 @@
       (let [behavior (atom '())
             errors (flatten
                      (doall
-                       (for [[input [correct-output sentences words-per-sentence]] (case data-cases
+                       (for [[input correct-output sentences words-per-sentence] (case data-cases
                                                                                      :train train-cases
                                                                                      :test test-cases
                                                                                      [])]

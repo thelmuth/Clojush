@@ -38,7 +38,7 @@
    Returns the behaviors, a list of the outputs of the program on the inputs."
   [program cases]
   (doall
-   (for [[[input1 input2] output] cases]
+   (for [[input1 input2 output] cases]
      (let [final-state (run-push program
                                  (->> (make-push-state)
                                       (push-item input2 :input)

@@ -45,7 +45,7 @@
       (let [behavior (atom '())
             errors (flatten
                      (doall
-                       (for [[[input1 input2] correct-output] (case data-cases
+                       (for [[input1 input2 correct-output] (case data-cases
                                                                 :train train-cases
                                                                 :test test-cases
                                                                 [])]

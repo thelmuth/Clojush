@@ -44,7 +44,7 @@
   [program cases]
   (flatten
    (doall
-    (for [[input output] cases]
+    (for [[input printed-output int-output] cases]
       (let [final-state (run-push program
                                   (->> (make-push-state)
                                        (push-item input :input)
@@ -58,7 +58,7 @@
    for each of those behaviors, returning an error vector."
   [behaviors cases]
   (let [behavior-pairs (partition 2 behaviors)
-        output-pairs (map second cases)]
+        output-pairs (map rest cases)]
     (flatten
      (map (fn [[printed-result int-result] [correct-printed-output correct-int]]
             (vector
@@ -115,7 +115,7 @@
     (println "Outputs of best individual on training cases:")
     (doseq [[[correct-output correct-int] [printed-result int-result]]
             (map vector
-                 (map second (first replace-space-with-newline-train-and-test-cases))
+                 (map rest (first replace-space-with-newline-train-and-test-cases))
                  (partition 2 (:behaviors best)))]
       (println (format "\n| Correct output: %s\n| Program output: %s" (pr-str correct-output) (pr-str printed-result)))
       (println (format "| Correct integer: %2d | Program integer: %s" correct-int (str int-result))))

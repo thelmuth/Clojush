@@ -32,7 +32,7 @@
             ;;; end input instructions
             )
           (registered-for-stacks [:integer :boolean :string :char :exec :print])))
-          
+
 ; Define train and test cases
 (def replace-space-with-newline-train-and-test-cases
   (map #(sort-by (comp count first) %)

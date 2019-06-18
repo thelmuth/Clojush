@@ -38,11 +38,14 @@
       (let [behavior (atom '())
             errors (flatten
                      (doall
-                       (for [[input1 correct-output correct-integers] (case data-cases
-                                                                          :train train-cases
-                                                                          :test test-cases
-                                                                          [])]
-                         (let [final-state (run-push (:program individual)
+                       (for [[input1 correct-output] (case data-cases
+                                                       :train train-cases
+                                                       :test test-cases
+                                                       [])]
+                         (let [correct-integers (map #(Integer/parseInt %)
+                                                     (remove #(empty? %)
+                                                             (string/split-lines correct-output)))
+                               final-state (run-push (:program individual)
                                                      (->> (make-push-state)
                                                        (push-item input1 :input)
                                                        (push-item "" :output)))

@@ -354,7 +354,13 @@
   (let [point-evaluations-before-report @point-evaluations-count
         err-fn (if (= total-error-method :rmse) :weighted-error :total-error)
         sorted (sort-by err-fn < population)
-        err-fn-best (first sorted)
+        ; err-fn-best (first sorted)
+        err-fn-best (loop [lst sorted] (if (and (<= (:total-error (first sorted)) error-threshold)
+                                                  (> (apply + (:error (error-function (first sorted) :train))) error-threshold))
+                                            (recur (rest sorted))
+                                            (first sorted)))
+
+
         psr-best (problem-specific-report err-fn-best
                                           population
                                           generation
@@ -584,7 +590,7 @@
       (swap! viz-data-atom assoc :generation generation))
     (cond (and exit-on-success
                (or (<= (:total-error best) error-threshold)
-                   (:success best)) 
+                   (:success best))
                 (<= (:total-error (error-function best :train)) error-threshold)) [:success best]  ;; making sure solutions pass all training cases before success
           (>= generation max-generations) [:failure best]
           (>= @point-evaluations-count max-point-evaluations) [:failure best]

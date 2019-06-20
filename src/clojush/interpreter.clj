@@ -18,36 +18,42 @@
     (let [literal-type (recognize-literal instruction)]
       (cond
         ;
-        literal-type 
+        literal-type
         (push-item instruction literal-type state)
         ;
-        (and (vector? instruction) (= [] instruction)) 
-        (push-item [] :vector_integer 
-                   (push-item [] :vector_float 
-                              (push-item [] :vector_string 
+        (and (vector? instruction) (= [] instruction))
+        (push-item [] :vector_integer
+                   (push-item [] :vector_float
+                              (push-item [] :vector_string
                                          (push-item [] :vector_boolean state))))
         ;
-        (and (symbol? instruction) 
-             (re-seq #"in\d+" (name instruction))) 
+        (and (vector? instruction) (= () (flatten instruction)))
+        (push-item [[]] :vector_vector_integer
+                   (push-item [[]] :vector_vector_float
+                              (push-item [[]] :vector_vector_string
+                                         (push-item [[]] :vector_vector_boolean state))))
+        ;
+        (and (symbol? instruction)
+             (re-seq #"in\d+" (name instruction)))
         (handle-input-instruction instruction state)
         ;
-        (tag-instruction? instruction) 
+        (tag-instruction? instruction)
         (handle-tag-instruction instruction state)
         ;
-        (tagged-code-macro? instruction) 
+        (tagged-code-macro? instruction)
         (handle-tag-code-macro instruction state)
         ;
-        (contains? @instruction-table instruction) 
+        (contains? @instruction-table instruction)
         ((instruction @instruction-table) state)
         ;
-        :else 
+        :else
         (throw (Exception. (str "Undefined instruction: " (pr-str instruction))))))))
 
 (def saved-state-sequence (atom []))
 
-(defn eval-push 
-  "Executes the contents of the exec stack, aborting prematurely if execution limits are 
-   exceeded. The resulting push state will map :termination to :normal if termination was 
+(defn eval-push
+  "Executes the contents of the exec stack, aborting prematurely if execution limits are
+   exceeded. The resulting push state will map :termination to :normal if termination was
    normal, or :abnormal otherwise."
   ([state] (eval-push state false false false))
   ([state print-steps] (eval-push state print-steps false false))
@@ -70,7 +76,7 @@
         (if (empty? (:exec s))
           (let [s (end-environment s)]
             (when print-steps
-              (printf "\nState after %s steps (last step: %s):\n" 
+              (printf "\nState after %s steps (last step: %s):\n"
                       iteration "end_environment_from_empty_exec")
               (state-pretty-print s))
             (when save-state-sequence
@@ -99,9 +105,9 @@
                 (swap! saved-state-sequence #(conj % s)))
               (recur (inc iteration) s time-limit))))))))
 
-(defn run-push 
-  "The top level of the push interpreter; calls eval-push between appropriate code/exec 
-   pushing/popping. The resulting push state will map :termination to :normal if termination was 
+(defn run-push
+  "The top level of the push interpreter; calls eval-push between appropriate code/exec
+   pushing/popping. The resulting push state will map :termination to :normal if termination was
    normal, or :abnormal otherwise."
   ([code state]
     (run-push code state false false false))
@@ -121,4 +127,3 @@
           (if @global-top-level-pop-code
             (pop-item :code s)
             s))))))
-

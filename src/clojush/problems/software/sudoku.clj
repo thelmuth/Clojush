@@ -22,11 +22,6 @@
             )
           (registered-for-stacks [:integer :exec :boolean :vector_integer])))
 
-(defn sudoku-input
-  [correct-board]
-  )
-
-
 ;; A list of data domains for the problem. Each domain is a vector containing
 ;; a "set" of inputs and two integers representing how many cases from the set
 ;; should be used as training and testing cases respectively. Each "set" of
@@ -118,7 +113,7 @@
                        (let [final-state (run-push (:program individual)
                                                    (->> (make-push-state)
                                                      (push-item input :input)))
-                             result (stack-ref :boolean final-state)]
+                             result (top-item :boolean final-state)]
                          (when print-outputs
                            (println (format "Correct output: %5b | Program output: %s" correct-output (str result))))
                          ; Record the behavior

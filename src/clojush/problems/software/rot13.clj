@@ -9,24 +9,26 @@
         [clojure.math numeric-tower]
         ))
 
+;; Define test cases
+(defn rot13-input
+  "Makes a Rot13 input vector of length len."
+  [len]
+  (apply str (map char (repeatedly len #(+ (rand-int 26) 97)))))
+
 ; Atom generators
 (def rot13-atom-generators
   (concat (list
             ;;; end constants
+            (fn [] (lrand-nth (map char (range 97 122)))) ;Visible character ERC
+            (fn [] (rot13-input (lrand-int 21))) ;String ERC
             ;;; end ERCs
-            (tag-instruction-erc [:integer :boolean :exec] 1000)
+            (tag-instruction-erc [:integer :boolean :exec :string :char] 1000)
             (tagged-instruction-erc 1000)
             ;;; end tag ERCs
             'in1
             ;;; end input instructions
             )
           (registered-for-stacks [:integer :boolean :exec :char :string :print])))
-
-;; Define test cases
-(defn rot13-input
-  "Makes a Rot13 input vector of length len."
-  [len]
-  (apply str (map char (repeatedly len #(+ (rand-int 26) 97)))))
 
 ;; A list of data domains for the problem. Each domain is a vector containing
 ;; a "set" of inputs and two integers representing how many cases from the set
@@ -135,9 +137,9 @@
   {:error-function (make-rot13-error-function-from-cases (first rot13-train-and-test-cases)
                                                                   (second rot13-train-and-test-cases))
    :atom-generators rot13-atom-generators
-   :max-points 800
-   :max-genome-size-in-initial-program 100
-   :evalpush-limit 300
+   :max-points 1600
+   :max-genome-size-in-initial-program 200
+   :evalpush-limit 1500
    :population-size 1000
    :max-generations 300
    :parent-selection :lexicase

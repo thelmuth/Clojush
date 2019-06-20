@@ -24,6 +24,8 @@
 (def spin-words-atom-generators
   (concat (list
             ;;; end constants
+            (fn [] (lrand-nth (map char (range 97 122)))) ;Visible character ERC
+            (fn [] (spin-words-input (lrand-int 21))) ;String ERC
             ;;; end ERCs
             (tag-instruction-erc [:exec :integer :boolean :string :char] 1000)
             (tagged-instruction-erc 1000)
@@ -141,7 +143,7 @@
   :atom-generators spin-words-atom-generators
   :max-points 1200
   :max-genome-size-in-initial-program 150
-  :evalpush-limit 600
+  :evalpush-limit 1500
   :population-size 1000
   :max-generations 300
   :parent-selection :lexicase

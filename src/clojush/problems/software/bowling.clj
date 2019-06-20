@@ -13,7 +13,9 @@
 ; Atom generators
 (def bowling-atom-generators
   (concat (list
+            10
             ;;; end constants
+            (fn [] (range 1 11))
             ;;; end ERCs
             (tag-instruction-erc [:integer :exec :boolean :vector_integer] 1000)
             (tagged-instruction-erc 1000)

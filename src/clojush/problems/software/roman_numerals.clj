@@ -27,6 +27,13 @@
 (def roman-numerals-atom-generators
   (concat (list
             roman-numeral-values
+            1
+            5
+            10
+            50
+            100
+            500
+            1000
             ;;; end constants
             ;;; end ERCs
             (tag-instruction-erc [:string :char :integer :boolean :vector_integer :exec] 1000)
@@ -189,9 +196,9 @@
   {:error-function (make-roman-numerals-error-function-from-cases (first roman-numerals-train-and-test-cases)
                                                                   (second roman-numerals-train-and-test-cases))
    :atom-generators roman-numerals-atom-generators
-   :max-points 4000
-   :max-genome-size-in-initial-program 500
-   :evalpush-limit 2000
+   :max-points 1600
+   :max-genome-size-in-initial-program 200
+   :evalpush-limit 3000
    :population-size 1000
    :max-generations 300
    :parent-selection :lexicase
@@ -207,5 +214,5 @@
    :problem-specific-initial-report roman-numerals-initial-report
    :report-simplifications 0
    :final-report-simplifications 5000
-   :max-error 1000
+   :max-error 1000000
    })

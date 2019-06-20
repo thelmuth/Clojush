@@ -130,9 +130,9 @@
   {:error-function (make-hero-to-zero-error-function-from-cases (first hero-to-zero-train-and-test-cases)
                                                           (second hero-to-zero-train-and-test-cases))
    :atom-generators hero-to-zero-atom-generators
-   :max-points 800
-   :max-genome-size-in-initial-program 100
-   :evalpush-limit 200
+   :max-points 1600
+   :max-genome-size-in-initial-program 200
+   :evalpush-limit 2000
    :population-size 1000
    :max-generations 200
    :parent-selection :lexicase

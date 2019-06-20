@@ -12,6 +12,9 @@
 ; Atom generators
 (def rgb-atom-generators
   (concat (list
+            0
+            255
+            ;;; end constants
             ;;; end ERCs
             (tag-instruction-erc [:integer :boolean :exec] 1000)
             (tagged-instruction-erc 1000)
@@ -128,7 +131,7 @@
    :atom-generators rgb-atom-generators
    :max-points 1600
    :max-genome-size-in-initial-program 200
-   :evalpush-limit 2000
+   :evalpush-limit 1500
    :population-size 1000
    :max-generations 300
    :parent-selection :lexicase

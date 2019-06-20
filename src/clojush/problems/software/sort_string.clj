@@ -12,12 +12,17 @@
         [clojure.math numeric-tower combinatorics]
         ))
 
+;; Define test cases
+(defn sort-string-input
+  "Makes a Sort String input vector of length len."
+  [len]
+  (apply str (repeatedly len #(rand-nth (map char (flatten (list '(32) (range 65 91) (range 97 123))))))))
+
 ; Atom generators
 (def sort-string-atom-generators
   (concat (list
-            []
-            ;;; end constants
-            (fn [] (- (lrand-int 2001) 1000)) ;Integer ERC [-1000,1000]
+            (fn [] (lrand-nth (map char (range 97 122)))) ;Visible character ERC
+            (fn [] (sort-string-input (lrand-int 21))) ;String ERC
             ;;; end ERCs
             (tag-instruction-erc [:string :char :integer :boolean :exec :print] 1000)
             (tagged-instruction-erc 1000)
@@ -26,13 +31,6 @@
             ;;; end input instructions
             )
           (registered-for-stacks [:string :char :integer :boolean :exec :print])))
-
-
-;; Define test cases
-(defn sort-string-input
-  "Makes a Sort String input vector of length len."
-  [len]
-  (apply str (repeatedly len #(rand-nth (map char (flatten (list '(32) (range 65 91) (range 97 123))))))))
 
 ;; A list of data domains for the problem. Each domain is a vector containing
 ;; a "set" of inputs and two integers representing how many cases from the set
@@ -140,9 +138,9 @@
   {:error-function (make-sort-string-error-function-from-cases (first sort-string-train-and-test-cases)
                                                                   (second sort-string-train-and-test-cases))
    :atom-generators sort-string-atom-generators
-   :max-points 2000
+   :max-points 1600
    :max-genome-size-in-initial-program 200
-   :evalpush-limit 1500
+   :evalpush-limit 2000
    :population-size 1000
    :max-generations 300
    :parent-selection :lexicase

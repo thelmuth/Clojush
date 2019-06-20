@@ -13,6 +13,8 @@
 ; Atom generators
 (def bit-count-atom-generators
   (concat (list
+            0
+            1
             ;;; end constants
             ;;; end ERCs
             (tag-instruction-erc [:integer :boolean :exec] 1000)
@@ -124,9 +126,9 @@
   {:error-function (make-bit-count-error-function-from-cases (first bit-count-train-and-test-cases)
                                                                    (second bit-count-train-and-test-cases))
    :atom-generators bit-count-atom-generators
-   :max-points 2400
-   :max-genome-size-in-initial-program 300
-   :evalpush-limit 15000
+   :max-points 1600
+   :max-genome-size-in-initial-program 200
+   :evalpush-limit 1500
    :population-size 1000
    :max-generations 300
    :parent-selection :lexicase

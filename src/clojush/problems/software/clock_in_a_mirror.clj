@@ -12,6 +12,8 @@
 ; Atom generators
 (def clock-in-a-mirror-atom-generators
   (concat (list
+            "12:00"
+            "06:30"
             ;;; end constants
             ;;; end ERCs
             (tag-instruction-erc [:exec :integer :boolean :string :char] 1000)
@@ -133,8 +135,8 @@
   {:error-function (make-clock-in-a-mirror-error-function-from-cases (first clock-in-a-mirror-train-and-test-cases)
                                                                   (second clock-in-a-mirror-train-and-test-cases))
    :atom-generators clock-in-a-mirror-atom-generators
-   :max-points 3200
-   :max-genome-size-in-initial-program 400
+   :max-points 1600
+   :max-genome-size-in-initial-program 200
    :evalpush-limit 1600
    :population-size 1000
    :max-generations 300

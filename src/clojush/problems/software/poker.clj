@@ -228,9 +228,9 @@
   {:error-function (make-poker-error-function-from-cases (first poker-train-and-test-cases)
                                                                (second poker-train-and-test-cases))
    :atom-generators poker-atom-generators
-   :max-points 1200
-   :max-genome-size-in-initial-program 400
-   :evalpush-limit 600
+   :max-points 1600
+   :max-genome-size-in-initial-program 200
+   :evalpush-limit 2000
    :population-size 1000
    :max-generations 300
    :parent-selection :lexicase
@@ -246,5 +246,5 @@
    :problem-specific-initial-report poker-initial-report
    :report-simplifications 0
    :final-report-simplifications 5000
-   :max-error 5000
+   :max-error 500000
    })

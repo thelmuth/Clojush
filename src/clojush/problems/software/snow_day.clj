@@ -82,10 +82,12 @@
                                (println (format "Correct output: %.5f | Program output: %s" (float correct-output) res-str))))
                            ; Record the behavior
                            (swap! behavior conj result)
-                           ; Error 1: float absolute error
-                           (if (number? result)
-                              (float (abs (- result correct-output))) ;distance from correct integer
-                              1000000.0) ;penalty for no return value
+                           ; Error is float error rounded to 4 decimal places
+                           (round-to-n-decimal-places
+                            (if (number? result)
+                              (abs (- result correct-output)) ; distance from correct integer
+                              1000000.0) ; penalty for no return value
+                            4)
                              )))]
         (if (= data-cases :train)
           (assoc individual :behaviors @behavior :errors errors)
@@ -138,9 +140,9 @@
   {:error-function (make-snow-day-error-function-from-cases (first snow-day-train-and-test-cases)
                                                              (second snow-day-train-and-test-cases))
    :atom-generators snow-day-atom-generators
-   :max-points 2400
-   :max-genome-size-in-initial-program 300
-   :evalpush-limit 8000
+   :max-points 1600
+   :max-genome-size-in-initial-program 200
+   :evalpush-limit 1500
    :population-size 1000
    :max-generations 300
    :parent-selection :lexicase

@@ -13,9 +13,18 @@
         [clojure.math numeric-tower combinatorics]
         ))
 
+;; Define test cases
+(defn leaders-input
+  "Makes a leaders input given a length len"
+  [len]
+  (vec (repeatedly len #(rand-int 1001))))
+
 ; Atom generators
 (def leaders-atom-generators
   (concat (list
+            []
+            ;;; end constants
+            (fn [] (leaders-input (lrand-int 21))) ;Vector ERC
             ;;; end ERCs
             (tag-instruction-erc [:integer :vector_integer :exec :boolean] 1000)
             (tagged-instruction-erc 1000)
@@ -24,12 +33,6 @@
             ;;; end input instructions
             )
           (registered-for-stacks [:integer :vector_integer :exec :boolean])))
-
-;; Define test cases
-(defn leaders-input
-  "Makes a leaders input given a length len"
-  [len]
-  (vec (repeatedly len #(rand-int 1001))))
 
 (def leaders-data-domains
   [[(list []
@@ -141,9 +144,9 @@
   {:error-function (make-leaders-error-function-from-cases (first leaders-train-and-test-cases)
                                                                       (second leaders-train-and-test-cases))
    :atom-generators leaders-atom-generators
-   :max-points 1200
-   :max-genome-size-in-initial-program 150
-   :evalpush-limit 600
+   :max-points 1600
+   :max-genome-size-in-initial-program 200
+   :evalpush-limit 2000
    :population-size 1000
    :max-generations 300
    :parent-selection :lexicase

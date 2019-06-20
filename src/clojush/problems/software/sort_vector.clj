@@ -12,12 +12,19 @@
         [clojure.math numeric-tower combinatorics]
         ))
 
+;; Define test cases
+(defn sort-vector-input
+  "Makes a Sort Vector input vector of length len."
+  [len]
+  (vec (repeatedly len
+                   #(- (lrand-int 2001) 1000))))
+
 ; Atom generators
 (def sort-vector-atom-generators
   (concat (list
             []
             ;;; end constants
-            (fn [] (- (lrand-int 2001) 1000)) ;Integer ERC [-1000,1000]
+            (fn [] (sort-vector-input (lrand-int 21))) ;Vector ERC
             ;;; end ERCs
             (tag-instruction-erc [:vector_integer :integer :boolean :exec] 1000)
             (tagged-instruction-erc 1000)
@@ -26,14 +33,6 @@
             ;;; end input instructions
             )
           (registered-for-stacks [:vector_integer :integer :boolean :exec])))
-
-
-;; Define test cases
-(defn sort-vector-input
-  "Makes a Sort Vector input vector of length len."
-  [len]
-  (vec (repeatedly len
-                   #(- (lrand-int 2001) 1000))))
 
 ;; A list of data domains for the problem. Each domain is a vector containing
 ;; a "set" of inputs and two integers representing how many cases from the set
@@ -150,7 +149,7 @@
    :atom-generators sort-vector-atom-generators
    :max-points 2000
    :max-genome-size-in-initial-program 200
-   :evalpush-limit 1500
+   :evalpush-limit 2000
    :population-size 1000
    :max-generations 300
    :parent-selection :lexicase

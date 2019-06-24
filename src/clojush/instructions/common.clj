@@ -31,7 +31,7 @@
 (define-registered char_pop (with-meta (popper :char) {:stack-types [:char]}))
 
 (defn duper
-  "Returns a function that takes a state and duplicates the top item of the appropriate 
+  "Returns a function that takes a state and duplicates the top item of the appropriate
    stack of the state."
   [type]
   (fn [state]
@@ -109,14 +109,14 @@
 (define-registered char_dup_items (with-meta (dup-itemser :char) {:stack-types [:char :integer]}))
 
 (defn swapper
-  "Returns a function that takes a state and swaps the top 2 items of the appropriate 
+  "Returns a function that takes a state and swaps the top 2 items of the appropriate
    stack of the state."
   [type]
   (fn [state]
     (if (not (empty? (rest (type state))))
       (let [first-item (stack-ref type 0 state)
             second-item (stack-ref type 1 state)]
-        (->> (pop-item type state) 
+        (->> (pop-item type state)
              (pop-item type)
              (push-item first-item type)
              (push-item second-item type)))
@@ -132,7 +132,7 @@
 (define-registered char_swap (with-meta (swapper :char) {:stack-types [:char]}))
 
 (defn rotter
-  "Returns a function that takes a state and rotates the top 3 items of the appropriate 
+  "Returns a function that takes a state and rotates the top 3 items of the appropriate
    stack of the state."
   [type]
   (fn [state]
@@ -173,7 +173,7 @@
 (define-registered char_flush (with-meta (flusher :char) {:stack-types [:char]}))
 
 (defn eqer
-  "Returns a function that compares the top two items of the appropriate stack of 
+  "Returns a function that compares the top two items of the appropriate stack of
    the given state."
   [type]
   (fn [state]
@@ -195,7 +195,7 @@
 (define-registered char_eq (with-meta (eqer :char) {:stack-types [:char :boolean]}))
 
 (defn stackdepther
-  "Returns a function that pushes the depth of the appropriate stack of the 
+  "Returns a function that pushes the depth of the appropriate stack of the
    given state."
   [type]
   (fn [state]
@@ -224,8 +224,8 @@
             with-index-popped (pop-item :integer state)
             actual-index (max 0 (min raw-index (- (count (type with-index-popped)) 1)))
             item (stack-ref type actual-index with-index-popped)
-            with-item-pulled (assoc with-index-popped 
-                                    type 
+            with-item-pulled (assoc with-index-popped
+                                    type
                                     (let [stk (type with-index-popped)]
                                       (not-lazy (concat (take actual-index stk)
                                                         (rest (drop actual-index stk))))))]
@@ -314,4 +314,3 @@
 (define-registered zip_empty (with-meta (emptyer :zip) {:stack-types [:zip :boolean]}))
 (define-registered string_empty (with-meta (emptyer :string) {:stack-types [:string :boolean]}))
 (define-registered char_empty (with-meta (emptyer :char) {:stack-types [:char :boolean]}))
-

@@ -17,7 +17,7 @@
 (def dungeon-atom-generators
   (concat (list
             ;;; end ERCs
-            (tag-instruction-erc [:integer :vector_integer :exec :boolean] 1000)
+            (tag-instruction-erc [:integer :vector_integer :vector_vector_integer :exec :boolean] 1000)
             (tagged-instruction-erc 1000)
             ;;; end tag ERCs
             'in1
@@ -25,7 +25,7 @@
             'in3
             ;;; end input instructions
             )
-          (registered-for-stacks [:integer :vector_integer :exec :boolean])))
+          (registered-for-stacks [:integer :vector_integer :vector_vector_integer :exec :boolean])))
 
 ;; Define test cases
 (defn dungeon-input

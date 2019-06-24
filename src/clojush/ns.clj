@@ -7,7 +7,7 @@
   []
   '(do
      (use '(clojush 
-             args evaluate globals individual interpreter pushstate random 
+             args evaluate globals individual interpreter meta-errors pushstate random 
              simplification translate util))
      (use '(clojush.instructions 
              boolean code common numbers random-instructions environment string char vectors 

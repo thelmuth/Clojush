@@ -11,30 +11,23 @@
         clojure.math.numeric-tower)
     (:require [clojure.string :as string]))
 
-; Helper function 1 for input
-(defn puzzle-word-creation
-  [row col direction puzzle]
-  (cond
-    (= direction 0) (take col (drop (+ row col) puzzle))
-    :else (loop [current col word ""]
-                (cond
-                  (< current (* row col)) (recur (+ current col) (str word (nth puzzle current)))
-                  :else word))))
+    ; Helper function 1 for input
+    (defn puzzle-word-creation
+      [row col direction puzzle]
+      (cond
+        (= direction 0) (string/join (rand-nth puzzle))
+        :else (string/join (map #(nth % (rand-int col)) puzzle))))
 
 ; Helper function 2 for input
 (defn make-word
   [row col puzzle use-puzzle]
   (if (= use-puzzle 1)
-      (puzzle-word-creation row col (lrand-int 2) puzzle)
-      (apply str (repeatedly row #(char (+ 97 (lrand-int 26)))))))
+      (puzzle-word-creation row col (rand-int 2) puzzle)
+      (apply str (repeatedly row #(char (+ 97 (rand-int 26)))))))
 
-;; Define test cases
-(defn word-search-input
-  "Makes a word search input of size row col."
-  [row col]
-  (let [puzzle (apply str (repeatedly (* row col) #(char (+ 97 (lrand-int 26)))))
-        word (apply str (make-word row col puzzle (lrand-int 2)))]
-        (vector word puzzle row col)))
+(defn make-row
+  [len]
+  (vec (map str (repeatedly len #(char (+ 97 (rand-int 26)))))))
 
 ; Atom generators
 (def word-search-atom-generators
@@ -46,12 +39,9 @@
             ;;; end tag ERCs
             'in1
             'in2
-            'in3
-            'in4
             ;;; end input instructions
             )
-          (registered-for-stacks [:string :char :integer :boolean :exec])))
-
+          (registered-for-stacks [:string :char :integer :boolean :exec :vector_string :vector_vector_string])))
 
 ;; A list of data domains for the problem. Each domain is a vector containing
 ;; a "set" of inputs and two integers representing how many cases from the set
@@ -59,16 +49,29 @@
 ;; inputs is either a list or a function that, when called, will create a
 ;; random element of the set.
 (def word-search-data-domains
-  [[(list ["" "" 0 0]
-          ["a" "a" 1 1]
-          ["b" "a" 1 1]
-          ["test" "test" 2 2]
-          ["test" "test" 1 4]
-          ["nothere" "amvkelavi" 3 3]
-          ["hello" "shellopeuakvldqapdkflgjelabz" 4 7]
-          ["hello" "asdhpeovmnelskquelieovnclqsudouozjb" 5 7]) 8 0] ;; "Special" inputs covering some base cases
-   [(fn [] (let [row (inc (lrand-int 20)) col (inc (lrand-int 20))]
-                (word-search-input row col))) 192 2000]
+  [[(list ["" [[]]]
+          ["a" [["a"]]]
+          ["b" [["a"]]]
+          ["test" [["t" "e"]
+                   ["s" "t"]]]
+          ["test" [["t" "e" "s" "t"]]]
+          ["nothere" [["a" "m" "v"]
+                      ["k" "e" "l"]
+                      ["a" "v" "i"]]]
+          ["hello" [["s" "h" "e" "l" "l" "o" "p"]
+                    ["e" "u" "a" "k" "v" "l" "d"]
+                    ["q" "a" "p" "d" "k" "f" "l"]
+                    ["g" "j" "e" "l" "a" "b" "z"]]]
+          ["hello" [["a" "s" "d" "h" "p" "e" "o"]
+                    ["v" "m" "n" "e" "l" "s" "k"]
+                    ["q" "u" "e" "l" "i" "e" "o"]
+                    ["v" "n" "c" "l" "q" "s" "u"]
+                    ["d" "o" "u" "o" "z" "j" "b"]]]) 8 0] ;; "Special" inputs covering some base cases
+   [(fn [] (let [row (inc (lrand-int 20))
+                 col (inc (lrand-int 20))
+                 puzzle (vec (repeatedly row #(make-row col)))
+                 word (make-word row col puzzle (lrand-int 2))]
+                 (vector word puzzle))) 192 2000]
    ])
 
 ;;Can make Word Search test data like this:
@@ -79,23 +82,21 @@
   "Takes a sequence of inputs and gives IO test cases of the form
    [input output]."
   [inputs]
-  (map (fn [[word puzzle row col]]
-         (vector [word puzzle row col]
-           (loop [current "" letter 0 pos 0 startpos 0 samepos false direction ""]
+  (map (fn [[word puzzle]]
+         (vector [word puzzle]
+           (loop [current "" letter 0 row 0 col 0 direction "" start-row 0 same-letter false]
              (cond
-               (= current word) true ; if the word is found, return true
-               (and
-                    (= startpos (dec (* row col)))
-                    (not= current word)) false   ; if the word isn't in the puzzle, return false
-               (and (= samepos false)
-                    (= (nth word letter) (nth puzzle pos))) (recur (str current (nth puzzle pos)) (inc letter) pos startpos true direction) ; if the current letter is correct
-               (and (not= (mod (inc pos) col) 0)  ; if the next letter to the right is correct and it isn't out of bounds
-                    (= (nth word letter) (nth puzzle (inc pos)))
-                    (or (= direction "") (= direction "right"))) (recur current letter (inc pos) startpos false "right")
-               (and (< (+ pos col) (* row col))  ; if the next letter is down and it isn't out of bounds
-                    (= (nth word letter) (nth puzzle (+ pos col)))
-                    (or (= direction "") (= direction "down"))) (recur current letter (+ pos col) startpos false "down")
-               :else (recur "" 0 (inc startpos) (inc startpos) false "")))))
+               (= (apply str current) word) true   ; word has been found
+               (and (= same-letter false)
+                    (= (str (nth word letter)) (str (nth (nth puzzle row) col)))) (recur (concat current (nth (nth puzzle row) col)) (inc letter) row col direction start-row true)
+               (and (>= row (dec (count puzzle)))
+                    (>= col (dec (count (first puzzle))))) false   ; word was not found
+               (and (= (str (nth word letter)) (str (nth (nth puzzle row) (inc col) nil))) ; letter to the right
+                    (or (= direction "") (= direction "right"))) (recur current letter row (inc col) "right" start-row false)
+               (and (= (str (nth word letter)) (str (nth (nth puzzle (inc row) nil) col))) ; letter down
+                    (or (= direction "") (= direction "down"))) (recur current letter (inc row) col "down" start-row false)
+               (= col (dec (count (first puzzle)))) (recur "" 0 (inc start-row) 0 "" (inc start-row) false) ; no letter, advance row, reset col
+               :else (recur "" 0 start-row (inc col) "" start-row false))))) ; no letter, advance col
        inputs))
 
 (defn make-word-search-error-function-from-cases
@@ -108,14 +109,12 @@
     ([individual data-cases print-outputs]
       (let [behavior (atom '())
             errors (doall
-                     (for [[[input1 input2 input3 input4] correct-output] (case data-cases
+                     (for [[[input1 input2] correct-output] (case data-cases
                                                                           :train train-cases
                                                                           :test test-cases
                                                                           [])]
                        (let [final-state (run-push (:program individual)
                                                    (->> (make-push-state)
-                                                     (push-item input4 :input)
-                                                     (push-item input3 :input)
                                                      (push-item input2 :input)
                                                      (push-item input1 :input)))
                              result (top-item :boolean final-state)]

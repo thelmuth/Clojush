@@ -181,9 +181,9 @@
   {:error-function (make-tic-tac-toe-error-function-from-cases (first tic-tac-toe-train-and-test-cases)
                                                                (second tic-tac-toe-train-and-test-cases))
    :atom-generators tic-tac-toe-atom-generators
-   :max-points 1200
-   :max-genome-size-in-initial-program 400
-   :evalpush-limit 600
+   :max-points 1600
+   :max-genome-size-in-initial-program 200
+   :evalpush-limit 2000
    :population-size 1000
    :max-generations 300
    :parent-selection :lexicase

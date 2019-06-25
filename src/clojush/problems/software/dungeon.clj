@@ -21,8 +21,6 @@
             (tagged-instruction-erc 1000)
             ;;; end tag ERCs
             'in1
-            'in2
-            'in3
             ;;; end input instructions
             )
           (registered-for-stacks [:integer :vector_integer :vector_vector_integer :exec :boolean])))
@@ -30,18 +28,26 @@
 ;; Define test cases
 (defn dungeon-input
   "Makes a Dungeon input given a row and col"
-  [row col]
-  (vec (repeatedly (* row col) #(- (lrand-int 201) 100))))
+  [col]
+  (vec (repeatedly col #(- (lrand-int 201) 100))))
 
 (def dungeon-data-domains
-  [[(list [3 3 [0 0 0 0 0 0 0 0 0]]
-          [1 1 [-5]]
-          [3 3 [-23 -54 -34 -65 -78 -96 -32 -21 -43]]
-          [3 3 [43 45 12 76 87 2 48 98 1]]
-          [2 2 [-100 -100 100 100]]
-          [2 2 [100 -50 -50 -49]]) 6 0]
+  [[(list [[0 0 0]
+           [0 0 0]
+           [0 0 0]]
+          [[-5]]
+          [[-23 -54 -34]
+           [-65 -78 -96]
+           [-32 -21 -43]]
+          [[43 45 12]
+           [76 87 2]
+           [48 98 1]]
+          [[-100 -100]
+           [100 100]]
+          [[100 -50]
+           [-50 -49]]) 6 0]
    [(fn [] (let [row (inc (lrand-int 20)) col (inc (lrand-int 20))]
-                (vector row col (dungeon-input row col)))) 194 2000]
+              (vec (repeatedly row #(dungeon-input col))))) 194 2000]
   ])
 
 ;;Can make dungeon test data like this:
@@ -50,38 +56,43 @@
 ; Helper function for error function
 (defn dungeon-test-cases
   "Takes a sequence of inputs and gives IO test cases of the form
-   [[input1 input2 input3] output]."
+   [input1 output]."
   [inputs]
-  (map (fn [[row col dungeon]]
-          (vector [row col dungeon]
-            (loop [start-health 1 health-remain 1 current-spot 0]
+  (map (fn [dungeon]
+          (vector dungeon
+            (loop [start-health 1 health-remain 1 current-row 0 current-col 0]
               (cond
-                (<= (+ health-remain (nth dungeon current-spot -1000)) 0) (recur (inc start-health) (inc start-health) 0) ; if the current spot kills you, then restart
-                (= current-spot (dec (* row col))) (if (<= (+ health-remain (nth dungeon current-spot -1000)) 0) ; if the knight made it to the end, check if the final spot kills him
-                                                  (recur (inc start-health)
-                                                         (inc start-health)
-                                                         0)
-                                                  start-health) ; if it does, restart, otherwise, return the health
-                (and (> (+ (+ health-remain (nth dungeon current-spot -1000)) (nth dungeon (+ current-spot 1) -1000)) 0)  ; if the knight could survive both directions
-                     (> (+ (+ health-remain (nth dungeon current-spot -1000)) (nth dungeon (+ current-spot col) -1000)) 0)) (if (> (+ (+ health-remain (nth dungeon current-spot -1000)) (nth dungeon (+ current-spot 1) -1000))
-                                                                                                                                   (+ (+ health-remain (nth dungeon current-spot -1000)) (nth dungeon (+ current-spot col) -1000)))
-                                                                                                                            (recur   ; If going right results in having more health, go right
-                                                                                                                              start-health
-                                                                                                                              (+ health-remain (nth dungeon current-spot -1000))
-                                                                                                                              (+ current-spot 1))
-                                                                                                                            (recur  ; otherwise, go down
-                                                                                                                              start-health
-                                                                                                                              (+ health-remain (nth dungeon current-spot -1000))
-                                                                                                                              (+ current-spot col)))
-                (> (+ (+ health-remain (nth dungeon current-spot -1000)) (nth dungeon (+ current-spot 1) -1000)) 0) (recur
-                                                                                                                      start-health
-                                                                                                                      (+ health-remain (nth dungeon current-spot -1000))
-                                                                                                                      (+ current-spot 1)) ; The knight can survive a step right, so it goes right
-                (> (+ (+ health-remain (nth dungeon current-spot -1000)) (nth dungeon (+ current-spot col) -1000)) 0) (recur
-                                                                                                                        start-health
-                                                                                                                        (+ health-remain (nth dungeon current-spot -1000))
-                                                                                                                        (+ current-spot col)) ; The knight goes down
-                :else (recur (inc start-health) (inc start-health) 0) ; if the knight would die either direction, reset at the top of the dungeon with 1 additional health
+                (<= (+ health-remain (nth (nth dungeon current-row) current-col)) 0) (recur (inc start-health) (inc start-health) 0 0) ; if the current spot kills you, then restart
+                (= (* (inc current-row) (inc current-col)) (* (count dungeon) (count (first dungeon)))) (if (<= (+ health-remain (nth (nth dungeon current-row) current-col)) 0) ; if the knight made it to the end, check if the final spot kills him
+                                                                                                      (recur (inc start-health) (inc start-health) 0 0)
+                                                                                                      start-health) ; if it does, restart, otherwise, return the health
+                (and (> (+ (+ health-remain (nth (nth dungeon current-row) current-col)) (nth (nth dungeon current-row [-1000]) (inc current-col) -1000)) 0)  ; if the knight could survive both directions
+                     (> (+ (+ health-remain (nth (nth dungeon current-row) current-col)) (nth (nth dungeon (+ current-row 1) [-1000]) current-col -1000)) 0))
+                        (if (> (+ (+ health-remain (nth (nth dungeon current-row) current-col)) (nth (nth dungeon current-row [-1000]) (inc current-col) -1000))
+                               (+ (+ health-remain (nth (nth dungeon current-row) current-col)) (nth (nth dungeon (+ current-row 1) [-1000]) current-col -1000)))
+                              (recur   ; If going right results in having more health, go right
+                                start-health
+                                (+ health-remain (nth (nth dungeon current-row) current-col))
+                                current-row
+                                (+ current-col 1))
+                              (recur  ; otherwise, go down
+                                start-health
+                                (+ health-remain (nth (nth dungeon current-row) current-col))
+                                (+ current-row 1)
+                                current-col))
+                (> (+ (+ health-remain (nth (nth dungeon current-row) current-col)) (nth (nth dungeon current-row [-1000]) (inc current-col) -1000)) 0)
+                    (recur
+                    start-health
+                    (+ health-remain (nth (nth dungeon current-row) current-col))
+                    current-row
+                    (+ current-col 1)) ; The knight can survive a step right, so it goes right
+                (> (+ (+ health-remain (nth (nth dungeon current-row) current-col)) (nth (nth dungeon (+ current-row 1) [-1000]) current-col -1000)) 0)
+                    (recur
+                    start-health
+                    (+ health-remain (nth (nth dungeon current-row) current-col))
+                    (+ current-row 1)
+                    current-col) ; The knight goes down
+                :else (recur (inc start-health) (inc start-health) 0 0) ; if the knight would die either direction, reset at the top of the dungeon with 1 additional health
                 ))))
        inputs))
 
@@ -95,14 +106,12 @@
     ([individual data-cases print-outputs]
       (let [behavior (atom '())
             errors (doall
-                     (for [[[input1 input2 input3] correct-output] (case data-cases
+                     (for [[input1 correct-output] (case data-cases
                                                                     :train train-cases
                                                                     :test test-cases
                                                                     [])]
                        (let [final-state (run-push (:program individual)
                                                    (->> (make-push-state)
-                                                     (push-item input3 :input)
-                                                     (push-item input2 :input)
                                                      (push-item input1 :input)))
                              result (top-item :integer final-state)]
                          (when print-outputs
@@ -165,9 +174,9 @@
   {:error-function (make-dungeon-error-function-from-cases (first dungeon-train-and-test-cases)
                                                                       (second dungeon-train-and-test-cases))
    :atom-generators dungeon-atom-generators
-   :max-points 1200
-   :max-genome-size-in-initial-program 150
-   :evalpush-limit 600
+   :max-points 1600
+   :max-genome-size-in-initial-program 200
+   :evalpush-limit 2000
    :population-size 1000
    :max-generations 300
    :parent-selection :lexicase

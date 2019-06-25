@@ -20,7 +20,11 @@
             'in1
             ;;; end input instructions
             )
-          (registered-for-stacks [:integer :exec :boolean :vector_integer])))
+          (registered-for-stacks [:integer :exec :boolean :vector_vector_integer :vector_integer])))
+
+(defn make-row
+  []
+  (vec (repeatedly 9 #(inc (rand-int 9)))))
 
 ;; A list of data domains for the problem. Each domain is a vector containing
 ;; a "set" of inputs and two integers representing how many cases from the set
@@ -29,45 +33,45 @@
 ;; random element of the set.
 (def sudoku-data-domains
   [[(list []  ; empty
-          [1 2 3 4 5 6
-           2 3 4 5 6 7] ; too small
-          [2 9 5 7 4 3 8 6 1
-           4 3 1 8 6 5 9 2 7
-           8 7 6 1 9 2 5 4 3
-           3 8 7 4 5 9 2 1 6
-           6 1 2 3 8 7 4 9 5
-           5 4 9 2 1 6 7 3 8
-           7 6 3 5 2 4 1 8 9
-           9 2 8 6 7 1 3 5 4
-           1 5 4 9 3 8 6 7 2] ; correct
-          [1 1 1 1 1 1 1 1 1
-           1 1 1 1 1 1 1 1 1
-           1 1 1 1 1 1 1 1 1
-           1 1 1 1 1 1 1 1 1
-           1 1 1 1 1 1 1 1 1
-           1 1 1 1 1 1 1 1 1
-           1 1 1 1 1 1 1 1 1
-           1 1 1 1 1 1 1 1 1
-           1 1 1 1 1 1 1 1 1] ; all same number
-          [2 9 5 7 4 3 8 6 1
-           4 3 1 8 6 5 9 2 7
-           8 7 6 1 9 2 5 4 3
-           3 8 7 4 5 9 2 1 6
-           6 1 2 3 8 7 4 9 5
-           5 4 9 2 1 1 7 3 8
-           7 6 3 5 2 4 1 8 9
-           9 2 8 6 7 1 3 5 4
-           1 5 4 9 3 8 6 7 2] ; almost correct
-          [1 5 2 4 8 9 3 7 6  ; correct
-           7 3 9 2 5 6 8 4 1
-           4 6 8 3 7 1 2 9 5
-           3 8 7 1 2 4 6 5 9
-           5 9 1 7 6 3 4 2 8
-           2 4 6 8 9 5 7 1 3
-           9 1 4 6 3 7 5 8 2
-           6 2 5 9 4 8 1 3 7
-           8 7 3 5 1 2 9 6 4]) 6 0]
-   [(fn [] (vec (repeatedly 81 #(inc (lrand-int 9))))) 194 2000]
+          [[1 2 3 4 5 6]
+           [2 3 4 5 6 7]] ; too small
+          [[2 9 5 7 4 3 8 6 1]
+           [4 3 1 8 6 5 9 2 7]
+           [8 7 6 1 9 2 5 4 3]
+           [3 8 7 4 5 9 2 1 6]
+           [6 1 2 3 8 7 4 9 5]
+           [5 4 9 2 1 6 7 3 8]
+           [7 6 3 5 2 4 1 8 9]
+           [9 2 8 6 7 1 3 5 4]
+           [1 5 4 9 3 8 6 7 2]] ; correct
+          [[1 1 1 1 1 1 1 1 1]
+           [1 1 1 1 1 1 1 1 1]
+           [1 1 1 1 1 1 1 1 1]
+           [1 1 1 1 1 1 1 1 1]
+           [1 1 1 1 1 1 1 1 1]
+           [1 1 1 1 1 1 1 1 1]
+           [1 1 1 1 1 1 1 1 1]
+           [1 1 1 1 1 1 1 1 1]
+           [1 1 1 1 1 1 1 1 1]] ; all same number
+          [[2 9 5 7 4 3 8 6 1]
+           [4 3 1 8 6 5 9 2 7]
+           [8 7 6 1 9 2 5 4 3]
+           [3 8 7 4 5 9 2 1 6]
+           [6 1 2 3 8 7 4 9 5]
+           [5 4 9 2 1 1 7 3 8]
+           [7 6 3 5 2 4 1 8 9]
+           [9 2 8 6 7 1 3 5 4]
+           [1 5 4 9 3 8 6 7 2]] ; almost correct
+          [[1 5 2 4 8 9 3 7 6] ; correct
+           [7 3 9 2 5 6 8 4 1]
+           [4 6 8 3 7 1 2 9 5]
+           [3 8 7 1 2 4 6 5 9]
+           [5 9 1 7 6 3 4 2 8]
+           [2 4 6 8 9 5 7 1 3]
+           [9 1 4 6 3 7 5 8 2]
+           [6 2 5 9 4 8 1 3 7]
+           [8 7 3 5 1 2 9 6 4]]) 6 0]
+   [(fn [] (vec (repeatedly 9 #(make-row)))) 194 2000]
   ])
 
 ;;Can make sudoku test data like this:

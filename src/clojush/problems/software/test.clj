@@ -6,20 +6,24 @@
         ))
 
 (def function-list
-  (registered-for-stacks [:vector_vector_float]))
+  (registered-for-stacks [:vector_vector_string]))
 
 (defn random-vector
   []
-  (vec (take (rand-int 11) (repeatedly #(rand 5)))))
+  (vector (apply str (repeatedly 10 #(char (+ 97 (rand-int 26)))))))
+
+(defn random-string
+  []
+  (apply str (repeatedly 10 #(char (+ 97 (rand-int 26))))))
 
 (defn make-program
   []
   (conj
-    (repeatedly (rand-int 6) #(rand 5))
+    (repeatedly (rand-int 6) #(random-string))
     (rand-nth function-list)
     (vec (repeatedly (rand-int 11) random-vector))))
 
-      
+
 (defn generate
   []
   (repeatedly 1000000 #(run-push (make-program) (make-push-state))))

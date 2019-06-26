@@ -7,7 +7,7 @@
         [clojush pushstate interpreter random util globals]
         clojush.instructions.tag
         [clojure.math numeric-tower]
-        ))
+        [clojure.math.combinatorics :as combo]))
 
 ; Atom generators
 (def sudoku-atom-generators
@@ -22,9 +22,23 @@
             )
           (registered-for-stacks [:integer :exec :boolean :vector_vector_integer :vector_integer])))
 
-(defn make-row
+(defn rotate
+  [n coll]
+  (let [c (count coll)]
+    (take c (drop (mod n c) (cycle coll)))))
+
+(defn sudoku-inputs
   []
-  (vec (repeatedly 9 #(inc (rand-int 9)))))
+  (let [row (rand-nth (combo/permutations [1 2 3 4 5 6 7 8 9]))]
+    (vector row
+            (vec (rotate -3 row))
+            (vec (rotate -6 row))
+            (vec (rotate -7 row))
+            (vec (rotate -10 row))
+            (vec (rotate -13 row))
+            (vec (rotate -14 row))
+            (vec (rotate -17 row))
+            (vec (rotate -20 row)))))
 
 ;; A list of data domains for the problem. Each domain is a vector containing
 ;; a "set" of inputs and two integers representing how many cases from the set
@@ -32,10 +46,7 @@
 ;; inputs is either a list or a function that, when called, will create a
 ;; random element of the set.
 (def sudoku-data-domains
-  [[(list []  ; empty
-          [[1 2 3 4 5 6]
-           [2 3 4 5 6 7]] ; too small
-          [[2 9 5 7 4 3 8 6 1]
+  [[(list [[2 9 5 7 4 3 8 6 1]
            [4 3 1 8 6 5 9 2 7]
            [8 7 6 1 9 2 5 4 3]
            [3 8 7 4 5 9 2 1 6]
@@ -70,8 +81,8 @@
            [2 4 6 8 9 5 7 1 3]
            [9 1 4 6 3 7 5 8 2]
            [6 2 5 9 4 8 1 3 7]
-           [8 7 3 5 1 2 9 6 4]]) 6 0]
-   [(fn [] (vec (repeatedly 9 #(make-row)))) 194 2000]
+           [8 7 3 5 1 2 9 6 4]]) 4 0]
+   [(fn [] (sudoku-inputs)) 194 2000]
   ])
 
 ;;Can make sudoku test data like this:
@@ -82,6 +93,17 @@
   [block]
   (clojure.set/subset? #{1 2 3 4 5 6 7 8 9} (set block)))
 
+; Another helper function
+; Some code from: https://github.com/anmonteiro/sudoku-validator/blob/master/src/sudoku_validator/core.clj
+(defn square-divide
+  [board]
+  (loop [i 0 squares []]
+    (if-not (< i 9)
+      squares
+      (recur (+ i 3)
+             (into squares
+                   (partition 9 (apply concat (map #(take 3 (drop i %)) board))))))))
+
 ; Helper function for error function
 (defn sudoku-test-cases
   "Takes a sequence of inputs and gives IO test cases of the form
@@ -89,15 +111,11 @@
   [inputs]
   (map (fn [in]
          (vector in
-           (if (not= (count in) 81)
-               false
-               (if (and (every? true?
-                              (map check (partition 9 (flatten (vector
-                                         (partition 9 (vec (apply concat (apply map vector (take 3 (partition 9 in))))))
-                                         (partition 9 (vec (apply concat (apply map vector (partition 9 (subvec in 27 54))))))
-                                         (partition 9 (vec (apply concat (apply map vector (nthrest (partition 9 in) 6)))))))))) ; squares
-                        (every? true? (map check (apply map vector (partition 9 in)))) ; columns
-                        (every? true? (map check (partition 9 in)))) true false))))
+           (if (and
+                 (every? true? (map check in))
+                 (every? true? (map check (apply map vector in)))
+                 (every? true? (map check (square-divide in))))
+                 true false)))
        inputs))
 
 (defn make-sudoku-error-function-from-cases
@@ -180,7 +198,7 @@
    :atom-generators sudoku-atom-generators
    :max-points 1600
    :max-genome-size-in-initial-program 200
-   :evalpush-limit 4000
+   :evalpush-limit 2000
    :population-size 1000
    :max-generations 300
    :parent-selection :lexicase

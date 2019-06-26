@@ -598,16 +598,20 @@
   (fn [state]
     (if (and (not (empty? (type state)))
              (not (empty? (:integer state))))
-      (push-item (vec (take (top-item :integer state)
-                            (top-item type state)))
-                 type
-                 (pop-item type (pop-item :integer state)))
+      (if (= (top-item :integer state) 0)
+        (push-item [[]]
+                   type
+                   (pop-item type (pop-item :iteger state)))
+        (push-item (vec (take (top-item :integer state)
+                              (top-item type state)))
+                   type
+                   (pop-item type (pop-item :integer state))))
       state)))
 
-(define-registered vector_vector_integer_take (with-meta (taker2 :vector_vector_integer) {:stack-types [:vector_vector_integer :integer]}))
-(define-registered vector_vector_float_take (with-meta (taker2 :vector_vector_float) {:stack-types [:vector_vector_float :integer]}))
-(define-registered vector_vector_boolean_take (with-meta (taker2 :vector_vector_boolean) {:stack-types [:vector_vector_boolean :integer]}))
-(define-registered vector_vector_string_take (with-meta (taker2 :vector_vector_string) {:stack-types [:vector_vector_string :integer]}))
+(define-registered vector_vector_integer_take (with-meta (taker2 :vector_vector_integer) {:stack-types [:vector_vector_integer]}))
+(define-registered vector_vector_float_take (with-meta (taker2 :vector_vector_float) {:stack-types [:vector_vector_float]}))
+(define-registered vector_vector_boolean_take (with-meta (taker2 :vector_vector_boolean) {:stack-types [:vector_vector_boolean]}))
+(define-registered vector_vector_string_take (with-meta (taker2 :vector_vector_string) {:stack-types [:vector_vector_string]}))
 
 (defn rowgetter
   "Returns a function that takes a state and takes the row of the top item

@@ -27,18 +27,24 @@
   (let [c (count coll)]
     (take c (drop (mod n c) (cycle coll)))))
 
-(defn sudoku-inputs
+(defn make-row
   []
-  (let [row (rand-nth (combo/permutations [1 2 3 4 5 6 7 8 9]))]
-    (vector row
-            (vec (rotate -3 row))
-            (vec (rotate -6 row))
-            (vec (rotate -7 row))
-            (vec (rotate -10 row))
-            (vec (rotate -13 row))
-            (vec (rotate -14 row))
-            (vec (rotate -17 row))
-            (vec (rotate -20 row)))))
+  (vec (repeatedly 9 #(inc (rand-int 9)))))
+
+(defn sudoku-inputs
+  [correct]
+  (if (= correct 0)
+    (let [row (rand-nth (combo/permutations [1 2 3 4 5 6 7 8 9]))]
+      (vector row
+              (vec (rotate -3 row))
+              (vec (rotate -6 row))
+              (vec (rotate -7 row))
+              (vec (rotate -10 row))
+              (vec (rotate -13 row))
+              (vec (rotate -14 row))
+              (vec (rotate -17 row))
+              (vec (rotate -20 row))))
+    (vec (repeatedly 9 #(make-row)))))
 
 ;; A list of data domains for the problem. Each domain is a vector containing
 ;; a "set" of inputs and two integers representing how many cases from the set
@@ -82,7 +88,7 @@
            [9 1 4 6 3 7 5 8 2]
            [6 2 5 9 4 8 1 3 7]
            [8 7 3 5 1 2 9 6 4]]) 4 0]
-   [(fn [] (sudoku-inputs)) 194 2000]
+   [(fn [] (sudoku-inputs (lrand-int 2))) 194 2000]
   ])
 
 ;;Can make sudoku test data like this:

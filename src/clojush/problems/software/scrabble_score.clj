@@ -80,12 +80,12 @@
                                                      (push-item input1 :input)))
                              result (stack-ref :integer 0 final-state)]
                          (when print-outputs
-                           (println (format "Correct output: %3d | Program output: %s" correct-output (str result))))
+                           (println (format "Correct output: %s | Program output: %s" correct-output (str result))))
                          ; Record the behavior
                          (swap! behavior conj result)
                          ; Error is difference of integers
                          (if (number? result)
-                           (abs (- result correct-output)) ;distance from correct integer
+                           (abs (- result (Integer/parseInt correct-output))) ;distance from correct integer
                            1000) ;penalty for no return value
                          )))]
         (if (= data-cases :train)

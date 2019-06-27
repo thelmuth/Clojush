@@ -13,18 +13,20 @@
 ; Atom generators
 (def tic-tac-toe-atom-generators
   (concat (list
-            "X won"
-            "O won"
-            "No winner"
+            [0 0]
+            [0 1]
+            [0 2]
+            [1 0]
+            [2 0]
             ;;; end constants
             ;;; end ERCs
-            (tag-instruction-erc [:exec :integer :boolean :string :char :vector_string :vector_vector_string] 1000)
+            (tag-instruction-erc [:exec :integer :boolean :string :char :vector_string :vector_vector_string :vector_integer] 1000)
             (tagged-instruction-erc 1000)
             ;;; end tag ERCs
             'in1
             ;;; end input instructions
             )
-          (registered-for-stacks [:exec :integer :boolean :string :char :vector_string :vector_vector_string :print])))
+          (registered-for-stacks [:exec :integer :boolean :string :char :vector_string :vector_vector_string :vector_integer])))
 
 
 ;; Define test cases
@@ -90,17 +92,22 @@
   [inputs]
   (map (fn [in]
           (vector in
-              (case
-                  (let [rows [(nth in 0)
-                              (nth in 1)
-                              (nth in 2)]
-                        cols (apply map vector rows)
-                        diags (map #(map % (range 3)) [#((rows %) %) #((rows %) (- 2 %))])
-                        lines (concat rows cols diags)]
-                  (first (some (comp #{#{"X"} #{"O"}} set) lines)))
-                  "X" "X won"
-                  "O" "O won"
-                  "No winner")))
+            (let [rows [(nth in 0 nil)
+                        (nth in 1 nil)
+                        (nth in 2 nil)]
+                  cols (apply map vector rows)
+                  diags (map #(map % (range 3)) [#((rows %) %) #((rows %) (- 2 %))])
+                  lines (concat rows cols diags)]
+                  (cond
+                    (apply = (nth lines 0 nil)) [0 0]   ; solution starts at position 0,0
+                    (apply = (nth lines 1 nil)) [1 0]  ; starts at 1,0
+                    (apply = (nth lines 2 nil)) [2 0]   ; starts at 2,0
+                    (apply = (nth lines 3 nil)) [0 0]   ; starts at 0,0
+                    (apply = (nth lines 4 nil)) [0 1]   ; starts at 0,1
+                    (apply = (nth lines 5 nil)) [0 2]   ; starts at 0,2
+                    (apply = (nth lines 6 nil)) [0 1]  ; starts at 0,1
+                    (apply = (nth lines 7 nil)) [0 2]  ; starts at 0,2
+                    :else [-1 -1])))) ; no answer
        inputs))
 
 (defn make-tic-tac-toe-error-function-from-cases
@@ -119,17 +126,22 @@
                                                     [])]
                        (let [final-state (run-push (:program individual)
                                                    (->> (make-push-state)
-                                                     (push-item input :input)
-                                                     (push-item "" :output)))
-                             printed-result (stack-ref :output 0 final-state)]
+                                                     (push-item input :input)))
+                             result (top-item :vector_integer final-state)]
                          (when print-outputs
-                           (println (format "| Correct output: %s\n| Program output: %s\n" (pr-str correct-output) (pr-str printed-result))))
+                           (println (format "| Correct output: %s\n| Program output: %s\n" (pr-str correct-output) (pr-str result))))
                          ; Record the behavior
-                         (swap! behavior conj printed-result)
+                         (swap! behavior conj result)
                          ; Error is boolean error
-                         (if (= printed-result correct-output)
-                           0
-                           1))))]
+                         ; Error is integer error at each position in the vectors, with additional penalties for incorrect size vector
+                         (if (vector? result)
+                           (+' (apply +' (map (fn [cor res]
+                                                (abs (- cor res)))
+                                              correct-output
+                                              result))
+                               (*' 10000 (abs (- (count correct-output) (count result))))) ; penalty of 10000 times difference in sizes of vectors
+                           1000000000) ; penalty for no return value
+                           )))]
         (if (= data-cases :train)
           (assoc individual :behaviors @behavior :errors errors)
           (assoc individual :test-errors errors))))))

@@ -11,12 +11,12 @@
         clojure.math.numeric-tower)
     (:require [clojure.string :as string]))
 
-    ; Helper function 1 for input
-    (defn puzzle-word-creation
-      [row col direction puzzle]
-      (cond
-        (= direction 0) (string/join (rand-nth puzzle))
-        :else (string/join (map #(nth % (rand-int col)) puzzle))))
+; Helper function 1 for input
+(defn puzzle-word-creation
+  [row col direction puzzle]
+  (cond
+    (= direction 0) (string/join (rand-nth puzzle))
+    :else (string/join (map #(nth % (rand-int col)) puzzle))))
 
 ; Helper function 2 for input
 (defn make-word
@@ -49,8 +49,7 @@
 ;; inputs is either a list or a function that, when called, will create a
 ;; random element of the set.
 (def word-search-data-domains
-  [[(list ["" [[]]]
-          ["a" [["a"]]]
+  [[(list ["a" [["a"]]]
           ["b" [["a"]]]
           ["test" [["t" "e"]
                    ["s" "t"]]]
@@ -66,12 +65,12 @@
                     ["v" "m" "n" "e" "l" "s" "k"]
                     ["q" "u" "e" "l" "i" "e" "o"]
                     ["v" "n" "c" "l" "q" "s" "u"]
-                    ["d" "o" "u" "o" "z" "j" "b"]]]) 8 0] ;; "Special" inputs covering some base cases
+                    ["d" "o" "u" "o" "z" "j" "b"]]]) 7 0] ;; "Special" inputs covering some base cases
    [(fn [] (let [row (inc (lrand-int 20))
                  col (inc (lrand-int 20))
                  puzzle (vec (repeatedly row #(make-row col)))
                  word (make-word row col puzzle (lrand-int 2))]
-                 (vector word puzzle))) 192 2000]
+                 (vector word puzzle))) 193 2000]
    ])
 
 ;;Can make Word Search test data like this:
@@ -88,12 +87,12 @@
              (cond
                (= (apply str current) word) true   ; word has been found
                (and (= same-letter false)
-                    (= (str (nth word letter)) (str (nth (nth puzzle row) col)))) (recur (concat current (nth (nth puzzle row) col)) (inc letter) row col direction start-row true)
+                    (= (str (nth word letter nil)) (str (nth (nth puzzle row nil) col nil)))) (recur (concat current (nth (nth puzzle row nil) col nil)) (inc letter) row col direction start-row true)
                (and (>= row (dec (count puzzle)))
                     (>= col (dec (count (first puzzle))))) false   ; word was not found
-               (and (= (str (nth word letter)) (str (nth (nth puzzle row) (inc col) nil))) ; letter to the right
+               (and (= (str (nth word letter nil)) (str (nth (nth puzzle row nil) (inc col) nil))) ; letter to the right
                     (or (= direction "") (= direction "right"))) (recur current letter row (inc col) "right" start-row false)
-               (and (= (str (nth word letter)) (str (nth (nth puzzle (inc row) nil) col))) ; letter down
+               (and (= (str (nth word letter)) (str (nth (nth puzzle (inc row) nil) col nil))) ; letter down
                     (or (= direction "") (= direction "down"))) (recur current letter (inc row) col "down" start-row false)
                (= col (dec (count (first puzzle)))) (recur "" 0 (inc start-row) 0 "" (inc start-row) false) ; no letter, advance row, reset col
                :else (recur "" 0 start-row (inc col) "" start-row false))))) ; no letter, advance col

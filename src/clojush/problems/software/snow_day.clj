@@ -82,12 +82,12 @@
                                (println (format "Correct output: %.5f | Program output: %s" (float correct-output) res-str))))
                            ; Record the behavior
                            (swap! behavior conj result)
-                           ; Error is float error rounded to 4 decimal places
+                           ; Error is float error rounded to 3 decimal places
                            (round-to-n-decimal-places
                             (if (number? result)
                               (abs (- result correct-output)) ; distance from correct integer
                               1000000.0) ; penalty for no return value
-                            4)
+                            3)
                              )))]
         (if (= data-cases :train)
           (assoc individual :behaviors @behavior :errors errors)
@@ -142,7 +142,7 @@
    :atom-generators snow-day-atom-generators
    :max-points 1600
    :max-genome-size-in-initial-program 200
-   :evalpush-limit 1500
+   :evalpush-limit 12000
    :population-size 1000
    :max-generations 300
    :parent-selection :lexicase

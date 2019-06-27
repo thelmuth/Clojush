@@ -37,7 +37,7 @@
           [0 255 0]
           [0 0 255]
           [100 100 100]) 6 0] ;; Edge cases
-   [(fn [] (vector (rand-int 256) (rand-int 256) (rand-int 256))) 94 1000] ;; Random cases
+   [(fn [] (vector (rand-int 256) (rand-int 256) (rand-int 256))) 194 2000] ;; Random cases
    ])
 
 ;;Can make RGB test data like this:

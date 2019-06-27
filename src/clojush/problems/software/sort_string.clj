@@ -46,7 +46,7 @@
           "SoYrqavT iQTAmfnZLiYbUOmYRgugWHhPiKpnDyNPjNxtC taFYoJnkDmxptcKVoLGbIZRGlJIJkoBdwtmdlveCZDliirvWkRPeU"  ; max length
           "abcdefghijklmnopqrstuvwxyz "
           "abcdefghijklmnopqrstuvwxyz ABCDEFGHIJKLMNOPQRSTUVWXYZ") 8 0]
-   [(fn [] (sort-string-input (inc (lrand-int 100)))) 92 1000] ;; Random length, random strings
+   [(fn [] (sort-string-input (inc (lrand-int 100)))) 192 2000] ;; Random length, random strings
    ])
 
 ;;Can make Sort String test data like this:

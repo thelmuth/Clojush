@@ -61,7 +61,7 @@
           ["4s9h1c6d2s"
            "5s1d9c7d2c"]    ; nothing tie
           ) 10 0]  ;; "Special" inputs covering the base cases
-   [(fn [] (poker-input)) 90 1000]
+   [(fn [] (poker-input)) 190 2000]
    ])
 
 ;;Can make poker test data like this:

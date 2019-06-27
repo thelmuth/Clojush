@@ -85,7 +85,7 @@
           "IX"
           "XI"
           "MMMCMXCIX") 13 0] ; Special edge cases
-    [(fn [] (roman-numerals-input (inc (lrand-int 4000)))) 87 1000]
+    [(fn [] (roman-numerals-input (inc (lrand-int 4000)))) 187 2000]
    ;[(fn [] (map roman-numerals-input (remove #(contains? #{1 5 10 50 100 500 1000 4 6 9 11 3999} %) (range 1 4000)))) 0 3987] ; The rest of the possible numbers 1-3999
    ])
 

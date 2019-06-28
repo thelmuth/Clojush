@@ -45,14 +45,12 @@
            (let [digits (map #(Character/digit % 10) (str in))
                  split (if (even? (count digits)) (apply map list (partition 2 digits))
                                                   (apply map list (partition 2 (rest digits))))]
-             (if (= (mod
-                     (reduce +
-                       (flatten (conj (map #(if (> % 9) (- % 9) %)
-                                       (map #(* 2 %)
-                                         (nth split 0)))
-                                      (if (even? (count digits)) (nth split 1)
-                                                                 (conj (nth split 1) (nth digits 0))))))
-                     10) 0) true false))))
+              (reduce +
+                   (flatten (conj (map #(if (> % 9) (- % 9) %)
+                                   (map #(* 2 %)
+                                     (nth split 0)))
+                                  (if (even? (count digits)) (nth split 1)
+                                                             (conj (nth split 1) (nth digits 0)))))))))
        inputs))
 
 (defn make-luhn-error-function-from-cases
@@ -71,17 +69,17 @@
                                                      [])]
                        (let [final-state (run-push (:program individual)
                                                    (->> (make-push-state)
-                                                        (push-item input1 :input)
-                                                        (push-item "" :output)))
-                             result (top-item :boolean final-state)]
+                                                        (push-item input1 :input)))
+                             result (top-item :integer final-state)]
                          (when print-outputs
-                           (println (format "Correct output: %5b | Program output: %s" correct-output (str result))))
+                           (println (format "Correct output: %s | Program output: %s" correct-output result)))
                          ; Record the behavior
                          (swap! behavior conj result)
-                         ; Error is boolean error
-                         (if (= result correct-output)
-                           0
-                           1))))]
+                         ; Error is difference of integers
+                         (if (number? result)
+                           (abs (- result correct-output)) ;distance from correct integer
+                           100000) ;penalty for no return value
+                           )))]
         (if (= data-cases :train)
           (assoc individual :behaviors @behavior :errors errors)
           (assoc individual :test-errors errors))))))

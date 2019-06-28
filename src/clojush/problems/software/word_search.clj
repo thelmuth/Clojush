@@ -41,7 +41,7 @@
             'in2
             ;;; end input instructions
             )
-          (registered-for-stacks [:string :char :integer :boolean :exec :vector_string :vector_vector_string])))
+          (registered-for-stacks [:string :char :integer :boolean :exec :vector_string :vector_vector_string :vector_integer])))
 
 ;; A list of data domains for the problem. Each domain is a vector containing
 ;; a "set" of inputs and two integers representing how many cases from the set
@@ -83,19 +83,21 @@
   [inputs]
   (map (fn [[word puzzle]]
          (vector [word puzzle]
-           (loop [current "" letter 0 row 0 col 0 direction "" start-row 0 same-letter false]
+           (loop [current "" letter 0 row 0 col 0 direction "" start-row 0 same-letter false index [-1 -1]]
              (cond
-               (= (apply str current) word) true   ; word has been found
+               (= (apply str current) word) index   ; word has been found
                (and (= same-letter false)
-                    (= (str (nth word letter nil)) (str (nth (nth puzzle row nil) col nil)))) (recur (concat current (nth (nth puzzle row nil) col nil)) (inc letter) row col direction start-row true)
-               (and (>= row (dec (count puzzle)))
-                    (>= col (dec (count (first puzzle))))) false   ; word was not found
-               (and (= (str (nth word letter nil)) (str (nth (nth puzzle row nil) (inc col) nil))) ; letter to the right
-                    (or (= direction "") (= direction "right"))) (recur current letter row (inc col) "right" start-row false)
-               (and (= (str (nth word letter)) (str (nth (nth puzzle (inc row) nil) col nil))) ; letter down
-                    (or (= direction "") (= direction "down"))) (recur current letter (inc row) col "down" start-row false)
-               (= col (dec (count (first puzzle)))) (recur "" 0 (inc start-row) 0 "" (inc start-row) false) ; no letter, advance row, reset col
-               :else (recur "" 0 start-row (inc col) "" start-row false))))) ; no letter, advance col
+                    (= (str (nth word letter)) (str (nth (nth puzzle row " ") col " ")))) (recur (concat current (nth (nth puzzle row " ") col " ")) (inc letter) row col direction start-row true (if (= letter 0) [row col] index))
+               (and (= row (dec (count puzzle)))
+                    (= col (dec (count (first puzzle))))) [-1 -1]   ; word was not found
+               (and (= (str (nth word letter)) (str (nth (nth puzzle row " ") (inc col) " "))) ; letter to the right
+                    (or (= direction "") (= direction "right"))
+                    (not= letter 0)) (recur current letter row (inc col) "right" start-row false index)
+               (and (= (str (nth word letter)) (str (nth (nth puzzle (inc row) " ") col " "))) ; letter down
+                    (or (= direction "") (= direction "down"))
+                    (not= letter 0)) (recur current letter (inc row) col "down" start-row false index)
+               (= col (dec (count (first puzzle)))) (recur "" 0 (inc start-row) 0 "" (inc start-row) false [-1 -1]) ; no letter, advance row, reset col, reset index
+               :else (recur "" 0 start-row (inc col) "" start-row false [-1 -1]))))) ; no letter, advance col, reset index
        inputs))
 
 (defn make-word-search-error-function-from-cases
@@ -116,15 +118,21 @@
                                                    (->> (make-push-state)
                                                      (push-item input2 :input)
                                                      (push-item input1 :input)))
-                             result (top-item :boolean final-state)]
+                             result (top-item :vector_integer final-state)]
                          (when print-outputs
-                           (println (format "\n| Correct output: %b\n| Program output: %b" (pr-str correct-output) (pr-str result))))
+                           (println (format "\n| Correct output: %s\n| Program output: %s" (str correct-output) (str result))))
                          ; Record the behavior
                          (swap! behavior conj result)
                          ; Error is Levenshtein distance for printed string
-                         (if (= result correct-output)
-                           0
-                           1))))]
+                         ; Error is integer error at each position in the vectors, with additional penalties for incorrect size vector
+                         (if (vector? result)
+                           (+' (apply +' (map (fn [cor res]
+                                                (abs (- cor res)))
+                                              correct-output
+                                              result))
+                               (*' 10000 (abs (- (count correct-output) (count result))))) ; penalty of 10000 times difference in sizes of vectors
+                           1000000000) ; penalty for no return value
+                           )))]
         (if (= data-cases :train)
           (assoc individual :behaviors @behavior :errors errors)
           (assoc individual :test-errors errors))))))
@@ -178,7 +186,7 @@
    :atom-generators word-search-atom-generators
    :max-points 4000
    :max-genome-size-in-initial-program 500
-   :evalpush-limit 2000
+   :evalpush-limit 4000
    :population-size 1000
    :max-generations 300
    :parent-selection :lexicase

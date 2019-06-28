@@ -132,7 +132,6 @@
                            (println (format "| Correct output: %s\n| Program output: %s\n" (pr-str correct-output) (pr-str result))))
                          ; Record the behavior
                          (swap! behavior conj result)
-                         ; Error is boolean error
                          ; Error is integer error at each position in the vectors, with additional penalties for incorrect size vector
                          (if (vector? result)
                            (+' (apply +' (map (fn [cor res]
@@ -195,7 +194,7 @@
    :atom-generators tic-tac-toe-atom-generators
    :max-points 1600
    :max-genome-size-in-initial-program 200
-   :evalpush-limit 2000
+   :evalpush-limit 8000
    :population-size 1000
    :max-generations 300
    :parent-selection :lexicase

@@ -121,7 +121,7 @@
                  (every? true? (map check in))
                  (every? true? (map check (apply map vector in)))
                  (every? true? (map check (square-divide in))))
-                 true false)))
+                 (first (first in)) -1)))
        inputs))
 
 (defn make-sudoku-error-function-from-cases
@@ -141,16 +141,20 @@
                        (let [final-state (run-push (:program individual)
                                                    (->> (make-push-state)
                                                      (push-item input :input)))
-                             result (top-item :boolean final-state)]
+                             result (top-item :integer final-state)]
                          (when print-outputs
-                           (println (format "Correct output: %5b | Program output: %s" correct-output (str result))))
+                           (println (format "Correct output: %s | Program output: %s" correct-output result)))
                          ; Record the behavior
                          (swap! behavior conj result)
-                         ; Error is integer distance
-                         ; Error is boolean error
-                         (if (= result correct-output)
-                           0
-                           1))))]
+                         ; Error is integer error at each position in the vectors, with additional penalties for incorrect size vector
+                         (if (vector? result)
+                           (+' (apply +' (map (fn [cor res]
+                                                (abs (- cor res)))
+                                              correct-output
+                                              result))
+                               (*' 10000 (abs (- (count correct-output) (count result))))) ; penalty of 10000 times difference in sizes of vectors
+                           1000000000) ; penalty for no return value
+                           )))]
         (if (= data-cases :train)
           (assoc individual :behaviors @behavior :errors errors)
           (assoc individual :test-errors errors))))))

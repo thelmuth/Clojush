@@ -92,21 +92,21 @@
   [inputs]
   (map (fn [in]
           (vector in
-            (let [rows [(nth in 0 nil)
-                        (nth in 1 nil)
-                        (nth in 2 nil)]
+            (let [rows [(nth in 0 [1 2])
+                        (nth in 1 [1 2])
+                        (nth in 2 [1 2])]
                   cols (apply map vector rows)
                   diags (map #(map % (range 3)) [#((rows %) %) #((rows %) (- 2 %))])
                   lines (concat rows cols diags)]
                   (cond
-                    (apply = (nth lines 0 nil)) [0 0]   ; solution starts at position 0,0
-                    (apply = (nth lines 1 nil)) [1 0]  ; starts at 1,0
-                    (apply = (nth lines 2 nil)) [2 0]   ; starts at 2,0
-                    (apply = (nth lines 3 nil)) [0 0]   ; starts at 0,0
-                    (apply = (nth lines 4 nil)) [0 1]   ; starts at 0,1
-                    (apply = (nth lines 5 nil)) [0 2]   ; starts at 0,2
-                    (apply = (nth lines 6 nil)) [0 1]  ; starts at 0,1
-                    (apply = (nth lines 7 nil)) [0 2]  ; starts at 0,2
+                    (apply = (nth lines 0 [1 2])) [0 0]   ; solution starts at position 0,0
+                    (apply = (nth lines 1 [1 2])) [1 0]  ; starts at 1,0
+                    (apply = (nth lines 2 [1 2])) [2 0]   ; starts at 2,0
+                    (apply = (nth lines 3 [1 2])) [0 0]   ; starts at 0,0
+                    (apply = (nth lines 4 [1 2])) [0 1]   ; starts at 0,1
+                    (apply = (nth lines 5 [1 2])) [0 2]   ; starts at 0,2
+                    (apply = (nth lines 6 [1 2])) [0 1]  ; starts at 0,1
+                    (apply = (nth lines 7 [1 2])) [0 2]  ; starts at 0,2
                     :else [-1 -1])))) ; no answer
        inputs))
 

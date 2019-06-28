@@ -13,9 +13,6 @@
 ; Atom generators
 (def poker-atom-generators
   (concat (list
-            "Player 1 wins"
-            "Player 2 wins"
-            "Tie"
             ;;; end constants
             ;;; end ERCs
             (tag-instruction-erc [:exec :integer :boolean :string :char :vector_string] 1000)
@@ -24,7 +21,7 @@
             'in1
             ;;; end input instructions
             )
-          (registered-for-stacks [:boolean :integer :string :char :exec :vector_string :print])))
+          (registered-for-stacks [:boolean :integer :string :char :exec :vector_string])))
 
 
 ;; Define test cases
@@ -145,9 +142,9 @@
   (map (fn [in]
           (vector in
             (cond
-              (> (hand-rank (nth in 0)) (hand-rank (nth in 1))) "Player 1 wins"
-              (< (hand-rank (nth in 0)) (hand-rank (nth in 1))) "Player 2 wins"
-              :else "Tie")))
+              (> (hand-rank (nth in 0)) (hand-rank (nth in 1))) (hand-rank (nth in 0))
+              (< (hand-rank (nth in 0)) (hand-rank (nth in 1))) (hand-rank (nth in 1))
+              :else -1)))
        inputs))
 
 (defn make-poker-error-function-from-cases
@@ -166,17 +163,17 @@
                                                     [])]
                        (let [final-state (run-push (:program individual)
                                                    (->> (make-push-state)
-                                                     (push-item input :input)
-                                                     (push-item "" :output)))
-                             printed-result (stack-ref :output 0 final-state)]
+                                                     (push-item input :input)))
+                             result (top-item :integer final-state)]
                          (when print-outputs
-                           (println (format "| Correct output: %s\n| Program output: %s\n" (pr-str correct-output) (pr-str printed-result))))
+                           (println (format "| Correct output: %s\n| Program output: %s\n" correct-output result)))
                          ; Record the behavior
-                         (swap! behavior conj printed-result)
-                         ; Error is boolean error
-                         (if (= printed-result correct-output)
-                           0
-                           1))))]
+                         (swap! behavior conj result)
+                         ; Error is difference of integers
+                         (if (number? result)
+                           (abs (- result correct-output)) ;distance from correct integer
+                           100000) ;penalty for no return value
+                           )))]
         (if (= data-cases :train)
           (assoc individual :behaviors @behavior :errors errors)
           (assoc individual :test-errors errors))))))

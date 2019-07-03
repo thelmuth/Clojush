@@ -122,11 +122,14 @@
       (let [behavior (atom '())
             errors (flatten
                      (doall
-                       (for [[input correct-output sentences words-per-sentence] (case data-cases
-                                                                                     :train train-cases
-                                                                                     :test test-cases
-                                                                                     [])]
-                         (let [final-state (run-push (:program individual)
+                       (for [[input correct-output] (case data-cases
+                                                      :train train-cases
+                                                      :test test-cases
+                                                      [])]
+                         (let [sentences (count (filter #(some #{%} ".?!") input))
+                               words (filter not-empty (string/split input #"\s+"))
+                               words-per-sentence (float (/ (count words) sentences))
+                               final-state (run-push (:program individual)
                                                      (->> (make-push-state)
                                                        (push-item input :input)
                                                        (push-item input :input)

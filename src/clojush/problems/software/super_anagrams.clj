@@ -22,7 +22,6 @@
 (def super-anagrams-atom-generators
   (concat (list
             ;;; end constants
-            (fn [] (lrand-nth (list true false))) ;Boolean ERC
             (fn [] (- (lrand-int 2001) 1000)) ;Integer ERC [-1000,1000]
             (fn [] (lrand-nth (concat [\newline \tab] (map char (range 32 127))))) ;Visible character ERC
             ;;; end ERCs
@@ -34,7 +33,6 @@
             ;;; end input instructions
             )
           (registered-for-stacks [:string :char :integer :boolean :exec])))
-
 
 ;; Define test cases
 (defn super-anagrams-input
@@ -99,6 +97,16 @@
 ;;Can make test data like this:
 ;(test-and-train-data-from-domains super-anagrams-data-domains)
 
+;Code from https://stackoverflow.com/questions/23199295/how-to-diff-substract-two-lists-in-clojure
+(defn diff [l1 l2]
+  (let [a (group-by identity l1)
+        b (group-by identity l2)]
+    (mapcat #(repeat
+              (-
+               (count (second %))
+               (count (get b (key %))))
+              (key %)) a)))
+
 ; Helper function for error function
 (defn super-anagrams-test-cases
   "Takes a sequence of inputs and gives IO test cases of the form
@@ -109,8 +117,8 @@
                  (loop [i1 in1
                         i2 in2]
                    (cond
-                     (empty? i1) true
-                     (> 0 (.indexOf i2 (str (first i1)))) false
+                     (empty? i1) ""
+                     (> 0 (.indexOf i2 (str (first i1)))) (apply str (diff i1 i2))
                      :else (recur (rest i1)
                                   (string/replace-first i2 (first i1) \space))))))
        inputs))
@@ -134,15 +142,13 @@
                                                      (push-item input2 :input)
                                                      (push-item input1 :input)
                                                      (push-item "" :output)))
-                             result (top-item :boolean final-state)]
+                             result (top-item :string final-state)]
                          (when print-outputs
-                           (println (format "Correct output: %5b | Program output: %s" correct-output (str result))))
+                           (println (format "Correct output: %5s | Program output: %s" correct-output (str result))))
                          ; Record the behavior
                          (swap! behavior conj result)
-                         ; Error is boolean error
-                         (if (= result correct-output)
-                           0
-                           1))))]
+                         ; Error is Levenshtein distance of printed strings
+                         (levenshtein-distance correct-output (str result)))))]
         (if (= data-cases :train)
           (assoc individual :behaviors @behavior :errors errors)
           (assoc individual :test-errors errors))))))

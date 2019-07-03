@@ -18,9 +18,12 @@
 ; Atom generators
 (def csl-atom-generators
   (concat (list
-            (fn [] (lrand-nth (list true false))) ;Boolean ERC
+            (fn [] (lrand-nth (vector (vector false false)
+                                      (vector false true)
+                                      (vector true false)
+                                      (vector true true)))) ;Boolean ERC
             ;;; end ERCs
-            (tag-instruction-erc [:integer :boolean :string :exec] 1000)
+            (tag-instruction-erc [:integer :boolean :string :exec :vector_boolean] 1000)
             (tagged-instruction-erc 1000)
             ;;; end tag ERCs
             'in1
@@ -28,7 +31,7 @@
             'in3
             ;;; end input instructions
             )
-          (registered-for-stacks [:integer :boolean :string :exec])))
+          (registered-for-stacks [:integer :boolean :string :exec :vector_boolean])))
 
 
 ;; Define test cases
@@ -64,7 +67,9 @@
    [input output]."
   [inputs]
   (map #(vector %
-                (apply < (map count %)))
+                (let [counts (map count %)]
+                  (vector (< (first counts) (second counts))
+                          (< (second counts) (last counts)))))
        inputs))
 
 (defn make-compare-string-lengths-error-function-from-cases
@@ -86,15 +91,20 @@
                                                      (push-item input3 :input)
                                                      (push-item input2 :input)
                                                      (push-item input1 :input)))
-                             result (top-item :boolean final-state)]
+                             result (top-item :vector_boolean final-state)]
                          (when print-outputs
-                           (println (format "Correct output: %5b | Program output: %s" correct-output (str result))))
+                           (println (format "Correct output: %s | Program output: %s" correct-output (str result))))
                          ; Record the behavior
                          (swap! behavior conj result)
-                         ; Error is boolean error
-                         (if (= result correct-output)
-                           0
-                           1))))]
+                         ; Error is boolean error at each position in the vectors, with additional penalties for incorrect size vector
+                         (if (vector? result)
+                           (+' (apply +' (map (fn [cor res]
+                                                (= cor res))
+                                              correct-output
+                                              result))
+                               (*' 1 (abs (- (count correct-output) (count result))))) ; penalty of 1 times difference in sizes of vectors
+                           10) ; penalty for no return value
+                           )))]
         (if (= data-cases :train)
           (assoc individual :behaviors @behavior :errors errors)
           (assoc individual :test-errors errors))))))

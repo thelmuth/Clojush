@@ -83,10 +83,13 @@
                            (println (format "Correct output: %-19s | Program output: %-19s" (str out-int) printed-result)))
                          ; Record the behavior
                          (swap! behavior conj printed-result)
-                         ; Each test case is either right or wrong
-                         (if (= printed-result (str out-int))
-                           0
-                           1))))]
+                         ; Error is difference of integers
+                         (if (number? (try
+                                        (Integer/parseInt printed-result)
+                                        (catch Exception e "")))
+                           (abs (- (Integer/parseInt printed-result) out-int)) ;distance from correct integer
+                           100000) ;penalty for no return value
+                           )))]
         (if (= data-cases :train)
           (assoc individual :behaviors @behavior :errors errors)
           (assoc individual :test-errors errors))))))

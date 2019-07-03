@@ -91,7 +91,9 @@
    [input output]."
   [inputs]
   (map #(vector %
-                (= (first %) (vec (reverse (second %)))))
+                (if (= (first %) (vec (reverse (second %))))
+                    []
+                    (vec (clojure.set/intersection (set (first %)) (set (second %))))))
        inputs))
 
 (defn get-mirror-image-train-and-test
@@ -114,16 +116,22 @@
                                  (->> (make-push-state)
                                       (push-item input2 :input)
                                       (push-item input1 :input)))]
-       (top-item :boolean final-state)))))
+       (top-item :vector-integer final-state)))))
 
 (defn mirror-image-errors-from-behaviors
   "Takes a list of behaviors across the list of cases and finds the error
    for each of those behaviors, returning an error vector."
   [behaviors cases]
   (map (fn [result correct-output]
-         (if (= result correct-output)
-           0
-           1))
+    ; Error is integer error at each position in the vectors, with additional penalties for incorrect size vector
+    (if (vector? result)
+      (+' (apply +' (map (fn [cor res]
+                           (abs (- cor res)))
+                         correct-output
+                         result))
+          (*' 1000 (abs (- (count correct-output) (count result))))) ; penalty of 10000 times difference in sizes of vectors
+      1000000) ; penalty for no return value
+      )
        behaviors
        (map second cases)))
 
@@ -173,7 +181,7 @@
     (doseq [[correct-output result] (map vector
                                          (map second (first mirror-image-train-and-test-cases))
                                          (:behaviors best))]
-      (println (format "Correct output: %5b | Program output: %s" correct-output (str result))))
+      (println (format "Correct output: %5s | Program output: %s" correct-output (str result))))
     (println ";;******************************")
     )) ;; To do validation, could have this function return an altered best individual
        ;; with total-error > 0 if it had error of zero on train but not on validation

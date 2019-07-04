@@ -116,7 +116,7 @@
                                  (->> (make-push-state)
                                       (push-item input2 :input)
                                       (push-item input1 :input)))]
-       (top-item :vector-integer final-state)))))
+       (top-item :vector_integer final-state)))))
 
 (defn mirror-image-errors-from-behaviors
   "Takes a list of behaviors across the list of cases and finds the error
@@ -194,7 +194,7 @@
    :atom-generators mirror-image-atom-generators
    :max-points 1200
    :max-genome-size-in-initial-program 150
-   :evalpush-limit 600
+   :evalpush-limit 1000
    :population-size 1000
    :max-generations 300
    :parent-selection :lexicase

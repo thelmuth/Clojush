@@ -66,10 +66,10 @@
   "Takes a sequence of inputs and gives IO test cases of the form
    [input output]."
   [inputs]
-  (map #(vector %
-                (let [counts (map count %)]
-                  (vector (< (first counts) (second counts))
-                          (< (second counts) (last counts)))))
+  (map (fn [[in1 in2 in3]]
+            (vector [in1 in2 in3]
+                  (vector (< (count in1) (count in2))
+                          (< (count in2) (count in3)))))
        inputs))
 
 (defn make-compare-string-lengths-error-function-from-cases
@@ -158,7 +158,7 @@
    :atom-generators csl-atom-generators
    :max-points 1600
    :max-genome-size-in-initial-program 200
-   :evalpush-limit 600
+   :evalpush-limit 1000
    :population-size 1000
    :max-generations 300
    :parent-selection :lexicase

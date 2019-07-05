@@ -19,10 +19,10 @@
      :vector_float (fn [thing] (and (vector? thing) (float? (first thing))))
      :vector_string (fn [thing] (and (vector? thing) (string? (first thing))))
      :vector_boolean (fn [thing] (and (vector? thing) (or (= (first thing) true) (= (first thing) false))))
-     :vector_vector_integer (fn [thing] (and (vector? thing) (integer? (first (flatten thing)))))
-     :vector_vector_float (fn [thing] (and (vector? thing) (float? (first (flatten thing)))))
+     :vector_vector_integer (fn [thing] (and (vector? thing) (vector? (first thing)) (integer? (first (flatten thing)))))
+     :vector_vector_float (fn [thing] (and (vector? thing) (vector? (first thing)) (float? (first (flatten thing)))))
      :vector_vector_string (fn [thing] (and (vector? thing) (vector? (first thing)) (string? (first (flatten thing)))))
-     :vector_vector_boolean (fn [thing] (and (vector? thing) (or (= (first (flatten thing)) true) (= (first (flatten thing)) false))))}))
+     :vector_vector_boolean (fn [thing] (and (vector? thing) (vector? (first thing)) (or (= (first (flatten thing)) true) (= (first (flatten thing)) false))))}))
 
 (defn recognize-literal
   "If thing is a literal, return its type -- otherwise return false."

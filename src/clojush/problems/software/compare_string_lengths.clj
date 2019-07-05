@@ -98,10 +98,11 @@
                          (swap! behavior conj result)
                          ; Error is boolean error at each position in the vectors, with additional penalties for incorrect size vector
                          (if (vector? result)
-                           (+' (apply +' (map (fn [cor res]
-                                                (= cor res))
-                                              correct-output
-                                              result))
+                           (+' (apply +' (map #(if (= % true) 0 1)
+                                            (map (fn [cor res]
+                                                  (= cor res))
+                                                correct-output
+                                                result)))
                                (*' 1 (abs (- (count correct-output) (count result))))) ; penalty of 1 times difference in sizes of vectors
                            10) ; penalty for no return value
                            )))]

@@ -368,6 +368,39 @@
                    (pop-item :char (pop-item :integer (pop-item :string state))))))))
 
 (define-registered
+  string_capitalize
+  ^{:stack-types [:string]}
+  (fn [state]
+    (if (empty? (:string state))
+      state
+      (let [cap (top-item :string state)]
+        (->> state
+             (pop-item :string)
+             (push-item (string/capitalize cap) :string))))))
+
+(define-registered
+  string_uppercase
+  ^{:stack-types [:string]}
+  (fn [state]
+    (if (empty? (:string state))
+      state
+      (let [up (top-item :string state)]
+        (->> state
+             (pop-item :string)
+             (push-item (string/upper-case up) :string))))))
+
+(define-registered
+  string_lowercase
+  ^{:stack-types [:string]}
+  (fn [state]
+    (if (empty? (:string state))
+      state
+      (let [low (top-item :string state)]
+        (->> state
+             (pop-item :string)
+             (push-item (string/lower-case low) :string))))))
+
+(define-registered
   exec_string_iterate ; Returns a function that iterates over a string using the code on the exec stack.
   ^{:stack-types [:string :char :exec] :parentheses 1}
   (fn [state]

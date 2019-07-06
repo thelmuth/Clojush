@@ -1,8 +1,8 @@
-;; rgb.clj
+;; to_hex.clj
 ;; Peter Kelly, pxkelly@hamilton.edu
 ;;
 
-(ns clojush.problems.software.rgb
+(ns clojush.problems.software.to-hex
   (:use clojush.pushgp.pushgp
         [clojush pushstate interpreter random util globals]
         clojush.instructions.tag
@@ -10,25 +10,23 @@
   (:require [clojure.string :as string]))
 
 ; Atom generators
-(def rgb-atom-generators
+(def to-hex-atom-generators
   (concat (list
-            \A
-            \B
-            \C
-            \D
-            \E
-            \F
-            0
-            255
+            \a
+            \b
+            \c
+            \d
+            \e
+            \f
             ;;; end constants
             ;;; end ERCs
-            (tag-instruction-erc [:integer :boolean :exec] 1000)
+            (tag-instruction-erc [:integer :boolean :exec :char :string] 1000)
             (tagged-instruction-erc 1000)
             ;;; end tag ERCs
             'in1
             ;;; end input instructions
             )
-          (registered-for-stacks [:integer :boolean :exec :print :vector_integer :string :char])))
+          (registered-for-stacks [:integer :boolean :exec :string :char])))
 
 
 ;; A list of data domains for the problem. Each domain is a vector containing
@@ -36,36 +34,36 @@
 ;; should be used as training and testing cases respectively. Each "set" of
 ;; inputs is either a list or a function that, when called, will create a
 ;; random element of the set.
-(def rgb-data-domains
-  [[(list [0 0 0]
-          [255 255 255]
-          [255 0 0]
-          [0 255 0]
-          [0 0 255]
-          [100 100 100]) 6 0] ;; Edge cases
-   [(fn [] (vector (rand-int 256) (rand-int 256) (rand-int 256))) 194 2000] ;; Random cases
+(def to-hex-data-domains
+  [[(list 0
+          255
+          500000
+          65535
+          123456
+          15) 6 0] ;; Edge cases
+   [(fn [] (lrand-int 500000)) 194 2000] ;; Random cases
    ])
 
-;;Can make RGB test data like this:
-;(test-and-train-data-from-domains rgb-data-domains)
+;;Can make to-hex test data like this:
+;(test-and-train-data-from-domains to-hex-data-domains)
 
 ; Helper function for error function
-(defn rgb-test-cases
+(defn to-hex-test-cases
   "Takes a sequence of inputs and gives IO test cases of the form
    [input output]."
   [inputs]
   (map (fn [in]
          (vector in
-            (format "%02X%02X%02X" (first in) (second in) (last in))))
+            (format "%h" in)))
        inputs))
 
-(defn make-rgb-error-function-from-cases
+(defn make-to-hex-error-function-from-cases
   [train-cases test-cases]
-  (fn the-actual-rgb-error-function
+  (fn the-actual-to-hex-error-function
     ([individual]
-      (the-actual-rgb-error-function individual :train))
+      (the-actual-to-hex-error-function individual :train))
     ([individual data-cases] ;; data-cases should be :train or :test
-     (the-actual-rgb-error-function individual data-cases false))
+     (the-actual-to-hex-error-function individual data-cases false))
     ([individual data-cases print-outputs]
       (let [behavior (atom '())
             errors (doall
@@ -75,45 +73,49 @@
                                                         [])]
                          (let [final-state (run-push (:program individual)
                                                      (->> (make-push-state)
-                                                       (push-item input1 :input)
-                                                       (push-item "" :output)))
-                               result (stack-ref :output 0 final-state)]
+                                                       (push-item input1 :input)))
+                               result (top-item :string final-state)]
                            (when print-outputs
-                             (println (format "| Correct output: %s\n| Program output: %s\n" (pr-str correct-output) (pr-str result))))
+                             (println (format "| Correct output: %s\n| Program output: %s\n" correct-output (str result))))
                            ; Record the behavior
                            (swap! behavior conj result)
-                           ; Error is Levenshtein distance of printed strings
-                           (levenshtein-distance correct-output result))))]
+                           ; Error is
+                           ; 1. Levenshtein distance of printed strings
+                           ; 2. The number of characters in the string that aren't hex digits (0-9, a-f)
+                           (vector
+                             (levenshtein-distance correct-output (str result))
+                             
+                             )))]
         (if (= data-cases :train)
           (assoc individual :behaviors @behavior :errors errors)
           (assoc individual :test-errors errors))))))
 
-(defn get-rgb-train-and-test
+(defn get-to-hex-train-and-test
   "Returns the train and test cases."
   [data-domains]
-  (map rgb-test-cases
+  (map to-hex-test-cases
       (test-and-train-data-from-domains data-domains)))
 
 ; Define train and test cases
-(def rgb-train-and-test-cases
-  (get-rgb-train-and-test rgb-data-domains))
+(def to-hex-train-and-test-cases
+  (get-to-hex-train-and-test to-hex-data-domains))
 
-(defn rgb-initial-report
+(defn to-hex-initial-report
   [argmap]
   (println "Train and test cases:")
-  (doseq [[i case] (map vector (range) (first rgb-train-and-test-cases))]
+  (doseq [[i case] (map vector (range) (first to-hex-train-and-test-cases))]
     (println (format "Train Case: %3d | Input/Output: %s" i (str case))))
-  (doseq [[i case] (map vector (range) (second rgb-train-and-test-cases))]
+  (doseq [[i case] (map vector (range) (second to-hex-train-and-test-cases))]
     (println (format "Test Case: %3d | Input/Output: %s" i (str case))))
   (println ";;******************************"))
 
-(defn rgb-report
+(defn to-hex-report
   "Custom generational report."
   [best population generation error-function report-simplifications]
   (let [best-test-errors (:test-errors (error-function best :test))
         best-total-test-error (apply +' best-test-errors)]
     (println ";;******************************")
-    (printf ";; -*- RGB problem report - generation %s\n" generation)(flush)
+    (printf ";; -*- To-Hex problem report - generation %s\n" generation)(flush)
     (println "Test total error for best:" best-total-test-error)
     (println (format "Test mean error for best: %.5f" (double (/ best-total-test-error (count best-test-errors)))))
     (when (zero? (:total-error best))
@@ -132,9 +134,9 @@
 
 ; Define the argmap
 (def argmap
-  {:error-function (make-rgb-error-function-from-cases (first rgb-train-and-test-cases)
-                                                                (second rgb-train-and-test-cases))
-   :atom-generators rgb-atom-generators
+  {:error-function (make-to-hex-error-function-from-cases (first to-hex-train-and-test-cases)
+                                                                (second to-hex-train-and-test-cases))
+   :atom-generators to-hex-atom-generators
    :max-points 1600
    :max-genome-size-in-initial-program 200
    :evalpush-limit 1500
@@ -149,8 +151,8 @@
    :alternation-rate 0.01
    :alignment-deviation 10
    :uniform-mutation-rate 0.01
-   :problem-specific-report rgb-report
-   :problem-specific-initial-report rgb-initial-report
+   :problem-specific-report to-hex-report
+   :problem-specific-initial-report to-hex-initial-report
    :report-simplifications 0
    :final-report-simplifications 5000
    :max-error 5000

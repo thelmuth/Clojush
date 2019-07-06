@@ -6,6 +6,9 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; calculate meta-errors
+(defn binary-meta-errors
+  [ind evaluated-population argmap]
+  (map #(if (= 0 %) 0 1) (:error ((:error-function argmap) ind :train))))
 
 (defn meta-error-fn-from-keyword
   "Takes a keyword and returns the meta-error function with the corresponding name."
@@ -19,14 +22,14 @@
 (defn evaluate-individual-meta-errors
   "Calculates one meta-error for each meta-error category provided. Each
   meta-error-category should either be a function (which must be namespace-qualified
-  if provided in a command-line argument) or a keyword corresponding to a pre-defined 
-  meta-error function. In either case the function should take an individual, an evaluated 
-  population, and an argmap, and it should return a numeric meta error value or collection 
-  of values, for which lower is interpreted as better. For keyword :foo, the corresponding 
+  if provided in a command-line argument) or a keyword corresponding to a pre-defined
+  meta-error function. In either case the function should take an individual, an evaluated
+  population, and an argmap, and it should return a numeric meta error value or collection
+  of values, for which lower is interpreted as better. For keyword :foo, the corresponding
   meta-error function will be clojush.meta-errors/foo-meta-error."
   [ind evaluated-population argmap]
-  (assoc ind :meta-errors 
-    (vec (flatten 
+  (assoc ind :meta-errors
+    (vec (flatten
            (for [cat (:meta-error-categories argmap)]
              (if (fn? cat)
                (cat ind evaluated-population argmap)
@@ -50,7 +53,7 @@
 
 (defn unsolved-cases-meta-error
   [ind evaluated-population argmap]
-  (count (filter #(> % (:error-threshold argmap)) 
+  (count (filter #(> % (:error-threshold argmap))
                  (:errors ind))))
 
 (defn rand-meta-error
@@ -88,15 +91,15 @@
 
 (defn amorphousness-meta-error
   [ind evaluated-population argmap]
-  (- 1 (double (/ (count-parens (:program ind)) 
+  (- 1 (double (/ (count-parens (:program ind))
                   (count-points (:program ind)))))) ;Number of (open) parens / points
 
 
 (defn gens-since-total-error-change-meta-error
   [ind evaluated-population argmap]
   (if (not (:print-history argmap))
-    (throw 
-      (Exception. 
+    (throw
+      (Exception.
         ":print-history must be true for :gens-since-total-error-change"))
     (let [hist (mapv (partial reduce +) (:history ind))]
       (if (or (empty? hist)
@@ -107,8 +110,8 @@
 (defn gens-since-error-change-meta-error
   [ind evaluated-population argmap]
   (if (not (:print-history argmap))
-    (throw 
-      (Exception. 
+    (throw
+      (Exception.
         ":print-history must be true for :gens-since-error-change"))
     (let [hist (:history ind)]
       (if (or (empty? hist)
@@ -119,8 +122,8 @@
 (defn no-recent-error-change-meta-error
   [ind evaluated-population argmap]
   (if (not (:print-history argmap))
-    (throw 
-      (Exception. 
+    (throw
+      (Exception.
         ":print-history must be true for :no-recent-error-change"))
     (let [hist (:history ind)
           limit (:error-change-recency-limit argmap)]
@@ -172,13 +175,13 @@
 
 (defn gens-since-total-error-improvement-meta-error
   [ind evaluated-population argmap]
-  (if (not (:print-history argmap)) 
+  (if (not (:print-history argmap))
     (if (not (:print-history argmap))
-      (throw 
-        (Exception. 
+      (throw
+        (Exception.
           ":print-history must be true for :gens-since-total-error-improvement"))
-      (let [diffs (mapv (fn [[a b]] (- a b)) 
-                        (partition 2 1 (mapv (partial reduce +) 
+      (let [diffs (mapv (fn [[a b]] (- a b))
+                        (partition 2 1 (mapv (partial reduce +)
                                              (:history ind))))]
         (if (or (empty? diffs)
                 (not (some neg? diffs)))
@@ -186,13 +189,13 @@
           (count (take-while #(>= % 0) diffs)))))))
 
 (defn total-error-improvement-ratio-meta-error
-  [ind evaluated-population argmap]  
+  [ind evaluated-population argmap]
   (if (not (:print-history argmap))
-    (throw 
-      (Exception. 
+    (throw
+      (Exception.
         ":print-history must be true for :total-error-improvement-ratio"))
-    (let [diffs (mapv (fn [[a b]] (- a b)) 
-                      (partition 2 1 (mapv (partial reduce +) 
+    (let [diffs (mapv (fn [[a b]] (- a b))
+                      (partition 2 1 (mapv (partial reduce +)
                                            (:history ind))))]
       (if (empty? diffs)
         1000000
@@ -200,10 +203,10 @@
                 (count diffs)))))))
 
 (defn total-error-new-best-ratio-meta-error
-  [ind evaluated-population argmap]  
+  [ind evaluated-population argmap]
   (if (not (:print-history argmap))
-    (throw 
-      (Exception. 
+    (throw
+      (Exception.
         ":print-history must be true for :total-error-new-best-ratio"))
     (let [hist (mapv (partial reduce +) (:history ind))]
       (if (empty? (rest hist))
@@ -220,10 +223,10 @@
                         0)))))))))
 
 (defn discounted-total-error-new-best-ratio-meta-error
-  [ind evaluated-population argmap] 
+  [ind evaluated-population argmap]
   (if (not (:print-history argmap))
-    (throw 
-      (Exception. 
+    (throw
+      (Exception.
         ":print-history must be true for :discounted-total-error-new-best-ratio"))
     (let [hist (mapv (partial reduce +) (:history ind))]
       (if (empty? (rest hist))
@@ -246,17 +249,17 @@
 (defn discounted-total-error-improvement-meta-error
   [ind evaluated-population argmap]
   (if (not (:print-history argmap))
-    (throw 
-      (Exception. 
+    (throw
+      (Exception.
         ":print-history must be true, :discounted-total-error-improvement-ratio"))
     (if (empty? (rest (:history ind)))
       1000000
       (let [diffs (mapv (fn [[a b]] (- a b))
                         (partition 2 1 (mapv (partial reduce +) (:history ind))))
-            improvements (mapv #(if (neg? %) 1.0 0.0) 
+            improvements (mapv #(if (neg? %) 1.0 0.0)
                                diffs)
             persistence 0.5
-            weights (take (count diffs) 
+            weights (take (count diffs)
                           (iterate (partial * persistence) 0.5))
             sum (reduce + (mapv * improvements weights))]
         (if (<= sum 0)
@@ -277,13 +280,13 @@
                (let [improvements (mapv (fn [[newer-error older-error]]
                                           (if (< newer-error older-error)
                                             1.0
-                                            (if (= newer-error older-error) 
+                                            (if (= newer-error older-error)
                                               -1.0
                                               0.0)))
                                         (partition 2 1 case-history))
                      weights (take (count improvements)
-                                   (iterate (partial * 
-                                                     (- 1 (:improvement-discount argmap))) 
+                                   (iterate (partial *
+                                                     (- 1 (:improvement-discount argmap)))
                                             1))
                      sum (reduce + (mapv * improvements weights))]
                  (- sum))))))))
@@ -340,7 +343,7 @@
                            evaluated-population)]
       (vec (for [case-index (range (count (:errors ind)))]
              (if (zero? (nth (:errors ind) case-index)) ;; solved
-               0 
+               0
                (if (or (empty? siblings)
                        (apply = (mapv #(nth (:errors %) case-index)
                                       siblings)))
@@ -362,8 +365,8 @@
                              evaluated-population)]
         (vec (for [case-index (range (count (:errors ind)))]
                (if (zero? (nth (:errors ind) case-index)) ;; solved
-                 0 
-                 (if 
+                 0
+                 (if
                    (some (fn [sib]
                            (or (zero? (-> (:history sib) ;; sib solved
                                           (first)
@@ -389,12 +392,12 @@
                                  (not (empty? (rest (:history %))))) ; new random sibs don't count
                            evaluated-population)]
       (vec (for [case-index (range (count (:errors ind)))]
-             (if (zero? (nth (:errors ind) case-index)) 
+             (if (zero? (nth (:errors ind) case-index))
                0 ;; solved
                (if (or (empty? (:parent-uuids ind))
                        (empty? (rest (:history ind))))
                  2 ;; not solved, no mom who might have produced diff behaviors
-                 (if 
+                 (if
                    (some (fn [sib]
                            (not= (-> (:history sib) ;; sib error different than mom's
                                      (first)
@@ -421,7 +424,7 @@
                                    (not (empty? (rest (:history %))))) ; new random sibs don't count
                              evaluated-population)]
         (vec (for [case-index (range (count (:errors ind)))]
-               (if (zero? (nth (second (:history ind)) case-index)) 
+               (if (zero? (nth (second (:history ind)) case-index))
                  (if ;; mom solved, error for any child to be different
                    (some (fn [sib]
                            (not= (-> (:history sib) ;; sib error different than mom's
@@ -444,7 +447,7 @@
                          siblings)
                    0
                    1))))))))
-                   
+
 (defn case-appropriate-family-diversity-meta-error
   [ind evaluated-population argmap]
   (if (not (:print-history argmap))
@@ -484,8 +487,8 @@
                                  (:errors ind)
                                  (:parent1-errors ind)
                                  (:parent2-errors ind))]
-           (+' (*' e 1000000) 
-               (#(cond 
+           (+' (*' e 1000000)
+               (#(cond
                    (neg? %) -1
                    (pos? %) 1
                    :else 0)
@@ -507,8 +510,8 @@
                              evaluated-population)]
         (vec (for [case-index (range (count (:errors ind)))]
                (if (zero? (nth (:errors ind) case-index)) ;; solved
-                 0 
-                 (if 
+                 0
+                 (if
                    (some (fn [sib]
                            (or (zero? (-> (:history sib) ;; sib solved
                                           (first)
@@ -538,8 +541,8 @@
                              evaluated-population)]
         (vec (for [case-index (range (count (:errors ind)))]
                (if (zero? (nth (:errors ind) case-index)) ;; solved
-                 0 
-                 (if 
+                 0
+                 (if
                    (some (fn [sib]
                            (or (zero? (-> (:history sib) ;; sib solved
                                           (first)
@@ -557,7 +560,7 @@
                                          (first)
                                          (nth case-index))
                                      (-> (:history sib)
-                                         (second)	
+                                         (second)
                                          (nth case-index))))
                              siblings)
                      2
@@ -578,11 +581,11 @@
                              evaluated-population)]
         (vec (for [case-index (range (count (:errors ind)))]
                (if (zero? (nth (:errors ind) case-index)) ;; solved
-                 0 
-                 (/ 1 (count 
-                        (distinct 
-                          (for [s siblings] 
-                            (nth (first (:history s)) 
+                 0
+                 (/ 1 (count
+                        (distinct
+                          (for [s siblings]
+                            (nth (first (:history s))
                                  case-index))))))))))))
 
 (defn family-uniformity-meta-error
@@ -615,7 +618,7 @@
       (vec (repeat (count (:errors ind)) 2))
       (vec (for [case-index (range (count (:errors ind)))]
              (if (zero? (nth (:errors ind) case-index)) ;; solved
-               0 
+               0
                (let [latest (nth (first (:history ind)) case-index)
                      olders (map #(nth % case-index) (rest (:history ind)))]
                  (if (some #{latest} (set olders))
@@ -645,7 +648,7 @@
                                  (:errors ind)
                                  (:parent1-errors ind)
                                  (:parent2-errors ind))]
-           (cond 
+           (cond
              (zero? e) 0
              (< e (min p1e p2e)) 1
              (and (not= p1e p2e) (= e (min p1e p2e))) 2
@@ -665,7 +668,7 @@
                                    (:errors ind)
                                    (:parent1-errors ind)
                                    (:parent2-errors ind))]
-             (cond 
+             (cond
                (zero? e) 0
                (< e (min p1e p2e)) 1
                (and (not= p1e p2e) (= e (min p1e p2e))) 2
@@ -701,8 +704,8 @@
                              evaluated-population)]
         (vec (for [case-index (range (count (:errors ind)))]
                (if (zero? (nth (:errors ind) case-index)) ;; solved
-                 0 
-                 (if 
+                 0
+                 (if
                    (some (fn [sib] ;; sibling solved
                            (zero? (-> (:history sib)
                                       (first)
@@ -735,8 +738,8 @@
                              evaluated-population)]
         (vec (for [case-index (range (count (:errors ind)))]
                (if (zero? (nth (:errors ind) case-index)) ;; solved
-                 0 
-                 (if 
+                 0
+                 (if
                    (some (fn [sib]
                            (or (zero? (-> (:history sib)
                                           (first)
@@ -758,13 +761,13 @@
                 genomes (list (:genome ind))]
            (if (>= step limit)
              step
-             (let [child (produce-child-genome-by-autoconstruction 
-                           (first genomes) 
-                           (first genomes) 
+             (let [child (produce-child-genome-by-autoconstruction
+                           (first genomes)
+                           (first genomes)
                            argmap)]
                (if (some #{child} (set genomes))
                  step
-                 (recur (inc step) 
+                 (recur (inc step)
                         (cons child genomes)))))))))
 
 (defn reproductive-infidelity-meta-error
@@ -845,7 +848,7 @@
 
 (defn favoritism-meta-error
   [ind evaluated-population argmap]
-  (if (and (:parent1-genome ind) 
+  (if (and (:parent1-genome ind)
            (:parent2-genome ind)
            (not= (:parent1-genome ind) (:parent2-genome ind)))
     (/ (math/abs (- (sequence-similarity (:genome ind) (:parent1-genome ind))
@@ -908,7 +911,7 @@
   (if (and (:parent1-errors ind)
            (:parent2-errors ind))
     (mapv #(if (some #{%1} [%2 %3]) 1 0)
-          (:errors ind) 
+          (:errors ind)
           (:parent1-errors ind)
           (:parent2-errors ind))
     (vec (repeat (count (:errors ind)) 1))))
@@ -918,7 +921,7 @@
   (if (and (:parent1-errors ind)
            (:parent2-errors ind))
     (mapv #(if (some #{%1} [%2 %3]) 1 0)
-          (:errors ind) 
+          (:errors ind)
           (:parent1-errors ind)
           (:parent2-errors ind))
     (vec (repeat (count (:errors ind)) 1))))

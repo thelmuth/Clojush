@@ -356,7 +356,7 @@
         sorted (sort-by err-fn < population)
         ; err-fn-best (first sorted)
         err-fn-best (loop [sorted-individuals sorted] (if (and (<= (:total-error (first sorted-individuals)) error-threshold)
-                                                  (> (apply + (:error (error-function (first sorted-individuals) :train))) error-threshold)
+                                                  (> (apply + (:errors (error-function (first sorted-individuals) :train))) error-threshold)
                                                   (<= (:total-error (second sorted-individuals)) error-threshold))
                                             (recur (rest sorted-individuals))
                                             (first sorted-individuals)))
@@ -592,7 +592,7 @@
     (cond (and exit-on-success
                (or (<= (:total-error best) error-threshold)
                    (:success best))
-                (<= (apply + (:error (error-function best :train))) error-threshold)) [:success best]  ;; making sure solutions pass all training cases before success
+                (<= (apply + (:errors (error-function best :train))) error-threshold)) [:success best]  ;; making sure solutions pass all training cases before success
           (>= generation max-generations) [:failure best]
           (>= @point-evaluations-count max-point-evaluations) [:failure best]
           :else [:continue best])))

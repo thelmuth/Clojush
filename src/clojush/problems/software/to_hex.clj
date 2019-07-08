@@ -66,26 +66,27 @@
      (the-actual-to-hex-error-function individual data-cases false))
     ([individual data-cases print-outputs]
       (let [behavior (atom '())
-            errors (doall
-                       (for [[input1 correct-output] (case data-cases
-                                                        :train train-cases
-                                                        :test test-cases
-                                                        [])]
-                         (let [final-state (run-push (:program individual)
-                                                     (->> (make-push-state)
-                                                       (push-item input1 :input)))
-                               result (top-item :string final-state)]
-                           (when print-outputs
-                             (println (format "| Correct output: %s\n| Program output: %s\n" correct-output (str result))))
-                           ; Record the behavior
-                           (swap! behavior conj result)
-                           ; Error is
-                           ; 1. Levenshtein distance of printed strings
-                           ; 2. The number of characters in the string that aren't hex digits (0-9, a-f)
-                           (vector
-                             (levenshtein-distance correct-output (str result))
-                             
-                             )))]
+            errors (flatten
+                      (doall
+                         (for [[input1 correct-output] (case data-cases
+                                                          :train train-cases
+                                                          :test test-cases
+                                                          [])]
+                           (let [final-state (run-push (:program individual)
+                                                       (->> (make-push-state)
+                                                         (push-item input1 :input)))
+                                 result (top-item :string final-state)]
+                             (when print-outputs
+                               (println (format "| Correct output: %s\n| Program output: %s\n" correct-output (str result))))
+                             ; Record the behavior
+                             (swap! behavior conj result)
+                             ; Error is
+                             ; 1. Levenshtein distance of printed strings
+                             ; 2. The number of characters in the string that aren't hex digits (0-9, a-f)
+                             (vector
+                               (levenshtein-distance correct-output (str result))
+                               (reduce + (map #(if (clojure.string/includes? "0123456789abcdef" (str (first %))) 0 (second %)) (frequencies (str result))))
+                             )))))]
         (if (= data-cases :train)
           (assoc individual :behaviors @behavior :errors errors)
           (assoc individual :test-errors errors))))))

@@ -28,7 +28,7 @@
             'in1
             ;;; end input instructions
             )
-          (registered-for-stacks [:integer :boolean :exec :char :string :print])))
+          (registered-for-stacks [:integer :boolean :exec :char :string])))
 
 ;; A list of data domains for the problem. Each domain is a vector containing
 ;; a "set" of inputs and two integers representing how many cases from the set
@@ -61,6 +61,15 @@
                                                 (+ 96 (mod (+ 13 (int %)) 122))) in)))))
        inputs))
 
+; Edited code found here: http://www.learningclojure.com/2010/11/levenshtein-distance-edit-distance.html
+(defn letter-error
+ [in out]
+   (cond
+     (and (empty? in) (empty? out)) 0   ; same length strings
+     (or (empty? in) (empty? out)) (* (abs (- (count in) (count out))) 25)    ; different length strings
+     :else (+ (if (= (first in) (first out)) 0 (abs (- (int (first in)) (int (first out)))))
+              (#'letter-error (rest in) (rest out)))))
+
 (defn make-rot13-error-function-from-cases
   [train-cases test-cases]
   (fn the-actual-rot13-error-function
@@ -70,22 +79,27 @@
      (the-actual-rot13-error-function individual data-cases false))
     ([individual data-cases print-outputs]
       (let [behavior (atom '())
-            errors (doall
-                     (for [[input1 correct-output] (case data-cases
-                                                     :train train-cases
-                                                     :test test-cases
-                                                     [])]
-                       (let [final-state (run-push (:program individual)
-                                                   (->> (make-push-state)
-                                                     (push-item input1 :input)
-                                                     (push-item "" :output)))
-                             result (stack-ref :output 0 final-state)]
-                         (when print-outputs
-                           (println (format "| Correct output: %s\n| Program output: %s\n" (pr-str correct-output) (pr-str result))))
-                         ; Record the behavior
-                         (swap! behavior conj result)
-                         ; Error is Levenshtein distance of printed strings
-                         (levenshtein-distance correct-output result))))]
+            errors (flatten
+                      (doall
+                       (for [[input1 correct-output] (case data-cases
+                                                       :train train-cases
+                                                       :test test-cases
+                                                       [])]
+                         (let [final-state (run-push (:program individual)
+                                                     (->> (make-push-state)
+                                                       (push-item input1 :input)))
+                               result (top-item :string final-state)]
+                           (when print-outputs
+                             (println (format "| Correct output: %s\n| Program output: %s\n" correct-output (str result))))
+                           ; Record the behavior
+                           (swap! behavior conj result)
+                           ; Error is
+                           ; 1. Levenshtein distance (takes care of wrong lengths)
+                           ; 2. The difference between each letter in the string
+                           (vector
+                             (levenshtein-distance correct-output (str result))
+                             (letter-error correct-output (str result))
+                       )))))]
         (if (= data-cases :train)
           (assoc individual :behaviors @behavior :errors errors)
           (assoc individual :test-errors errors))))))

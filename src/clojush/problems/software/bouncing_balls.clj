@@ -77,7 +77,7 @@
                            (println (format "Correct output: %-19s | Program output: %-19s" (str out-int) printed-result)))
                          ; Record the behavior
                          (swap! behavior conj printed-result)
-                         ; Each test case is either right or wrong
+                         ; Each test case is integer error
                          (if (number? printed-result)
                            (abs (- printed-result out-int)) ;distance from correct integer
                            1000000))))] ; penalty for no return value

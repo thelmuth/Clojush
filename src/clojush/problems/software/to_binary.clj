@@ -81,7 +81,7 @@
                              ; Error is
                              ; 1. Levenshtein distance of printed strings
                              ; 2. The number of characters in the string that aren't hex digits (0-9, a-f)
-                             (vector
+                             (+
                                (levenshtein-distance correct-output (str result))
                                (reduce + (map #(if (clojure.string/includes? "01" (str (first %))) 0 (second %)) (frequencies (str result))))
                              )))))]

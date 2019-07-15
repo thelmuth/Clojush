@@ -18,6 +18,7 @@
             (tagged-instruction-erc 1000)
             ;;; end tag ERCs
             'in1
+            'in2
             ;;; end input instructions
             )
           (registered-for-stacks [:string :char :integer :boolean :exec :vector_string])))
@@ -72,13 +73,14 @@
     ([individual data-cases print-outputs]
      (let [behavior (atom '())
            errors (doall
-                   (for [[input correct-output] (case data-cases
+                   (for [[[input1 input2] correct-output] (case data-cases
                                                    :train train-cases
                                                    :test test-cases
                                                    [])]
                      (let [final-state (run-push (:program individual)
                                                  (->> (make-push-state)
-                                                      (push-item input :input)))
+                                                      (push-item input2 :input)
+                                                      (push-item input1 :input)))
                            result (top-item :string final-state)]
                        (when print-outputs
                            (println (format "Correct output: %s\n| Program output: %s\n" correct-output (str result))))

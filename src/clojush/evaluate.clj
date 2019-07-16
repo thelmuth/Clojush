@@ -98,4 +98,3 @@
                            :normalized-error ne
                            :history (if print-history (cons e (:history i)) (:history i)))]
         new-ind))))
-

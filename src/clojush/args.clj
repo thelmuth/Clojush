@@ -22,13 +22,13 @@
           ;;----------------------------------------
           ;; Standard GP arguments
           ;;----------------------------------------
+         :batches [] ;; contains batches of indices for test cases
+         :batch-size 16
+         :tourn-size 16
          :training-cases '()
-         :sub-training-cases '()
+
          :error-function (fn [p] '(0))
           ;; Function that takes a program and returns a list of errors.
-
-         :down-sample-factor 0.5
-         ;; between 0 and 1
 
          :error-threshold 0
           ;; Pushgp will stop and return the best program if its total error

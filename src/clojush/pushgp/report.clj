@@ -591,18 +591,29 @@
 
 (defn initial-report
   "Prints the initial report of a PushGP run."
-  [{:keys [problem-specific-initial-report csv-log-filename csv-case-usage-filename] :as push-argmap}]
+  [{:keys [problem-specific-initial-report csv-log-filename csv-case-usage-filename
+           csv-individuals-remaining] :as push-argmap}]
   (problem-specific-initial-report push-argmap)
   (println "Registered instructions:"
     (r/config-data! [:registered-instructions] @registered-instructions))
   (println "Starting PushGP run.")
   (printf "Clojush version = ")
+  ;; CSV for case usage
   (with-open [csv-file (io/writer csv-case-usage-filename :append false)]
     (csv/write-csv csv-file
                    [["generation"
                      ; "UUID"
                      "number-test-cases-used"
                      "rank-by-total-error"]]))
+  ;; CSV for numbe of individuals remaining after each lexicase step
+  (with-open [csv-file (io/writer csv-individuals-remaining :append false)]
+    (csv/write-csv csv-file
+                   [["generation"
+                     "population-location"
+                     "parent-number"
+                     "lexicase-step"
+                     "case-number"
+                     "individuals-remaining"]]))
   (try
     (let [version-str (apply str (butlast (re-find #"\".*\""
                                                    (first (string/split-lines

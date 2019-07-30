@@ -6,12 +6,12 @@
 
 (defn select
   "Returns a selected parent."
-  [pop {:keys [parent-selection print-selection-counts] :as argmap}]
+  [pop location {:keys [parent-selection print-selection-counts] :as argmap} parent-number]
   (let [pop-with-meta-errors (map #(update-in % [:errors] (comp vec concat) (:meta-errors %)) pop)
         preselected (preselect pop-with-meta-errors argmap)
         selected (case parent-selection
                    :tournament (tournament-selection preselected argmap)
-                   :lexicase (lexicase-selection preselected argmap)
+                   :lexicase (lexicase-selection preselected location argmap parent-number)
                    :epsilon-lexicase (epsilon-lexicase-selection preselected argmap)
                    :elitegroup-lexicase (elitegroup-lexicase-selection preselected argmap)
                    :random-threshold-lexicase (random-threshold-lexicase-selection 

@@ -89,12 +89,12 @@
                                (dec num-parents) 
                                (fn []
                                  (loop [re-selections 0
-                                        other (select population argmap)]
+                                        other (select population location argmap 2)]
                                    (if (and (= other first-parent)
                                             (< re-selections 
-                                               (:self-mate-avoidance-limit argmap)))
+                                               (:self-mate-avoidance-limit argmap 2)))
                                      (recur (inc re-selections)
-                                            (select population argmap))
+                                            (select population location argmap))
                                      other)))))
           op-fn (:fn (get genetic-operators operator))
           child (assoc (apply op-fn (vec (concat (vector first-parent) 
@@ -132,7 +132,7 @@
   [operator population location rand-gen 
    {:keys [max-points genome-representation
            track-instruction-maps] :as argmap}]
-  (let [first-parent (select population argmap)
+  (let [first-parent (select population location argmap 1)
         operator-vector (if (sequential? operator) operator (vector operator))
         child (perform-genetic-operator-list operator-vector
                                              (assoc first-parent :parent-uuids (vector (:uuid first-parent)))

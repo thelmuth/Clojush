@@ -518,6 +518,9 @@
           :csv-case-usage-filename "caseUsage.csv"
           ;; The file to print case usage CSV log to.
 
+          :csv-individuals-remaining "individualsRemaining.csv"
+          ;; The file to print the number of individuals remaining after each lexicase step to.
+          
           :edn-log-filename "log.edn"
           ;; The file to print EDN log to.
 

@@ -347,7 +347,7 @@
                    (pop-item :char (pop-item :string state))))
       state)))
 
-  (define-registered
+(define-registered
   string_setchar ; Returns a function that sets char at index in string
   ^{:stack-types [:string :char :integer]}
   (fn [state]
@@ -388,5 +388,3 @@
                 (push-item (apply str (rest s)) :exec)
                 (push-item (top-item :exec state) :exec)
                 (push-item (first s) :char)))))))
-
-(define-registered string_multiple_concat (with-meta (seq-multiplier :string) {:stack-types [:string :integer]}))

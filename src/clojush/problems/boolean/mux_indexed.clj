@@ -27,22 +27,26 @@
   (mod (abs n) number-of-data-bits))
 
 (define-registered a ;; push an address bit, indexed by an integer
-                   (fn [state] 
-                     (if (not (empty? (:integer state)))
-                       (push-item (nth (first (:auxiliary state))
-                                       (valid-address-index (first (:integer state))))
-                                  :boolean
-                                  (pop-item :integer state))
-                       state)))
+  (fn [state] 
+    (if (:autoconstructing state)
+      state
+      (if (not (empty? (:integer state)))
+        (push-item (nth (first (:auxiliary state))
+                        (valid-address-index (first (:integer state))))
+                   :boolean
+                   (pop-item :integer state))
+        state))))
 
 (define-registered d ;; push a data bit, indexed by an integer
-                   (fn [state] 
-                     (if (not (empty? (:integer state)))
-                       (push-item (nth (second (:auxiliary state))
-                                       (valid-data-index (first (:integer state))))
-                                  :boolean
-                                  (pop-item :integer state))
-                       state)))
+  (fn [state] 
+    (if (:autoconstructing state)
+      state
+      (if (not (empty? (:integer state)))
+        (push-item (nth (second (:auxiliary state))
+                        (valid-data-index (first (:integer state))))
+                   :boolean
+                   (pop-item :integer state))
+        state))))
 
 (defn int->bits-unmemoized
   [i num-bits]
@@ -63,23 +67,25 @@
 (def bits->int (memoize bits->int-unmemoized))
   
 (def argmap
-  {:error-function (fn [program]
+  {:error-function (fn [individual]
                      (let [total-num-bits (+ number-of-address-bits number-of-data-bits)]
-                       (doall
-                         (for [i (range (expt 2 total-num-bits))]
-                           (let [bits (int->bits i total-num-bits)
-                                 address-bits (vec (take number-of-address-bits bits))
-                                 data-bits (vec (drop number-of-address-bits bits))
-                                 state (run-push program 
-                                                 (push-item address-bits :auxiliary 
-                                                            (push-item data-bits :auxiliary 
-                                                                       (make-push-state))))
-                                 top-bool (top-item :boolean state)]
-                             (if (= top-bool :no-stack-item)
-                               1000000
-                               (if (= top-bool (nth data-bits (bits->int address-bits)))
-                                 0
-                                 1)))))))
+                       (assoc individual
+                              :errors
+                              (doall
+                               (for [i (range (expt 2 total-num-bits))]
+                                 (let [bits (int->bits i total-num-bits)
+                                       address-bits (vec (take number-of-address-bits bits))
+                                       data-bits (vec (drop number-of-address-bits bits))
+                                       state (run-push (:program individual)
+                                                       (push-item address-bits :auxiliary 
+                                                                  (push-item data-bits :auxiliary 
+                                                                             (make-push-state))))
+                                       top-bool (top-item :boolean state)]
+                                   (if (= top-bool :no-stack-item)
+                                     1000000
+                                     (if (= top-bool (nth data-bits (bits->int address-bits)))
+                                       0
+                                       1))))))))
    :atom-generators (concat
                       [(fn [] (lrand-int (+ number-of-address-bits number-of-data-bits)))]
                       '(a d exec_if boolean_and boolean_or boolean_not
@@ -94,3 +100,4 @@
                                     :uniform-mutation 0.45}
    :parent-selection :tournament
    })
+

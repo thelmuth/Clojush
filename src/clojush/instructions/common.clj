@@ -1,5 +1,5 @@
 (ns clojush.instructions.common
-  (:use [clojush pushstate globals]))
+  (:use [clojush pushstate globals util]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Lookup function to see how many paren groups a function requires. Uses metadata.
@@ -62,9 +62,9 @@
                  (not (empty? (:integer state)))))
       (let [times-duplicated (min (top-item :integer state)
                                   (- @global-max-points (count (rest (type (pop-item :integer state))))))
-            new-type-stack (concat (repeat times-duplicated
-                                           (top-item type (pop-item :integer state)))
-                                   (rest (type (pop-item :integer state))))]
+            new-type-stack (not-lazy (concat (repeat times-duplicated
+                                                     (top-item type (pop-item :integer state)))
+                                             (rest (type (pop-item :integer state)))))]
         (assoc (pop-item :integer state)
                type
                new-type-stack))
@@ -92,9 +92,9 @@
       state
       (let [items-to-duplicate (min (top-item :integer state)
                                     (- @global-max-points (count (type (pop-item :integer state)))))
-            new-type-stack (concat (take items-to-duplicate
-                                           (type (pop-item :integer state)))
-                                   (type (pop-item :integer state)))]
+            new-type-stack (not-lazy (concat (take items-to-duplicate
+                                             (type (pop-item :integer state)))
+                                     (type (pop-item :integer state))))]
         (assoc (pop-item :integer state)
                type
                new-type-stack)))))
@@ -227,8 +227,8 @@
             with-item-pulled (assoc with-index-popped 
                                     type 
                                     (let [stk (type with-index-popped)]
-                                      (concat (take actual-index stk)
-                                              (rest (drop actual-index stk)))))]
+                                      (not-lazy (concat (take actual-index stk)
+                                                        (rest (drop actual-index stk))))))]
         (push-item item type with-item-pulled))
       state)))
 
@@ -283,9 +283,10 @@
             with-args-popped (pop-item type with-index-popped)
             actual-index (max 0 (min raw-index (count (type with-args-popped))))]
         (assoc with-args-popped type (let [stk (type with-args-popped)]
-                                       (concat (take actual-index stk)
-                                               (list item)
-                                               (drop actual-index stk)))))
+                                       (not-lazy
+                                         (concat (take actual-index stk)
+                                                 (list item)
+                                                 (drop actual-index stk))))))
       state)))
 
 (define-registered exec_shove (with-meta (shover :exec) {:stack-types [:exec :integer] :parentheses 1}))
@@ -313,3 +314,4 @@
 (define-registered zip_empty (with-meta (emptyer :zip) {:stack-types [:zip :boolean]}))
 (define-registered string_empty (with-meta (emptyer :string) {:stack-types [:string :boolean]}))
 (define-registered char_empty (with-meta (emptyer :char) {:stack-types [:char :boolean]}))
+

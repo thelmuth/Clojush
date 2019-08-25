@@ -27,6 +27,7 @@
                    :uniform (lrand-nth preselected)
                    :rarified-lexicase (rarified-lexicase-selection preselected argmap)
                    :subset-tournament (subset-tournament-selection preselected argmap)
+                   :subset-tournament-normal (subset-tournament-selection-with-normal-case-distribution preselected argmap)
                    (throw (Exception. (str "Unrecognized argument for parent-selection: "
                                            parent-selection))))]
     (when print-selection-counts

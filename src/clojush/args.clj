@@ -485,6 +485,14 @@
           ;; of the parent population with the collection of evaluated children. If the value
           ;; is :with-replacement, then individuals can be selected multiple times.
 
+         :subset-tournament-selection-mu 0.2
+          ;; When using subset-tournament-normal as parent selection, this is the mu (mean)
+          ;; for the distribution.
+
+         :subset-tournament-selection-sigma 0.1
+          ;; When using subset-tournament-normal as parent selection, this is the sigma (standard
+          ;; deviation) for the distribution.
+
           ;;----------------------------------------
           ;; Arguments related to the Push interpreter
           ;;----------------------------------------

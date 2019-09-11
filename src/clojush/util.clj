@@ -249,6 +249,12 @@
               (apply list-concat (doall (map all-items lst)))
               ())))
 
+(defn remove-one
+  "Returns sequence s without the first instance of item."
+  [item s]
+  (let [[without-item with-item] (split-with #(not (= item %)) s)]
+    (concat without-item (rest with-item))))
+
 (defn list-to-open-close-sequence
   [lst]
   (if (seq? lst)
@@ -256,6 +262,7 @@
     lst))
 
 ;(list-to-open-close-sequence '(1 2 (a b (c) ((d)) e)))
+
 
 (defn open-close-sequence-to-list
   [sequence]
@@ -265,16 +272,21 @@
                     closes (count (filter #(= :close %) sequence))]
                 (assert (= opens closes)
                         (str "open-close sequence must have equal numbers of :open and :close; this one does not:\n" sequence))
-                (let [s (str sequence)
+                (let [s (str (not-lazy sequence))
                       l (read-string (string/replace (string/replace s ":open" " ( ") ":close" " ) "))]
-                  ;; there'll be an extra ( ) around l, which we keep if the number of read things is >1
-                  (if (= (count l) 1)
+                  ;; there'll be an extra ( ) around l, which we remove if the number of things is =1 and that thing is a sequence
+                  (if (and (= (count l) 1)
+                           (seq? (first l)))
                     (first l)
                     l)))))
 
 ;(open-close-sequence-to-list '(:open 1 2 :open a b :open c :close :open :open d :close :close e :close :close))
 ;(open-close-sequence-to-list '(:open 1 :close :open 2 :close))
 ;(open-close-sequence-to-list '(:open :open 1 :close :open 2 :close :close))
+;(open-close-sequence-to-list '(1 :open 2 3 :close 4))
+;(open-close-sequence-to-list '(1))
+;(open-close-sequence-to-list '(:close 5 :open))
+;(open-close-sequence-to-list (list-to-open-close-sequence '(5)))
 
 (defn test-and-train-data-from-domains
   "Takes a list of domains and creates a set of (random) train inputs and a set of test

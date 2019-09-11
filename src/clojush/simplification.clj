@@ -65,7 +65,8 @@
                 step (pr-str (not-lazy program)) (not-lazy errors) total-errors (count-points program))
         (flush))
       (if (>= step steps)
-        (make-individual :program program :errors errors :total-error total-errors 
+        (make-individual :program program :errors errors :total-error total-errors
+                         :initial-tagspace (:initial-tagspace ind)
                          :history (:history ind) 
                          :ancestors (if maintain-ancestors
                                       (cons (:program ind) (:ancestors ind))
@@ -81,7 +82,8 @@
                                        (dec how-many))))
                             ;; remove single paren pair
                             (remove-paren-pair program))
-              new-errors (:errors (error-function {:program new-program}))
+              new-errors (:errors (error-function {:program new-program
+                                                   :initial-tagspace (:initial-tagspace ind)}))
               new-total-errors (compute-total-error new-errors)] ;simplification bases its decision on raw error; HAH-error could also be used here
           (if (= new-errors errors) ; only keep the simplified program if its error vector is the same as the original program's error vector
             (recur (inc step) new-program new-errors new-total-errors)

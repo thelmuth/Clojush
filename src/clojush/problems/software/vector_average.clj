@@ -21,12 +21,13 @@
             ;;; end constants
             ;;; end ERCs
             (tag-instruction-erc [:vector_float :float :integer :exec] 1000)
-            (tagged-instruction-erc 1000)
+            ;(tagged-instruction-erc 1000)
             ;;; end tag ERCs
             'in1
             ;;; end input instructions
             )
-          (registered-for-stacks [:vector_float :float :integer :exec])))
+          (registered-for-stacks [:vector_float :float :integer :exec])
+          (repeat 10 (tagged-instruction-erc 1000))))
 
 
 ;; Define test cases
@@ -82,9 +83,13 @@
                                                    :train train-cases
                                                    :test test-cases
                                                    [])]
-                     (let [final-state (run-push (:program individual)
-                                                 (->> (make-push-state)
-                                                      (push-item input1 :input)))
+                     (let [final-state (run-push
+                                        (:program individual)
+                                        (assoc
+                                         (->> (make-push-state)
+                                              (push-item input1 :input))
+                                         :tag
+                                         (:initial-tagspace individual)))
                            result (top-item :float final-state)]
                        (when print-outputs
                          (let [res-str (if (float? result)

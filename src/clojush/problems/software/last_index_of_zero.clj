@@ -22,12 +22,13 @@
             (fn [] (- (lrand-int 101) 50))
             ;;; end ERCs
             (tag-instruction-erc [:integer :boolean :vector_integer :exec] 1000)
-            (tagged-instruction-erc 1000)
+            ;(tagged-instruction-erc 1000)
             ;;; end tag ERCs
             'in1
             ;;; end input instructions
             )
-          (registered-for-stacks [:integer :boolean :vector_integer :exec])))
+          (registered-for-stacks [:integer :boolean :vector_integer :exec])
+          (repeat 10 (tagged-instruction-erc 1000))))
 
 ;; Define test cases
 (defn random-sequence-with-at-least-one-zero
@@ -90,9 +91,13 @@
                                                     :train train-cases
                                                     :test test-cases
                                                     [])]
-                       (let [final-state (run-push (:program individual)
-                                                   (->> (make-push-state)
-                                                     (push-item input :input)))
+                       (let [final-state (run-push
+                                          (:program individual)
+                                          (assoc
+                                           (->> (make-push-state)
+                                                (push-item input :input))
+                                           :tag
+                                           (:initial-tagspace individual)))
                              result (top-item :integer final-state)]
                          (when print-outputs
                            (println (format "Correct output: %2d | Program output: %s"

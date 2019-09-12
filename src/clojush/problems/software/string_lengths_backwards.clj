@@ -22,12 +22,13 @@
             (fn [] (- (lrand-int 201) 100)) ; Integer ERC in [-100,100]
             ;;; end ERCs
             (tag-instruction-erc [:string :vector_string :integer :boolean :exec] 1000)
-            (tagged-instruction-erc 1000)
+            ;(tagged-instruction-erc 1000)
             ;;; end tag ERCs
             'in1
             ;;; end input instructions
             )
-          (registered-for-stacks [:string :vector_string :integer :boolean :exec :print])))
+          (registered-for-stacks [:string :vector_string :integer :boolean :exec :print])
+          (repeat 10 (tagged-instruction-erc 1000))))
 
 ;; Define test cases
 (defn string-generator
@@ -89,10 +90,14 @@
                                                      :train train-cases
                                                      :test test-cases
                                                      [])]
-                       (let [final-state (run-push (:program individual)
-                                                   (->> (make-push-state)
-                                                     (push-item input1 :input)
-                                                     (push-item "" :output)))
+                       (let [final-state (run-push
+                                          (:program individual)
+                                          (assoc
+                                           (->> (make-push-state)
+                                                (push-item input1 :input)
+                                                (push-item "" :output))
+                                           :tag
+                                           (:initial-tagspace individual)))
                              result (stack-ref :output 0 final-state)]
                          (when print-outputs
                            (println (format "| Correct output: %s\n| Program output: %s\n" (pr-str correct-output) (pr-str result))))

@@ -45,12 +45,13 @@
             (fn [] (syllables-input (lrand-int 21))) ;String ERC
             ;;; end ERCs
             (tag-instruction-erc [:exec :integer :boolean :string :char] 1000)
-            (tagged-instruction-erc 1000)
+            ;(tagged-instruction-erc 1000)
             ;;; end tag ERCs
             'in1
             ;;; end input instructions
             )
-          (registered-for-stacks [:integer :boolean :string :char :exec :print])))
+          (registered-for-stacks [:integer :boolean :string :char :exec :print])
+          (repeat 10 (tagged-instruction-erc 1000))))
 
 
 ;; A list of data domains for the problem. Each domain is a vector containing
@@ -97,10 +98,14 @@
                                                       :train train-cases
                                                       :test test-cases
                                                       [])]
-                         (let [final-state (run-push (:program individual)
-                                                     (->> (make-push-state)
-                                                       (push-item input :input)
-                                                       (push-item "" :output)))
+                         (let [final-state (run-push
+                                            (:program individual)
+                                            (assoc
+                                             (->> (make-push-state)
+                                                  (push-item input :input)
+                                                  (push-item "" :output))
+                                             :tag
+                                             (:initial-tagspace individual)))
                                printed-result (stack-ref :output 0 final-state)]
                            (when print-outputs
                              (println (format "\n| Correct output: %s\n| Program output: %s" (pr-str correct-output) (pr-str printed-result))))

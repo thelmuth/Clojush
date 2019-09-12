@@ -54,12 +54,13 @@
             ;;; end constants
             ;;; end ERCs
             (tag-instruction-erc [:string :char :integer :boolean :vector_integer :exec] 1000)
-            (tagged-instruction-erc 1000)
+            ;(tagged-instruction-erc 1000)
             ;;; end tag ERCs
             'in1
             ;;; end input instructions
             )
-          (registered-for-stacks [:string :char :integer :boolean :vector_integer :exec])))
+          (registered-for-stacks [:string :char :integer :boolean :vector_integer :exec])
+          (repeat 10 (tagged-instruction-erc 1000))))
 
 ;; Define test cases
 (defn scrabble-score-input
@@ -123,9 +124,13 @@
                                                      :train train-cases
                                                      :test test-cases
                                                      [])]
-                       (let [final-state (run-push (:program individual)
-                                                   (->> (make-push-state)
-                                                     (push-item input1 :input)))
+                       (let [final-state (run-push
+                                          (:program individual)
+                                          (assoc
+                                           (->> (make-push-state)
+                                                (push-item input1 :input))
+                                           :tag
+                                           (:initial-tagspace individual)))
                              result (stack-ref :integer 0 final-state)]
                          (when print-outputs
                            (println (format "Correct output: %3d | Program output: %s" correct-output (str result))))

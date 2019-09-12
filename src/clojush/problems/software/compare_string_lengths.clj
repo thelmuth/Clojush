@@ -21,14 +21,15 @@
             (fn [] (lrand-nth (list true false))) ;Boolean ERC
             ;;; end ERCs
             (tag-instruction-erc [:integer :boolean :string :exec] 1000)
-            (tagged-instruction-erc 1000)
+            ;(tagged-instruction-erc 1000)
             ;;; end tag ERCs
             'in1
             'in2
             'in3
             ;;; end input instructions
             )
-          (registered-for-stacks [:integer :boolean :string :exec])))
+          (registered-for-stacks [:integer :boolean :string :exec])
+          (repeat 10 (tagged-instruction-erc 1000))))
 
 
 ;; Define test cases
@@ -81,11 +82,15 @@
                                                                      :train train-cases
                                                                      :test test-cases
                                                                      [])]
-                       (let [final-state (run-push (:program individual)
-                                                   (->> (make-push-state)
-                                                     (push-item input3 :input)
-                                                     (push-item input2 :input)
-                                                     (push-item input1 :input)))
+                       (let [final-state (run-push
+                                          (:program individual)
+                                          (assoc
+                                           (->> (make-push-state)
+                                                (push-item input3 :input)
+                                                (push-item input2 :input)
+                                                (push-item input1 :input))
+                                           :tag
+                                           (:initial-tagspace individual)))
                              result (top-item :boolean final-state)]
                          (when print-outputs
                            (println (format "Correct output: %5b | Program output: %s" correct-output (str result))))

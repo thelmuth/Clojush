@@ -24,7 +24,7 @@
             (fn [] (- (lrand-int 201) 100))
             ;;; end ERCs
             (tag-instruction-erc [:exec :integer :boolean] 1000)
-            (tagged-instruction-erc 1000)
+            ;(tagged-instruction-erc 1000)
             ;;; end tagERCs
             'in1
             'in2
@@ -32,7 +32,8 @@
             'in4
             ;;; end input instructions
             )
-          (registered-for-stacks [:integer :boolean :exec :print])))
+          (registered-for-stacks [:integer :boolean :exec :print])
+          (repeat 10 (tagged-instruction-erc 1000))))
 
 ;; A list of data domains for the problem. Each domain is a vector containing
 ;; a "set" of inputs and two integers representing how many cases from the set
@@ -74,13 +75,17 @@
                                                                      :train train-cases
                                                                      :test test-cases
                                                                      [])]
-                       (let [final-state (run-push (:program individual)
-                                                   (->> (make-push-state)
-                                                     (push-item input4 :input)
-                                                     (push-item input3 :input)
-                                                     (push-item input2 :input)
-                                                     (push-item input1 :input)
-                                                     (push-item "" :output)))
+                       (let [final-state (run-push
+                                          (:program individual)
+                                          (assoc
+                                           (->> (make-push-state)
+                                                (push-item input4 :input)
+                                                (push-item input3 :input)
+                                                (push-item input2 :input)
+                                                (push-item input1 :input)
+                                                (push-item "" :output))
+                                           :tag
+                                           (:initial-tagspace individual)))
                              printed-result (stack-ref :output 0 final-state)]
                          (when print-outputs
                            (println (format "Correct output: %-19s | Program output: %-19s" (str out-int) printed-result)))

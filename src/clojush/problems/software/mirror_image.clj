@@ -21,13 +21,14 @@
             (fn [] (lrand-nth (list true false))) ;Boolean
             ;;; end ERCs
             (tag-instruction-erc [:integer :boolean :vector_integer :exec] 1000)
-            (tagged-instruction-erc 1000)
+            ;(tagged-instruction-erc 1000)
             ;;; end tag ERCs
             'in1
             'in2
             ;;; end input instructions
             )
-          (registered-for-stacks [:integer :boolean :vector_integer :exec])))
+          (registered-for-stacks [:integer :boolean :vector_integer :exec])
+          (repeat 10 (tagged-instruction-erc 1000))))
 
 
 ;; Define test cases
@@ -107,13 +108,17 @@
 (defn mirror-image-evaluate-program-for-behaviors
   "Evaluates the program on the given list of cases.
    Returns the behaviors, a list of the outputs of the program on the inputs."
-  [program cases]
+  [individual cases]
   (doall
    (for [[[input1 input2] output] cases]
-     (let [final-state (run-push program
-                                 (->> (make-push-state)
-                                      (push-item input2 :input)
-                                      (push-item input1 :input)))]
+     (let [final-state (run-push
+                        (:program individual)
+                        (assoc
+                         (->> (make-push-state)
+                              (push-item input2 :input)
+                              (push-item input1 :input))
+                         :tag
+                         (:initial-tagspace individual)))]
        (top-item :boolean final-state)))))
 
 (defn mirror-image-errors-from-behaviors
@@ -137,8 +142,8 @@
                  :train (first mirror-image-train-and-test-cases)
                  :test (second mirror-image-train-and-test-cases)
                  [])
-         behaviors (mirror-image-evaluate-program-for-behaviors (:program individual)
-                                                                 cases)
+         behaviors (mirror-image-evaluate-program-for-behaviors individual
+                                                                cases)
          errors (mirror-image-errors-from-behaviors behaviors cases)]
      (cond
        (= data-cases :train) (assoc individual :behaviors behaviors :errors errors)

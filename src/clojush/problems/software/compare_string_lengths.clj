@@ -56,7 +56,9 @@
 
                        ; print if wrong answer
                        (when (not= result correct-output)
-                         (println "Wrong result:" input1 input2 input3 correct-output result))
+                         (println "############################################################")
+                         (println "Wrong result:" input1 input2 input3 correct-output result)
+                         (println "############################################################"))
                        ; print case numbers sometimes
                        (when (or (= (mod case-num 10000) 9999)
                                  (= (mod case-num 10000) 1))
@@ -172,5 +174,6 @@
 ;(test-program-on-training tom-ind false)
 
 (test-program-on-testing tom-ind false)
+
 
 

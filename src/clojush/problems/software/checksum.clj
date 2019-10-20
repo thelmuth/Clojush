@@ -48,28 +48,26 @@
      (the-actual-checksum-error-function individual data-cases false))
     ([individual data-cases print-outputs]
       (let [behavior (atom '())
-            errors (flatten
-                     (doall
-                       (for [[input correct-output] (case data-cases
-                                                      :train train-cases
-                                                      :test test-cases
-                                                      [])]
-                         (let [final-state (run-push (:program individual)
-                                                     (->> (make-push-state)
-                                                       (push-item input :input)
-                                                       (push-item "" :output)))
-                               printed-result (stack-ref :output 0 final-state)]
-                           (when print-outputs
-                             (println (format "Correct output: %-19s | Program output: %-19s" correct-output printed-result)))
-                           ; Record the behavior
-                           (swap! behavior conj printed-result)
-                           ; Error is Levenshtein distance and, if correct format, distance from correct character
-                           (vector
-                             (levenshtein-distance correct-output printed-result)
-                             (if (not (empty? printed-result))
-                               (abs (- (int (last correct-output)) (int (last printed-result)))) ;distance from correct last character
-                               1000) ;penalty for wrong format
-                             )))))]
+            errors (doseq
+                       [[case-num [input correct-output]] (map-indexed vector (case data-cases
+                                                                                :train train-cases
+                                                                                :test test-cases
+                                                                                []))]
+                     (let [final-state (run-push (:program individual)
+                                                 (->> (make-push-state)
+                                                      (push-item input :input)
+                                                      (push-item "" :output)))
+                           printed-result (stack-ref :output 0 final-state)]
+                       (when print-outputs
+                         (println (format "Correct output: %-19s | Program output: %-19s" correct-output printed-result)))
+                                        ; Record the behavior
+
+                       ; print if wrong answer
+                       (when (not= printed-result correct-output)
+                         (println "Wrong result:" input correct-output printed-result))
+                       ; print case numbers sometimes
+                       (when (= (mod case-num 10000) 0)
+                         (println "At case" case-num))))]
         (if (= data-cases :train)
           (assoc individual :behaviors @behavior :errors errors)
           (assoc individual :test-errors errors))))))
@@ -77,7 +75,7 @@
 ; Define train and test cases
 (def checksum-train-and-test-cases
   (map #(sort-by (comp count first) %)
-       (train-and-test-cases-from-dataset "checksum" 194 2000)))
+       (train-and-test-cases-from-dataset "checksum" 0 100000000)))
 
 (defn checksum-initial-report
   [argmap]
@@ -136,3 +134,47 @@
    :final-report-simplifications 5000
    :max-error 1000
    })
+
+;;;;;;;
+;; Below here is for testing push programs against stored data
+
+(reset! global-evalpush-limit 1500)
+
+(reset! global-max-points 3200)
+
+(defn test-program-on-training
+ [program print-outputs]
+ ((:error-function argmap) program :train print-outputs))
+
+(defn test-program-on-testing
+ [program print-outputs]
+ ((:error-function argmap) program :test print-outputs))
+
+;;This program works
+(def tom-program
+ '(
+    "Check sum is " print_string
+    in1 char_allfromstring
+    100 exec_do*times
+    (integer_fromchar integer_add)
+    64 integer_swap 64 integer_mod
+    \space integer_fromchar integer_add
+    char_frominteger
+    print_char
+    ))
+
+
+(def tom-ind
+  {:program tom-program})
+
+
+;;; This is how you run the program once.
+#_(run-push tom-program
+          (push-item "oldowestact" :input (push-item "clinteastwood" :input (make-push-state))))
+
+;;; This makes sure the program works on all test and train cases:
+
+;(test-program-on-training tom-ind false)
+
+
+(test-program-on-testing tom-ind false)

@@ -44,33 +44,37 @@
      (the-actual-super-anagrams-error-function individual data-cases false))
     ([individual data-cases print-outputs]
       (let [behavior (atom '())
-            errors (doall
-                     (for [[input1 input2 correct-output] (case data-cases
-                                                              :train train-cases
-                                                              :test test-cases
-                                                              [])]
-                       (let [final-state (run-push (:program individual)
-                                                   (->> (make-push-state)
-                                                     (push-item input2 :input)
-                                                     (push-item input1 :input)
-                                                     (push-item "" :output)))
-                             result (top-item :boolean final-state)]
-                         (when print-outputs
-                           (println (format "Correct output: %5b | Program output: %s" correct-output (str result))))
-                         ; Record the behavior
-                         (swap! behavior conj result)
-                         ; Error is boolean error
-                         (if (= result correct-output)
-                           0
-                           1))))]
+            errors (doseq [[case-num [input1 input2 correct-output]] (map-indexed vector
+                                                                              (case data-cases
+                                                                                :train train-cases
+                                                                                :test test-cases
+                                                                                []))]
+                     (let [final-state (run-push (:program individual)
+                                                 (->> (make-push-state)
+                                                      (push-item input2 :input)
+                                                      (push-item input1 :input)
+                                                      (push-item "" :output)))
+                           result (top-item :boolean final-state)]
+                       (when print-outputs
+                         (println (format "Correct output: %5b | Program output: %s" correct-output (str result))))
+                       ; print if wrong answer
+                       (when (not= result correct-output)
+                         (println "Wrong result:" input1 input2 correct-output result))
+                       ; print case numbers sometimes
+                       (when (= (mod case-num 10000) 0)
+                         (println "At case" case-num))
+                     
+                                        ; Error is boolean error
+                       (if (= result correct-output)
+                         0
+                         1)))]
         (if (= data-cases :train)
           (assoc individual :behaviors @behavior :errors errors)
           (assoc individual :test-errors errors))))))
 
 ; Define train and test cases
 (def super-anagrams-train-and-test-cases
-  (map #(sort-by second %)
-    (train-and-test-cases-from-dataset "super-anagrams" 170 2000)))
+  (train-and-test-cases-from-dataset "super-anagrams" 0 200000000))
 
 (defn super-anagrams-initial-report
   [argmap]
@@ -129,3 +133,47 @@
    :final-report-simplifications 5000
    :max-error 1
    })
+
+
+;;;;;;;
+;; Below here is for testing push programs against stored data
+
+(reset! global-evalpush-limit 1600)
+
+(reset! global-max-points 800)
+
+(defn test-program-on-training
+ [program print-outputs]
+ ((:error-function argmap) program :train print-outputs))
+
+(defn test-program-on-testing
+ [program print-outputs]
+ ((:error-function argmap) program :test print-outputs))
+
+;;This program works
+(def tom-program
+ '(
+    in2 in1 exec_string_iterate
+    (
+      string_dup char_dup
+      string_containschar boolean_not exec_when (false exec_flush) ;test if char is in string
+      \! string_replacefirstchar
+      )
+    true
+    ))
+
+(def tom-ind
+  {:program tom-program})
+
+
+;(count (first super-anagrams-train-and-test-cases))
+
+;(apply + (:errors (test-program-on-training tom-ind false)))
+
+;(apply + (:test-errors (test-program-on-testing tom-ind false)))
+
+(test-program-on-testing tom-ind false)
+
+;;; This is how you run the program once.
+#_(run-push tom-program
+          (push-item "oldowestact" :input (push-item "clinteastwood" :input (make-push-state))))

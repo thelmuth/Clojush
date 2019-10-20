@@ -39,32 +39,41 @@
      (the-actual-csl-error-function individual data-cases false))
     ([individual data-cases print-outputs]
       (let [behavior (atom '())
-            errors (doall
-                     (for [[input1 input2 input3 correct-output] (case data-cases
-                                                                     :train train-cases
-                                                                     :test test-cases
-                                                                     [])]
-                       (let [final-state (run-push (:program individual)
-                                                   (->> (make-push-state)
-                                                     (push-item input3 :input)
-                                                     (push-item input2 :input)
-                                                     (push-item input1 :input)))
-                             result (top-item :boolean final-state)]
-                         (when print-outputs
-                           (println (format "Correct output: %5b | Program output: %s" correct-output (str result))))
-                         ; Record the behavior
-                         (swap! behavior conj result)
-                         ; Error is boolean error
-                         (if (= result correct-output)
-                           0
-                           1))))]
+            errors (doseq
+                       [[case-num [input1 input2 input3 correct-output]] (map-indexed vector (case data-cases
+                                                                                               :train train-cases
+                                                                                               :test test-cases
+                                                                                               []))]
+                     (let [final-state (run-push (:program individual)
+                                                 (->> (make-push-state)
+                                                      (push-item input3 :input)
+                                                      (push-item input2 :input)
+                                                      (push-item input1 :input)))
+                           result (top-item :boolean final-state)]
+                       (when print-outputs
+                         (println (format "Correct output: %5b | Program output: %s" correct-output (str result))))
+
+
+                       ; print if wrong answer
+                       (when (not= result correct-output)
+                         (println "Wrong result:" input1 input2 input3 correct-output result))
+                       ; print case numbers sometimes
+                       (when (or (= (mod case-num 10000) 9999)
+                                 (= (mod case-num 10000) 1))
+                         (println "At case" case-num ", input=", input1))  
+
+
+                                        ; Error is boolean error
+                       (if (= result correct-output)
+                         0
+                         1)))]
         (if (= data-cases :train)
           (assoc individual :behaviors @behavior :errors errors)
           (assoc individual :test-errors errors))))))
 
 ; Define train and test cases
 (def compare-string-lengths-train-and-test-cases
-  (train-and-test-cases-from-dataset "compare-string-lengths" 78 1000))
+  (train-and-test-cases-from-dataset "compare-string-lengths" 0 10009990000))
 
 (defn compare-string-lengths-initial-report
   [argmap]
@@ -123,3 +132,45 @@
    :final-report-simplifications 5000
    :max-error 1
    })
+
+
+
+;;;;;;;
+;; Below here is for testing push programs against stored data
+
+(reset! global-evalpush-limit 1500)
+
+(reset! global-max-points 2000)
+
+(defn test-program-on-training
+ [program print-outputs]
+ ((:error-function argmap) program :train print-outputs))
+
+(defn test-program-on-testing
+ [program print-outputs]
+ ((:error-function argmap) program :test print-outputs))
+
+;;This program is an evolved solution
+(def tom-program
+ '(in1 in2 string_dup string_emptystring
+       string_dup exec_when exec_empty string_length
+       string_butlast in3 exec_y
+       (boolean_invert_first_then_and
+        string_length integer_lt)))
+
+
+(def tom-ind
+  {:program tom-program})
+
+
+;;; This is how you run the program once.
+#_(run-push tom-program
+          (push-item "oldowestact" :input (push-item "clinteastwood" :input (make-push-state))))
+
+;;; This makes sure the program works on all test and train cases:
+
+;(test-program-on-training tom-ind false)
+
+(test-program-on-testing tom-ind false)
+
+

@@ -40,31 +40,34 @@
      (the-actual-collatz-numbers-error-function individual data-cases false))
     ([individual data-cases print-outputs]
       (let [behavior (atom '())
-            errors (doall
-                     (for [[input1 correct-output] (case data-cases
-                                                     :train train-cases
-                                                     :test test-cases
-                                                     [])]
-                       (let [final-state (run-push (:program individual)
-                                                   (->> (make-push-state)
-                                                        (push-item input1 :input)))
-                             result (stack-ref :integer 0 final-state)]
-                         (when print-outputs
-                           (println (format "Correct output: %3d | Program output: %s" correct-output (str result))))
-                         ; Record the behavior
-                         (swap! behavior conj result)
-                         ; Error is difference of integers
-                         (if (number? result)
-                           (abs (- result correct-output)) ;distance from correct integer
-                           1000000) ;penalty for no return value
-                         )))]
+            errors (doseq
+                       [[case-num [input1 correct-output]] (map-indexed vector (case data-cases
+                                                                                 :train train-cases
+                                                                                 :test test-cases
+                                                                                 []))]
+                     (let [final-state (run-push (:program individual)
+                                                 (->> (make-push-state)
+                                                      (push-item input1 :input)))
+                           result (stack-ref :integer 0 final-state)]
+                       (when print-outputs
+                         (println (format "Correct output: %3d | Program output: %s" correct-output (str result))))
+                                        ; Record the behavior
+                         ; print if wrong answer
+                       (when (not= result correct-output)
+                         (println "Wrong result:" input1 correct-output result))
+                       ; print case numbers sometimes
+                       (when (or (= (mod case-num 10000) 9999)
+                                 (= (mod case-num 10000) 1))
+                         (println "At case" case-num))
+                       
+                       ))]
         (if (= data-cases :train)
           (assoc individual :behaviors @behavior :errors errors)
           (assoc individual :test-errors errors))))))
 
 ; Define train and test cases
 (def collatz-numbers-train-and-test-cases
-  (train-and-test-cases-from-dataset "collatz-numbers" 184 2000))
+  (train-and-test-cases-from-dataset "collatz-numbers" 0 2000000000))
 
 (defn collatz-numbers-initial-report
   [argmap]
@@ -123,3 +126,66 @@
    :final-report-simplifications 5000
    :max-error 1000000
    })
+
+
+
+;;;;;;;
+;; Below here is for testing push programs against stored data
+
+(reset! global-evalpush-limit 15000)
+
+(reset! global-max-points 2400)
+
+(defn test-program-on-training
+ [program print-outputs]
+ ((:error-function argmap) program :train print-outputs))
+
+(defn test-program-on-testing
+ [program print-outputs]
+ ((:error-function argmap) program :test print-outputs))
+
+;;This program works
+(def tom-program
+ '(
+    tag_exec_100
+    (
+      integer_dup
+      1 integer_gt
+      exec_if
+      (
+       float_inc integer_dup
+       2 integer_mod 0 integer_eq
+       exec_if ; condition for even/odd (first even, then odd)
+       ( ;even case
+         2 integer_div
+         )
+       ( ;odd case
+         3 integer_mult integer_inc
+         )
+       tagged_50
+       )
+      (
+        integer_fromfloat
+        )
+      )
+    in1 1.0
+    tagged_50
+    ))
+
+
+(def tom-ind
+  {:program tom-program})
+
+
+;;; This is how you run the program once.
+#_(run-push tom-program
+          (push-item "oldowestact" :input (push-item "clinteastwood" :input (make-push-state))))
+
+;;; This makes sure the program works on all test and train cases:
+
+;(test-program-on-training tom-ind false)
+
+;(test-program-on-testing tom-ind false)
+
+
+

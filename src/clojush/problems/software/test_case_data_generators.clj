@@ -8,6 +8,7 @@
             [clojure.edn :as edn]
             [clojure.data.json :as json]
             [clojure.java.io :as io]
+            [clojure.string :as string]
             [clojush.problems.software
              checksum
              collatz-numbers
@@ -134,12 +135,27 @@
        :edge train-data
        :random test-data})))
 
+(defn escape-the-newlines
+  "Takes the data to write and escapes any newline characters manually.
+  For some reason this is sometimes necessary for Scrabble Score, maybe others."
+  [data-to-write]
+  (map (fn [[input output]]
+         (list
+          (string/replace input "\n" "\\n")
+          output)
+         )
+       data-to-write))
+
 (defn write-data-to-csv
   "Takes given data as a vector of vectors, where each internal vector
   is a line to write in the CSV. Then, writes the CSV file."
-  [data-to-write csv-filename]
-  (with-open [csv-file (io/writer csv-filename :append false)]
-    (csv/write-csv csv-file data-to-write)))
+  ([data-to-write csv-filename]
+   (write-data-to-csv data-to-write csv-filename false))
+  ([data-to-write csv-filename escape-newlines?]
+   (with-open [csv-file (io/writer csv-filename :append false)]
+     (csv/write-csv csv-file (if escape-newlines?
+                               (escape-the-newlines data-to-write)
+                               data-to-write)))))
 
 (defn write-data-to-edn
   "Takes given data as a vector of vectors, where each internal vector
@@ -169,16 +185,20 @@
   Note: uses train data for edge cases and test data for random data."
   [problem output-filename-prefix]
   (let [{:keys [header edge random]} (get-writeable-data problem false)]
-    (write-data-to-csv (concat header edge) (str output-filename-prefix "-edge.csv"))
-    (write-data-to-csv (concat header random) (str output-filename-prefix "-random.csv"))
+    (write-data-to-csv (concat header edge)
+                       (str output-filename-prefix "-edge.csv")
+                       (= problem "scrabble-score"))
+    (write-data-to-csv (concat header random)
+                       (str output-filename-prefix "-random.csv")
+                       (= problem "scrabble-score"))
     (write-data-to-edn (concat header edge) (str output-filename-prefix "-edge.edn"))
     (write-data-to-edn (concat header random) (str output-filename-prefix "-random.edn"))
     (write-data-to-json (concat header edge) (str output-filename-prefix "-edge.json"))
     (write-data-to-json (concat header random) (str output-filename-prefix "-random.json"))))
 
 
-(let [namespace "vectors-summed"]
-  (generate-data-for-data-sets namespace (str "data/" namespace)))
+(let [namespace "scrabble-score"]
+  (generate-data-for-data-sets namespace (str "new-data/" namespace)))
 
 
 

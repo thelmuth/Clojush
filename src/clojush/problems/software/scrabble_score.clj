@@ -93,7 +93,7 @@
           (apply str (take 20 (cycle (list \H \a \space))))
           (apply str (take 20 (cycle (list \x \space \y \!))))
           (apply str (take 20 (cycle (list \G \5))))) 24 0] ;; "Special" inputs covering some base cases
-   [(fn [] (scrabble-score-input (+ 2 (lrand-int 19)))) 150 974] ;; Random strings with at least 2 characters
+   [(fn [] (scrabble-score-input (+ 2 (lrand-int 19)))) 0 999974] ;; Random strings with at least 2 characters
    ])
 
 ;;Can make Scrabble Score test data like this:

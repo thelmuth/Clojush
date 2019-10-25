@@ -37,36 +37,39 @@
      (the-actual-vector-average-error-function individual data-cases false))
     ([individual data-cases print-outputs]
      (let [behavior (atom '())
-           errors (doall
-                   (for [[input1 correct-output] (case data-cases
-                                                   :train train-cases
-                                                   :test test-cases
-                                                   [])]
-                     (let [final-state (run-push (:program individual)
-                                                 (->> (make-push-state)
-                                                      (push-item input1 :input)))
-                           result (top-item :float final-state)]
-                       (when print-outputs
-                         (let [res-str (if (float? result)
-                                         (format "%19.14f" result)
-                                         (str result))]
-                           (println (format "Correct output: %19.14f | Program output: %s" correct-output res-str))))
-                       ; Record the behavior
-                       (swap! behavior conj result)
-                       ; Error is float error rounded to 4 decimal places
-                       (round-to-n-decimal-places
-                        (if (number? result)
-                          (abs (- result correct-output)) ; distance from correct integer
-                          1000000.0) ; penalty for no return value
-                        4)
-                       )))]
+           errors (doseq
+                      [[case-num [input1 correct-output]] (map-indexed vector (case data-cases
+                                                                        :train train-cases
+                                                                        :test test-cases
+                                                                        []))]
+                   (let [final-state (run-push (:program individual)
+                                               (->> (make-push-state)
+                                                    (push-item input1 :input)))
+                         result (top-item :float final-state)]
+
+
+
+                     
+                                        ; print if wrong answer
+                       (when (not= result correct-output)
+                         (println "############################################################")
+                         (println "Wrong result:" input1 "||" correct-output result)
+                         (println "############################################################"))
+                                        ; print case numbers sometimes
+                       (when (or (= (mod case-num 10000) 9999)
+                                 (= (mod case-num 10000) 1))
+                         (prn "At case" case-num ", input =", input1))  
+
+
+                     
+                     ))]
        (if (= data-cases :train)
          (assoc individual :behaviors @behavior :errors errors)
          (assoc individual :test-errors errors))))))
 
 ; Define train and test cases
 (def vector-average-train-and-test-cases
-  (train-and-test-cases-from-dataset "vector-average" 240 2550))
+  (train-and-test-cases-from-dataset "vector-average" 0 25500000))
 
 (defn vector-average-initial-report
   [argmap]
@@ -126,3 +129,52 @@
    :error-threshold 1.0E-3
    :max-error 1000000.0
    })
+
+
+;;;;;;;
+;; Below here is for testing push programs against stored data
+
+(reset! global-max-points 3200)
+
+(reset! global-evalpush-limit 1600)
+
+(defn test-program-on-training
+ [program print-outputs]
+ ((:error-function argmap) program :train print-outputs))
+
+(defn test-program-on-testing
+ [program print-outputs]
+ ((:error-function argmap) program :test print-outputs))
+
+;;This program is an evolved solution
+(def tom-program
+  '(in1 integer_stackdepth exec_do*vector_float (float_add integer_stackdepth) float_stackdepth float_dup float_dup_items integer_div float_mod integer_dec exec_do*range float_inc float_div)
+  )
+
+
+;; This program is hand-written
+#_(def tom-program
+ '(
+    in1 integer_inc exec_do*count
+    (
+      integer_dup integer_mult integer_add
+      )
+    ))
+
+
+(def tom-ind
+  {:program tom-program})
+
+
+;;; This is how you run the program once.
+#_(run-push tom-program
+          (push-item "oldowestact" :input (push-item "clinteastwood" :input (make-push-state))))
+
+;;; This makes sure the program works on all test and train cases:
+
+;(test-program-on-training tom-ind false)
+
+
+;(test-program-on-testing tom-ind false)
+
+

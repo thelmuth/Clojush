@@ -61,30 +61,30 @@
      (the-actual-syllables-error-function individual data-cases false))
     ([individual data-cases print-outputs]
       (let [behavior (atom '())
-            errors (flatten
-                     (doall
-                       (for [[input correct-output] (case data-cases
-                                                      :train train-cases
-                                                      :test test-cases
-                                                      [])]
-                         (let [final-state (run-push (:program individual)
-                                                     (->> (make-push-state)
-                                                       (push-item input :input)
-                                                       (push-item "" :output)))
-                               printed-result (stack-ref :output 0 final-state)]
-                           (when print-outputs
-                             (println (format "\n| Correct output: %s\n| Program output: %s" (pr-str correct-output) (pr-str printed-result))))
-                           ; Record the behavior
-                           (swap! behavior conj printed-result)
-                           ; Error is Levenshtein distance and, if ends in an integer, distance from correct integer
-                           (vector
-                             (levenshtein-distance correct-output printed-result)
-                             (if-let [num-result (try (Integer/parseInt (last (string/split printed-result #"\s+")))
-                                                   (catch Exception e nil))]
-                               (abs (- (Integer/parseInt (last (string/split correct-output #"\s+")))
-                                       num-result)) ;distance from correct integer
-                               1000)
-                             )))))]
+            errors (doseq
+                       [[case-num [input1 correct-output]] (map-indexed vector (case data-cases
+                                                                                :train train-cases
+                                                                                :test test-cases
+                                                                                []))]
+                     (let [final-state (run-push (:program individual)
+                                                 (->> (make-push-state)
+                                                      (push-item input1 :input)
+                                                      (push-item "" :output)))
+                           result (stack-ref :output 0 final-state)]
+
+                                        ; print if wrong answer
+                       (when (not= result correct-output)
+                         (println "############################################################")
+                         (println "Wrong result:" input1 "||" correct-output result)
+                         (println "############################################################"))
+                                        ; print case numbers sometimes
+                       (when (or (= (mod case-num 10000) 9999)
+                                 (= (mod case-num 10000) 1))
+                         (prn "At case" case-num ", input =", input1))  
+
+
+
+                       ))]
         (if (= data-cases :train)
           (assoc individual :behaviors @behavior :errors errors)
           (assoc individual :test-errors errors))))))
@@ -92,7 +92,7 @@
 ; Define train and test cases
 (def syllables-train-and-test-cases
   (map #(sort-by (comp count first) %)
-    (train-and-test-cases-from-dataset "syllables" 83 1000)))
+    (train-and-test-cases-from-dataset "syllables" 0 10000000)))
 
 (defn syllables-initial-report
   [argmap]
@@ -151,3 +151,51 @@
    :final-report-simplifications 5000
    :max-error 5000
    })
+
+
+
+;;;;;;;
+;; Below here is for testing push programs against stored data
+
+(reset! global-max-points 3200)
+
+(reset! global-evalpush-limit 1600)
+
+(defn test-program-on-training
+ [program print-outputs]
+ ((:error-function argmap) program :train print-outputs))
+
+(defn test-program-on-testing
+ [program print-outputs]
+ ((:error-function argmap) program :test print-outputs))
+
+;;This program is an evolved solution
+(def tom-program
+  '(char_empty \y integer_empty "aeiouy" \i char_eq char_allfromstring char_isletter \a \o integer_empty char_isdigit "The number of syllables is " print_string boolean_stackdepth exec_do*count (in1 string_occurrencesofchar boolean_dup_times) boolean_stackdepth print_integer))
+
+
+;; This program is hand-written
+#_(def tom-program
+ '(
+    in1 integer_inc exec_do*count
+    (
+      integer_dup integer_mult integer_add
+      )
+    ))
+
+
+(def tom-ind
+  {:program tom-program})
+
+
+;;; This is how you run the program once.
+#_(run-push tom-program
+          (push-item "oldowestact" :input (push-item "clinteastwood" :input (make-push-state))))
+
+;;; This makes sure the program works on all test and train cases:
+
+;(test-program-on-training tom-ind false)
+
+
+                                        ;(test-program-on-testing tom-ind false)
+

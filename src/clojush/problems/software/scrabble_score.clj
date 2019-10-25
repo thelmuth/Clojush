@@ -70,32 +70,38 @@
      (the-actual-scrabble-score-error-function individual data-cases false))
     ([individual data-cases print-outputs]
       (let [behavior (atom '())
-            errors (doall
-                     (for [[input1 correct-output] (case data-cases
-                                                     :train train-cases
-                                                     :test test-cases
-                                                     [])]
-                       (let [final-state (run-push (:program individual)
-                                                   (->> (make-push-state)
-                                                     (push-item input1 :input)))
-                             result (stack-ref :integer 0 final-state)]
-                         (when print-outputs
-                           (println (format "Correct output: %s | Program output: %s" correct-output (str result))))
-                         ; Record the behavior
-                         (swap! behavior conj result)
-                         ; Error is difference of integers
-                         (if (number? result)
-                           (abs (- result (Integer/parseInt correct-output))) ;distance from correct integer
-                           1000) ;penalty for no return value
-                         )))]
+            errors (doseq
+                       [[case-num [input1 correct-output]] (map-indexed vector (case data-cases
+                                                                                 :train train-cases
+                                                                                 :test test-cases
+                                                                                 []))]
+                     (let [final-state (run-push (:program individual)
+                                                 (->> (make-push-state)
+                                                      (push-item input1 :input)))
+                           result (stack-ref :integer 0 final-state)]
+
+
+
+                       ; print if wrong answer
+                       (when (or (not= (str result) correct-output))
+                         (println "############################################################")
+                         (println "Wrong result:" (pr-str input1) "||" correct-output result)
+                         (println "############################################################"))
+                                        ; print case numbers sometimes
+                       (when (or (= (mod case-num 10000) 9999)
+                                 (= (mod case-num 10000) 1))
+                         (prn "At case" case-num ", input =", input1))  
+
+
+                       
+                       ))]
         (if (= data-cases :train)
           (assoc individual :behaviors @behavior :errors errors)
           (assoc individual :test-errors errors))))))
 
 ; Define train and test cases
 (def scrabble-score-train-and-test-cases
-  (map #(sort-by (comp count first) %)
-    (train-and-test-cases-from-dataset "scrabble-score" 150 974)))
+  (train-and-test-cases-from-dataset "scrabble-score" 0 9740000000))
 
 (defn scrabble-score-initial-report
   [argmap]
@@ -154,3 +160,57 @@
    :final-report-simplifications 5000
    :max-error 1000
    })
+
+
+
+;;;;;;;
+;; Below here is for testing push programs against stored data
+
+(reset! global-max-points 4000)
+
+(reset! global-evalpush-limit 2000)
+
+(defn test-program-on-training
+ [program print-outputs]
+ ((:error-function argmap) program :train print-outputs))
+
+(defn test-program-on-testing
+ [program print-outputs]
+ ((:error-function argmap) program :test print-outputs))
+
+;;This program is an evolved solution
+#_(def tom-program
+  '(boolean_stackdepth in1 vector_integer_dup exec_do*vector_integer
+                       (integer_min exec_do*times boolean_stackdepth
+                                    vector_integer_replace vector_integer_stackdepth)))
+
+
+;; This program is hand-written
+(def tom-program
+ '(
+    0 in1 exec_string_iterate
+    (
+      [0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 3 3 2 1 4 2 4 1 8 5 1 3 1 1 3 10 1 1 1 1 4 4 8 4 10 0 0 0 0 0 0 1 3 3 2 1 4 2 4 1 8 5 1 3 1 1 3 10 1 1 1 1 4 4 8 4 10 0 0 0 0]
+      integer_fromchar vector_integer_nth
+      integer_add
+      )
+    ))
+
+
+(def tom-ind
+  {:program tom-program})
+
+
+;;; This is how you run the program once.
+(run-push tom-program
+          (push-item " \n " :input (make-push-state)))
+
+;;; This makes sure the program works on all test and train cases:
+
+(test-program-on-training tom-ind false)
+
+(test-program-on-testing tom-ind false)
+
+
+
+

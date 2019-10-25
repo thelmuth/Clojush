@@ -40,39 +40,41 @@
      (the-actual-num-io-error-function individual data-cases false))
     ([individual data-cases print-outputs]
       (let [behavior (atom '())
-            errors (flatten
-                     (doall
-                       (for [[in-float in-int out-float] (case data-cases
-                                                             :train train-cases
-                                                             :test test-cases
-                                                             [])]
-                         (let [final-state (run-push (:program individual)
-                                                     (->> (make-push-state)
-                                                       (push-item in-int :input)
-                                                       (push-item in-float :input)
-                                                       (push-item "" :output)))
-                               printed-result (stack-ref :output 0 final-state)]
-                           (when print-outputs
-                             (println (format "Correct output: %-14s | Program output: %-14s" (pr-str (round-to-n-decimal-places out-float 10)) printed-result)))
-                           ; Record the behavior
-                           (swap! behavior conj printed-result)
-                           ; Each test case results in two error values:
-                           ;   1. Numeric difference between correct output and the printed
-                           ;      output read into a float, rounded to 4 decimal places;
-                           ;      if such a conversion fails, the error is a penalty of 1000.
-                           ;   2. Levenstein distance between printed output and correct output as strings
-                           (vector (round-to-n-decimal-places
-                                     (try (min 1000.0 (abs (- out-float (Double/parseDouble printed-result))))
-                                       (catch Exception e 1000.0))
-                                     4)
-                                   (levenshtein-distance printed-result (pr-str (round-to-n-decimal-places out-float 10))))))))]
+            errors (doseq
+                       [[case-num [input1 in-int correct-output]] (map-indexed vector (case data-cases
+                                                                                     :train train-cases
+                                                                                     :test test-cases
+                                                                                     []))]
+                     (let [final-state (run-push (:program individual)
+                                                 (->> (make-push-state)
+                                                      (push-item in-int :input)
+                                                      (push-item input1 :input)
+                                                      (push-item "" :output)))
+                           result (stack-ref :output 0 final-state)]
+
+
+;                       (println result)
+;                       (println (type result))
+                                        ; print if wrong answer
+                       (when (not= (subs (str result) 0 7)
+                                   (subs (pr-str (round-to-n-decimal-places correct-output 10)) 0 7))
+                         (println "############################################################")
+                         (println "Wrong result:" input1 "||" correct-output result)
+                         (println "############################################################"))
+                                        ; print case numbers sometimes
+                       (when (or (= (mod case-num 10000) 9999)
+                                 (= (mod case-num 10000) 1))
+                         (prn "At case" case-num ", input =", input1))  
+
+
+                       ))]
         (if (= data-cases :train)
           (assoc individual :behaviors @behavior :errors errors)
           (assoc individual :test-errors errors))))))
 
 ; Define train and test cases
 (def number-io-train-and-test-cases
-  (train-and-test-cases-from-dataset "number-io" 25 1000))
+  (train-and-test-cases-from-dataset "number-io" 0 100000000))
 
 (defn number-io-initial-report
   [argmap]
@@ -132,3 +134,65 @@
    :max-error 5000
    :error-threshold 1.0E-4
    })
+
+
+
+;;;;;;;
+;; Below here is for testing push programs against stored data
+
+(reset! global-max-points 800)
+
+(reset! global-evalpush-limit 200)
+
+(defn test-program-on-training
+ [program print-outputs]
+ ((:error-function argmap) program :train print-outputs))
+
+(defn test-program-on-testing
+ [program print-outputs]
+ ((:error-function argmap) program :test print-outputs))
+
+;;This program is an evolved solution
+(def tom-program
+  '(in2 float_frominteger in1 float_add print_float))
+
+#_(def tom-program-BAD
+  '(integer_stackdepth integer_stackdepth exec_do*range
+                       (exec_do*vector_integer in1) integer_dup 42 exec_do*times
+                       (integer_mod integer_swap) integer_inc exec_do*times integer_lte
+                       vector_integer_dup_times integer_stackdepth))
+
+;; This program is hand-written
+#_(def tom-program
+ '(
+    4 in1 integer_lt
+    exec_when
+    (
+      4 print_integer
+      4 integer_dup integer_dup integer_mult integer_dup in1 integer_lt
+      exec_while
+      (
+        print_newline print_integer 
+        integer_inc integer_inc
+        integer_dup integer_dup integer_mult integer_dup in1 integer_lt
+        )
+      )
+    ))
+
+
+(def tom-ind
+  {:program tom-program})
+
+
+;;; This is how you run the program once.
+#_(run-push tom-program
+          (push-item "oldowestact" :input (push-item "clinteastwood" :input (make-push-state))))
+
+;;; This makes sure the program works on all test and train cases:
+
+;(test-program-on-training tom-ind false)
+
+(test-program-on-testing tom-ind false)
+
+
+

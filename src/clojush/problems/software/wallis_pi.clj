@@ -43,41 +43,41 @@
      (the-actual-wallis-pi-error-function individual data-cases false))
     ([individual data-cases print-outputs]
       (let [behavior (atom '())
-            errors (flatten
-                     (doall
-                       (for [[input1 correct-output] (case data-cases
-                                                       :train train-cases
-                                                       :test test-cases
-                                                       [])]
-                         (let [final-state (run-push (:program individual)
-                                                     (->> (make-push-state)
-                                                       (push-item input1 :input)))
-                               result (round-to-n-decimal-places
-                                        (stack-ref :float 0 final-state)
-                                        5)]
-                           (when print-outputs
-                             (let [res-str (if (float? result)
-                                             (format "%.5f" result)
-                                             (str result))]
-                               (println (format "Correct output: %.5f | Program output: %s" correct-output res-str))))
-                           ; Record the behavior
-                           (swap! behavior conj result)
-                           ; Outputs rounded to 5 decimal places
-                           (vector
-                             ; Error 1: float absolute error
-                             (if (number? result)
-                               (float (abs (- result correct-output))) ;distance from correct integer
-                               1000000.0) ;penalty for no return value
-                             ; Error 2: Levenshtein distance of strings
-                             (levenshtein-distance (str correct-output) (str result))
-                             )))))]
+            errors (doseq
+                       [[case-num [input1 correct-output]] (map-indexed vector (case data-cases
+                                                                                 :train train-cases
+                                                                                 :test test-cases
+                                                                                 []))]
+                     (let [final-state (run-push (:program individual)
+                                                 (->> (make-push-state)
+                                                      (push-item input1 :input)))
+                           result (round-to-n-decimal-places
+                                   (stack-ref :float 0 final-state)
+                                   5)]
+
+
+                       
+                                        ; print if wrong answer
+                       (when (not= result correct-output)
+                         (println "############################################################")
+                         (println "Wrong result:" input1 "||" correct-output result)
+                         (println "############################################################"))
+                                        ; print case numbers sometimes
+                       (when (or (= (mod case-num 10000) 9999)
+                                 (= (mod case-num 10000) 1))
+                         (prn "At case" case-num ", input =", input1))  
+
+                       
+
+
+                       ))]
         (if (= data-cases :train)
           (assoc individual :behaviors @behavior :errors errors)
           (assoc individual :test-errors errors))))))
 
 ; Define train and test cases
 (def wallis-pi-train-and-test-cases
-  (train-and-test-cases-from-dataset "wallis-pi" 135 50))
+  (train-and-test-cases-from-dataset "wallis-pi" 0 500000))
 
 (defn wallis-pi-initial-report
   [argmap]
@@ -138,3 +138,58 @@
    :error-threshold 0.001
    :max-error 1000000.0
    })
+
+
+;;;;;;;
+;; Below here is for testing push programs against stored data
+
+(reset! global-max-points 2400)
+
+(reset! global-evalpush-limit 8000)
+
+(defn test-program-on-training
+ [program print-outputs]
+ ((:error-function argmap) program :train print-outputs))
+
+(defn test-program-on-testing
+ [program print-outputs]
+ ((:error-function argmap) program :test print-outputs))
+
+;;This program is an evolved solution
+#_(def tom-program
+  '(([]) (in1 (vector_integer_pushall) (exec_do*vector_integer (integer_add vector_integer_conj))))
+  )
+
+
+;; This program is hand-written
+(def tom-program
+ '(
+    in1 1.0
+    exec_do*count
+    (
+      integer_dup integer_dup
+      2 integer_mod 0 integer_eq ;; now (even? in1) on boolean stack
+      exec_if
+      (2 integer_add float_frominteger 3 integer_add float_frominteger)
+      (3 integer_add float_frominteger 2 integer_add float_frominteger)
+      float_div float_mult
+      )
+    ))
+
+
+
+
+(def tom-ind
+  {:program tom-program})
+
+
+;;; This is how you run the program once.
+#_(run-push tom-program
+          (push-item "oldowestact" :input (push-item "clinteastwood" :input (make-push-state))))
+
+;;; This makes sure the program works on all test and train cases:
+
+;(test-program-on-training tom-ind false)
+
+(test-program-on-testing tom-ind false)
+

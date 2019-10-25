@@ -40,22 +40,31 @@
      (the-actual-double-letters-error-function individual data-cases false))
     ([individual data-cases print-outputs]
       (let [behavior (atom '())
-            errors (doall
-                     (for [[input correct-output] (case data-cases
-                                                    :train train-cases
-                                                    :test test-cases
-                                                    [])]
-                       (let [final-state (run-push (:program individual)
-                                                   (->> (make-push-state)
-                                                     (push-item input :input)
-                                                     (push-item "" :output)))
-                             printed-result (stack-ref :output 0 final-state)]
-                         (when print-outputs
-                           (println (format "| Correct output: %s\n| Program output: %s\n" (pr-str correct-output) (pr-str printed-result))))
-                         ; Record the behavior
-                         (swap! behavior conj printed-result)
-                         ; Error is Levenshtein distance
-                         (levenshtein-distance correct-output printed-result))))]
+            errors (doseq
+                       [[case-num [input correct-output]] (map-indexed vector (case data-cases
+                                                                                :train train-cases
+                                                                                :test test-cases
+                                                                                []))]
+                     (let [final-state (run-push (:program individual)
+                                                 (->> (make-push-state)
+                                                      (push-item input :input)
+                                                      (push-item "" :output)))
+                           printed-result (stack-ref :output 0 final-state)]
+                       (when print-outputs
+                         (println (format "| Correct output: %s\n| Program output: %s\n" (pr-str correct-output) (pr-str printed-result))))
+
+                       ; print if wrong answer
+                       (when (not= printed-result correct-output)
+                         (println "############################################################")
+                         (println "Wrong result:" input correct-output printed-result)
+                         (println "############################################################"))
+                       ; print case numbers sometimes
+                       (when (or (= (mod case-num 10000) 9999)
+                                 (= (mod case-num 10000) 1))
+                         (prn "At case" case-num ", input =", input))  
+
+
+                       ))]
         (if (= data-cases :train)
           (assoc individual :behaviors @behavior :errors errors)
           (assoc individual :test-errors errors))))))
@@ -63,7 +72,7 @@
 ; Define train and test cases
 (def double-letters-train-and-test-cases
   (map #(sort-by (comp count first) %)
-    (train-and-test-cases-from-dataset "double-letters" 68 1000)))
+    (train-and-test-cases-from-dataset "double-letters" 0 1000000000)))
 
 (defn double-letters-initial-report
   [argmap]
@@ -122,3 +131,48 @@
    :final-report-simplifications 5000
    :max-error 5000
    })
+
+
+
+;;;;;;;
+;; Below here is for testing push programs against stored data
+
+(reset! global-evalpush-limit 1600)
+
+(reset! global-max-points 3200)
+
+(defn test-program-on-training
+ [program print-outputs]
+ ((:error-function argmap) program :train print-outputs))
+
+(defn test-program-on-testing
+ [program print-outputs]
+ ((:error-function argmap) program :test print-outputs))
+
+;;This program is an evolved solution
+(def tom-program
+  '(in1 \! exec_string_iterate
+        (exec_dup char_dup exec_do*while () exec_do*while
+                  (exec_do*while
+                   (print_char integer_gte boolean_empty char_isletter)
+                   integer_stackdepth \! char_eq) integer_pop)))
+
+
+(def tom-ind
+  {:program tom-program})
+
+
+;;; This is how you run the program once.
+#_(run-push tom-program
+          (push-item "oldowestact" :input (push-item "clinteastwood" :input (make-push-state))))
+
+;;; This makes sure the program works on all test and train cases:
+
+;(test-program-on-training tom-ind  false)
+
+(test-program-on-testing tom-ind false)
+
+
+
+
+

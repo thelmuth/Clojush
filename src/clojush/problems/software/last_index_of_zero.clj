@@ -38,33 +38,37 @@
      (the-actual-last-index-of-zero-error-function individual data-cases false))
     ([individual data-cases print-outputs]
       (let [behavior (atom '())
-            errors (doall
-                     (for [[input correct-output] (case data-cases
-                                                    :train train-cases
-                                                    :test test-cases
-                                                    [])]
-                       (let [final-state (run-push (:program individual)
-                                                   (->> (make-push-state)
-                                                     (push-item input :input)))
-                             result (top-item :integer final-state)]
-                         (when print-outputs
-                           (println (format "Correct output: %2d | Program output: %s"
-                                            correct-output
-                                            (str result))))
-                         ; Record the behavior
-                         (swap! behavior conj result)
-                         ; Error is absolute distance from correct index
-                         (if (number? result)
-                           (abs (- result correct-output)) ; distance from correct integer
-                           1000000) ; penalty for no return value
-                         )))]
+            errors (doseq
+                       [[case-num [input correct-output]] (map-indexed vector (case data-cases
+                                                                                :train train-cases
+                                                                                :test test-cases
+                                                                                []))]
+                     (let [final-state (run-push (:program individual)
+                                                 (->> (make-push-state)
+                                                      (push-item input :input)))
+                           result (top-item :integer final-state)]
+
+
+                       
+                                        ; print if wrong answer
+                       (when (not= result correct-output)
+                         (println "############################################################")
+                         (println "Wrong result:" input correct-output result)
+                         (println "############################################################"))
+                                        ; print case numbers sometimes
+                       (when (or (= (mod case-num 10000) 9999)
+                                 (= (mod case-num 10000) 1))
+                         (prn "At case" case-num ", input =", input))  
+
+                       
+                       ))]
         (if (= data-cases :train)
           (assoc individual :behaviors @behavior :errors errors)
           (assoc individual :test-errors errors))))))
 
 ; Define train and test cases
 (def last-index-of-zero-train-and-test-cases
-  (train-and-test-cases-from-dataset "last-index-of-zero" 78 1000))
+  (train-and-test-cases-from-dataset "last-index-of-zero" 0 100000000))
 
 (defn last-index-of-zero-initial-report
   [argmap]
@@ -123,3 +127,66 @@
    :final-report-simplifications 5000
    :max-error 1000000
    })
+
+
+
+;;;;;;;
+;; Below here is for testing push programs against stored data
+
+(reset! global-evalpush-limit 100600)
+
+(reset! global-max-points 100200)
+
+(defn test-program-on-training
+ [program print-outputs]
+ ((:error-function argmap) program :train print-outputs))
+
+(defn test-program-on-testing
+ [program print-outputs]
+ ((:error-function argmap) program :test print-outputs))
+
+;;This program is an evolved solution
+(def tom-program
+  '(in1 exec_swap (boolean_dup_items integer_stackdepth)
+        (exec_empty vector_integer_rest vector_integer_pushall integer_stackdepth
+                    exec_stackdepth exec_do*while (integer_fromboolean integer_yank
+                                                                       boolean_frominteger integer_dup))))
+
+#_(def tom-program-BAD
+  '(integer_stackdepth integer_stackdepth exec_do*range
+                       (exec_do*vector_integer in1) integer_dup 42 exec_do*times
+                       (integer_mod integer_swap) integer_inc exec_do*times integer_lte
+                       vector_integer_dup_times integer_stackdepth))
+
+;; This program is hand-written
+#_(def tom-program
+ '(
+    4 in1 integer_lt
+    exec_when
+    (
+      4 print_integer
+      4 integer_dup integer_dup integer_mult integer_dup in1 integer_lt
+      exec_while
+      (
+        print_newline print_integer 
+        integer_inc integer_inc
+        integer_dup integer_dup integer_mult integer_dup in1 integer_lt
+        )
+      )
+    ))
+
+
+(def tom-ind
+  {:program tom-program})
+
+
+;;; This is how you run the program once.
+#_(run-push tom-program
+          (push-item "oldowestact" :input (push-item "clinteastwood" :input (make-push-state))))
+
+;;; This makes sure the program works on all test and train cases:
+
+;(test-program-on-training tom-ind false)
+
+(test-program-on-testing tom-ind false)
+

@@ -55,19 +55,23 @@
                                                       (push-item input1 :input)
                                                       (push-item "" :output)))
                            result (top-item :boolean final-state)]
-                       (when print-outputs
-                         (println (format "Correct output: %5b | Program output: %s" correct-output (str result))))
-                       ; print if wrong answer
+
+
+                                        ; print if wrong answer
                        (when (not= result correct-output)
-                         (println "Wrong result:" input1 input2 correct-output result))
-                       ; print case numbers sometimes
-                       (when (= (mod case-num 10000) 0)
-                         (println "At case" case-num))
-                     
-                                        ; Error is boolean error
-                       (if (= result correct-output)
-                         0
-                         1)))]
+                         (println "############################################################")
+                         (println "Wrong result:" input1 "||" correct-output result)
+                         (println "############################################################"))
+                                        ; print case numbers sometimes
+                       (when (or (= (mod case-num 10000) 9999)
+                                 (= (mod case-num 10000) 1))
+                         (prn "At case" case-num ", input =", input1))  
+
+
+
+
+
+                       ))]
         (if (= data-cases :train)
           (assoc individual :behaviors @behavior :errors errors)
           (assoc individual :test-errors errors))))))

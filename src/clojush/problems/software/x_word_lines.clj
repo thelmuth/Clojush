@@ -43,44 +43,39 @@
      (the-actual-x-word-lines-error-function individual data-cases false))
     ([individual data-cases print-outputs]
       (let [behavior (atom '())
-            errors (flatten
-                     (doall
-                       (for [[input1 input2 correct-output] (case data-cases
-                                                                :train train-cases
-                                                                :test test-cases
-                                                                [])]
-                         (let [final-state (run-push (:program individual)
-                                                     (->> (make-push-state)
-                                                       (push-item input2 :input)
-                                                       (push-item input1 :input)
-                                                       (push-item "" :output)))
-                               result (stack-ref :output 0 final-state)]
-                           (when print-outputs
-                             (println (format "| Correct output: %s\n| Program output: %s\n" (pr-str correct-output) (pr-str result))))
-                           ; Record the behavior
-                           (swap! behavior conj result)
-                           (vector
-                             ; First error is Levenshtein distance of printed strings
-                             (levenshtein-distance correct-output result)
-                             ; Second error is integer distance from the correct number of newlines
-                             (abs (- (count (filter #(= % \newline) correct-output))
-                                     (count (filter #(= % \newline) result))))
-                             ; Third error is summed error of integer distances over the lines of the correct number of words per line
-                             (+ (apply + (map #(abs (- input2
-                                                       (count (string/split (string/trim %) #"\s+"))))
-                                              (butlast (string/split-lines result))))
-                                (abs (- (count (string/split (string/trim (last (string/split-lines correct-output))) #"\s+"))
-                                        (count (string/split (string/trim (let [last-line (last (string/split-lines result))]
-                                                                            (if last-line last-line "")))
-                                                             #"\s+")))))
-                             )))))]
+            errors (doseq
+                       [[case-num [input1 input2 correct-output]] (map-indexed vector (case data-cases
+                                                                                        :train train-cases
+                                                                                        :test test-cases
+                                                                                        []))]
+                     (let [final-state (run-push (:program individual)
+                                                 (->> (make-push-state)
+                                                      (push-item input2 :input)
+                                                      (push-item input1 :input)
+                                                      (push-item "" :output)))
+                           result (stack-ref :output 0 final-state)]
+
+
+                                                               ; print if wrong answer
+                       (when (not= result correct-output)
+                         (println "############################################################")
+                         (println "Wrong result:" input1 "||" correct-output result)
+                         (println "############################################################"))
+                                        ; print case numbers sometimes
+                       (when (or (= (mod case-num 10000) 9999)
+                                 (= (mod case-num 10000) 1))
+                         (prn "At case" case-num ", input =", input1))  
+
+
+
+                       ))]
         (if (= data-cases :train)
           (assoc individual :behaviors @behavior :errors errors)
           (assoc individual :test-errors errors))))))
 
 ; Define train and test cases
 (def x-word-lines-train-and-test-cases
-  (train-and-test-cases-from-dataset "x-word-lines" 104 2000))
+  (train-and-test-cases-from-dataset "x-word-lines" 0 20000000))
 
 (defn x-word-lines-initial-report
   [argmap]
@@ -139,3 +134,53 @@
    :final-report-simplifications 5000
    :max-error 5000
    })
+
+
+;;;;;;;
+;; Below here is for testing push programs against stored data
+
+(reset! global-max-points 3200)
+
+(reset! global-evalpush-limit 6000)
+
+(defn test-program-on-training
+ [program print-outputs]
+ ((:error-function argmap) program :train print-outputs))
+
+(defn test-program-on-testing
+ [program print-outputs]
+ ((:error-function argmap) program :test print-outputs))
+
+;;This program is an evolved solution
+(def tom-program
+  '(in1 string_split string_stackdepth exec_do*times (in2 print_char integer_dec \space char_dup_times char_stackdepth print_string \newline char_yank))
+  )
+
+
+;; This program is hand-written
+#_(def tom-program
+ '())
+
+
+
+
+
+
+
+(def tom-ind
+  {:program tom-program})
+
+
+;;; This is how you run the program once.
+#_(run-push tom-program
+          (push-item "oldowestact" :input (push-item "clinteastwood" :input (make-push-state))))
+
+;;; This makes sure the program works on all test and train cases:
+
+(test-program-on-training tom-ind false)
+
+(test-program-on-testing tom-ind false)
+
+
+
+

@@ -40,31 +40,38 @@
      (the-actual-sum-of-squares-error-function individual data-cases false))
     ([individual data-cases print-outputs]
       (let [behavior (atom '())
-            errors (doall
-                     (for [[input1 correct-output] (case data-cases
-                                                     :train train-cases
-                                                     :test test-cases
-                                                     [])]
-                       (let [final-state (run-push (:program individual)
-                                                   (->> (make-push-state)
-                                                     (push-item input1 :input)))
-                             result (stack-ref :integer 0 final-state)]
-                         (when print-outputs
-                           (println (format "Correct output: %6d | Program output: %s" correct-output (str result))))
-                         ; Record the behavior
-                         (swap! behavior conj result)
-                         ; Error is integer distance
-                         (if (number? result)
-                           (abs (- result correct-output)) ;distance from correct integer
-                           1000000000) ;penalty for no return value
-                         )))]
+            errors (doseq
+                       [[case-num [input1 correct-output]] (map-indexed vector (case data-cases
+                                                                                 :train train-cases
+                                                                                 :test test-cases
+                                                                                 []))]
+                     (let [final-state (run-push (:program individual)
+                                                 (->> (make-push-state)
+                                                      (push-item input1 :input)))
+                           result (stack-ref :integer 0 final-state)]
+
+                       
+                                        ; print if wrong answer
+                       (when (not= result correct-output)
+                         (println "############################################################")
+                         (println "Wrong result:" input1 "||" correct-output result)
+                         (println "############################################################"))
+                                        ; print case numbers sometimes
+                       (when (or (= (mod case-num 10000) 9999)
+                                 (= (mod case-num 10000) 1))
+                         (prn "At case" case-num ", input =", input1))  
+
+
+
+                                        
+                       ))]
         (if (= data-cases :train)
           (assoc individual :behaviors @behavior :errors errors)
           (assoc individual :test-errors errors))))))
 
 ; Define train and test cases
 (def sum-of-squares-train-and-test-cases
-  (train-and-test-cases-from-dataset "sum-of-squares" 44 100))
+  (train-and-test-cases-from-dataset "sum-of-squares" 0 100000000))
 
 (defn sum-of-squares-initial-report
   [argmap]
@@ -123,3 +130,50 @@
    :final-report-simplifications 5000
    :max-error 1000000000
    })
+
+
+;;;;;;;
+;; Below here is for testing push programs against stored data
+
+(reset! global-max-points 1600)
+
+(reset! global-evalpush-limit 4000)
+
+(defn test-program-on-training
+ [program print-outputs]
+ ((:error-function argmap) program :train print-outputs))
+
+(defn test-program-on-testing
+ [program print-outputs]
+ ((:error-function argmap) program :test print-outputs))
+
+;;This program is an evolved solution
+#_(def tom-program
+  '(in1 vector_string_reverse vector_string_pushall exec_s vector_string_dup_items (string_length print_integer string_empty exec_while integer_empty print_newline) exec_dup))
+
+
+;; This program is hand-written
+(def tom-program
+ '(
+    in1 integer_inc exec_do*count
+    (
+      integer_dup integer_mult integer_add
+      )
+    ))
+
+
+(def tom-ind
+  {:program tom-program})
+
+
+;;; This is how you run the program once.
+#_(run-push tom-program
+          (push-item "oldowestact" :input (push-item "clinteastwood" :input (make-push-state))))
+
+;;; This makes sure the program works on all test and train cases:
+
+;(test-program-on-training tom-ind false)
+
+
+                                        ;(test-program-on-testing tom-ind false)
+

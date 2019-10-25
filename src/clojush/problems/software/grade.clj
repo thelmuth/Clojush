@@ -55,42 +55,45 @@
      (the-actual-grade-error-function individual data-cases false))
     ([individual data-cases print-outputs]
       (let [behavior (atom '())
-            errors (flatten
-                     (doall
-                       (for [[input1 input2 input3 input4 input5 correct-output] (case data-cases
-                                                                                     :train train-cases
-                                                                                     :test test-cases
-                                                                                     [])]
-                         (let [final-state (run-push (:program individual)
-                                                     (->> (make-push-state)
-                                                       (push-item input5 :input)
-                                                       (push-item input4 :input)
-                                                       (push-item input3 :input)
-                                                       (push-item input2 :input)
-                                                       (push-item input1 :input)
-                                                       (push-item "" :output)))
-                               printed-result (stack-ref :output 0 final-state)]
-                           (when print-outputs
-                             (println (format "Correct output: %-19s | Program output: %-19s" (pr-str correct-output) (pr-str printed-result))))
-                           ; Record the behavior
-                           (swap! behavior conj printed-result)
-                           ; Error is Levenshtein distance and, if correct format, distance from correct letter grade character
-                           (vector
-                             (levenshtein-distance correct-output printed-result)
-                             (let [printed-letter (second (re-find #"^Student has a (.) grade.$" printed-result))
-                                   correct-letter (second (re-find #"^Student has a (.) grade.$" correct-output))]
-                               (if printed-letter
-                                 (abs (- (int (first correct-letter))
-                                         (int (first printed-letter)))) ;distance from correct character
-                                 1000))
-                             )))))]
+            errors (doseq
+                       [[case-num [input1 input2 input3 input4 input5 correct-output]] (map-indexed vector (case data-cases
+                                                                                                             :train train-cases
+                                                                                                             :test test-cases
+                                                                                                             []))]
+                     (let [final-state (run-push (:program individual)
+                                                 (->> (make-push-state)
+                                                      (push-item input5 :input)
+                                                      (push-item input4 :input)
+                                                      (push-item input3 :input)
+                                                      (push-item input2 :input)
+                                                      (push-item input1 :input)
+                                                      (push-item "" :output)))
+                           result (stack-ref :output 0 final-state)]
+                       
+                                        ; Record the behavior
+
+
+
+                                        ; print if wrong answer
+                       (when (not= result correct-output)
+                         (println "############################################################")
+                         (println "Wrong result:" input1 correct-output result)
+                         (println "############################################################"))
+                                        ; print case numbers sometimes
+                       (when (or (= (mod case-num 10000) 9999)
+                                 (= (mod case-num 10000) 1))
+                         (prn "At case" case-num ", input =", input1))  
+                       
+                       
+                       
+                       ))]
         (if (= data-cases :train)
           (assoc individual :behaviors @behavior :errors errors)
           (assoc individual :test-errors errors))))))
 
 ; Define train and test cases
 (def grade-train-and-test-cases
-  (train-and-test-cases-from-dataset "grade" 159 2000))
+  (train-and-test-cases-from-dataset "grade" 0 2000000000))
 
 (defn grade-initial-report
   [argmap]
@@ -150,3 +153,60 @@
    :final-report-simplifications 5000
    :max-error 5000
    })
+
+
+
+;;;;;;;
+;; Below here is for testing push programs against stored data
+
+(reset! global-evalpush-limit 800)
+
+(reset! global-max-points 1600)
+
+(defn test-program-on-training
+ [program print-outputs]
+ ((:error-function argmap) program :train print-outputs))
+
+(defn test-program-on-testing
+ [program print-outputs]
+ ((:error-function argmap) program :test print-outputs))
+
+;;This program is an evolved solution
+(def tom-program
+  '("F" "Student has a " print_string "D" in2 in4 in5 integer_sub string_yank
+    string_dup_times in1 "C" in1 in3 in5 "C" "B" in2 integer_div string_dup_times
+    in5 string_dup_times string_yank string_dup_times "A" "A" in5 string_dup_times
+    string_yank print_string " grade." print_string))
+
+;; This program is hand-written
+#_(def tom-program
+ '(
+    4 in1 integer_lt
+    exec_when
+    (
+      4 print_integer
+      4 integer_dup integer_dup integer_mult integer_dup in1 integer_lt
+      exec_while
+      (
+        print_newline print_integer 
+        integer_inc integer_inc
+        integer_dup integer_dup integer_mult integer_dup in1 integer_lt
+        )
+      )
+    ))
+
+
+(def tom-ind
+  {:program tom-program})
+
+
+;;; This is how you run the program once.
+#_(run-push tom-program
+          (push-item "oldowestact" :input (push-item "clinteastwood" :input (make-push-state))))
+
+;;; This makes sure the program works on all test and train cases:
+
+;(test-program-on-training tom-ind  false)
+
+
+(test-program-on-testing tom-ind false)

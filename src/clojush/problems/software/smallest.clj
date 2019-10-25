@@ -43,34 +43,41 @@
      (the-actual-smallest-error-function individual data-cases false))
     ([individual data-cases print-outputs]
       (let [behavior (atom '())
-            errors (doall
-                     (for [[input1 input2 input3 input4 out-int] (case data-cases
-                                                                     :train train-cases
-                                                                     :test test-cases
-                                                                     [])]
-                       (let [final-state (run-push (:program individual)
-                                                   (->> (make-push-state)
-                                                     (push-item input4 :input)
-                                                     (push-item input3 :input)
-                                                     (push-item input2 :input)
-                                                     (push-item input1 :input)
-                                                     (push-item "" :output)))
-                             printed-result (stack-ref :output 0 final-state)]
-                         (when print-outputs
-                           (println (format "Correct output: %-19s | Program output: %-19s" (str out-int) printed-result)))
-                         ; Record the behavior
-                         (swap! behavior conj printed-result)
-                         ; Each test case is either right or wrong
-                         (if (= printed-result (str out-int))
-                           0
-                           1))))]
+            errors (doseq
+                       [[case-num [input1 input2 input3 input4 out-int]] (map-indexed vector (case data-cases
+                                                                                        :train train-cases
+                                                                                        :test test-cases
+                                                                                        []))]
+                     (let [final-state (run-push (:program individual)
+                                                 (->> (make-push-state)
+                                                      (push-item input4 :input)
+                                                      (push-item input3 :input)
+                                                      (push-item input2 :input)
+                                                      (push-item input1 :input)
+                                                      (push-item "" :output)))
+                           printed-result (stack-ref :output 0 final-state)]
+
+                                              
+                                        ; print if wrong answer
+                       (when (not= printed-result (str out-int))
+                         (println "############################################################")
+                         (println "Wrong printed-result:" input1 "||" out-int printed-result)
+                         (println "############################################################"))
+                                        ; print case numbers sometimes
+                       (when (or (= (mod case-num 10000) 9999)
+                                 (= (mod case-num 10000) 1))
+                         (prn "At case" case-num ", input =", input1))  
+
+
+
+                       ))]
         (if (= data-cases :train)
           (assoc individual :behaviors @behavior :errors errors)
           (assoc individual :test-errors errors))))))
 
 ; Define train and test cases
 (def smallest-train-and-test-cases
-  (train-and-test-cases-from-dataset "smallest" 95 1000))
+  (train-and-test-cases-from-dataset "smallest" 0 10000000))
 
 (defn smallest-initial-report
   [argmap]
@@ -130,3 +137,58 @@
    :final-report-simplifications 5000
    :max-error 1
    })
+
+
+
+;;;;;;;
+;; Below here is for testing push programs against stored data
+
+(reset! global-max-points 800)
+
+(reset! global-evalpush-limit 200)
+
+(defn test-program-on-training
+ [program print-outputs]
+ ((:error-function argmap) program :train print-outputs))
+
+(defn test-program-on-testing
+ [program print-outputs]
+ ((:error-function argmap) program :test print-outputs))
+
+;;This program is an evolved solution
+(def tom-program
+  '(in3 in4 in2 exec_dup integer_min in1 integer_min print_integer))
+
+;; This program is hand-written
+#_(def tom-program
+ '(
+    4 in1 integer_lt
+    exec_when
+    (
+      4 print_integer
+      4 integer_dup integer_dup integer_mult integer_dup in1 integer_lt
+      exec_while
+      (
+        print_newline print_integer 
+        integer_inc integer_inc
+        integer_dup integer_dup integer_mult integer_dup in1 integer_lt
+        )
+      )
+    ))
+
+
+(def tom-ind
+  {:program tom-program})
+
+
+;;; This is how you run the program once.
+#_(run-push tom-program
+          (push-item "oldowestact" :input (push-item "clinteastwood" :input (make-push-state))))
+
+;;; This makes sure the program works on all test and train cases:
+
+(test-program-on-training tom-ind false)
+
+(test-program-on-testing tom-ind false)
+
+

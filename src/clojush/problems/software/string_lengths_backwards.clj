@@ -38,29 +38,37 @@
      (the-actual-string-lengths-error-function individual data-cases false))
     ([individual data-cases print-outputs]
       (let [behavior (atom '())
-            errors (doall
-                     (for [[input1 correct-output] (case data-cases
-                                                     :train train-cases
-                                                     :test test-cases
-                                                     [])]
-                       (let [final-state (run-push (:program individual)
-                                                   (->> (make-push-state)
-                                                     (push-item input1 :input)
-                                                     (push-item "" :output)))
-                             result (stack-ref :output 0 final-state)]
-                         (when print-outputs
-                           (println (format "| Correct output: %s\n| Program output: %s\n" (pr-str correct-output) (pr-str result))))
-                         ; Record the behavior
-                         (swap! behavior conj result)
-                         ; Error is Levenshtein distance
-                         (levenshtein-distance correct-output result))))]
+            errors (doseq
+                       [[case-num [input1 correct-output]] (map-indexed vector (case data-cases
+                                                                                 :train train-cases
+                                                                                 :test test-cases
+                                                                                 []))]
+                     (let [final-state (run-push (:program individual)
+                                                 (->> (make-push-state)
+                                                      (push-item input1 :input)
+                                                      (push-item "" :output)))
+                           result (stack-ref :output 0 final-state)]
+
+                       
+                                        ; print if wrong answer
+                       (when (not= result correct-output)
+                         (println "############################################################")
+                         (println "Wrong result:" input1 "||" correct-output result)
+                         (println "############################################################"))
+                                        ; print case numbers sometimes
+                       (when (or (= (mod case-num 10000) 9999)
+                                 (= (mod case-num 10000) 1))
+                         (prn "At case" case-num ", input =", input1))  
+
+
+                       ))]
         (if (= data-cases :train)
           (assoc individual :behaviors @behavior :errors errors)
           (assoc individual :test-errors errors))))))
 
 ; Define train and test cases
 (def string-lengths-backwards-train-and-test-cases
-  (train-and-test-cases-from-dataset "string-lengths-backwards" 90 1000))
+  (train-and-test-cases-from-dataset "string-lengths-backwards" 0 10000000))
 
 (defn string-lengths-backwards-initial-report
   [argmap]
@@ -119,3 +127,53 @@
    :final-report-simplifications 5000
    :max-error 5000
    })
+
+
+;;;;;;;
+;; Below here is for testing push programs against stored data
+
+(reset! global-max-points 1200)
+
+(reset! global-evalpush-limit 600)
+
+(defn test-program-on-training
+ [program print-outputs]
+ ((:error-function argmap) program :train print-outputs))
+
+(defn test-program-on-testing
+ [program print-outputs]
+ ((:error-function argmap) program :test print-outputs))
+
+;;This program is an evolved solution
+(def tom-program
+  '(in1 vector_string_reverse vector_string_pushall exec_s vector_string_dup_items (string_length print_integer string_empty exec_while integer_empty print_newline) exec_dup))
+
+
+;; This program is hand-written
+#_(def tom-program
+  '(
+     in1 string_length string_length integer_min ;get length of shorter string
+     integer_dup 0 integer_lte exec_when exec_flush ;when shorter string has length <= 0, don't do anything
+     exec_do*count
+     
+     ))
+
+
+(def tom-ind
+  {:program tom-program})
+
+
+;;; This is how you run the program once.
+#_(run-push tom-program
+          (push-item "oldowestact" :input (push-item "clinteastwood" :input (make-push-state))))
+
+;;; This makes sure the program works on all test and train cases:
+
+;(test-program-on-training tom-ind false)
+
+;(test-program-on-testing tom-ind false)
+
+
+
+
+

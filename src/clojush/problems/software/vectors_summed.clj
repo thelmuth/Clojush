@@ -40,36 +40,39 @@
      (the-actual-vectors-summed-error-function individual data-cases false))
     ([individual data-cases print-outputs]
       (let [behavior (atom '())
-            errors (doall
-                     (for [[input1 input2 correct-output] (case data-cases
-                                                              :train train-cases
-                                                              :test test-cases
-                                                              [])]
-                       (let [final-state (run-push (:program individual)
-                                                   (->> (make-push-state)
-                                                     (push-item input2 :input)
-                                                     (push-item input1 :input)))
-                             result (top-item :vector_integer final-state)]
-                         (when print-outputs
-                           (println (format "| Correct output: %s\n| Program output: %s\n" (pr-str correct-output) (pr-str result))))
-                         ; Record the behavior
-                         (swap! behavior conj result)
-                         ; Error is integer error at each position in the vectors, with additional penalties for incorrect size vector
-                         (if (vector? result)
-                           (+' (apply +' (map (fn [cor res]
-                                                (abs (- cor res)))
-                                              correct-output
-                                              result))
-                               (*' 10000 (abs (- (count correct-output) (count result))))) ; penalty of 10000 times difference in sizes of vectors
-                           1000000000) ; penalty for no return value
-                         )))]
+            errors (doseq
+                       [[case-num [input1 input2 correct-output]] (map-indexed vector (case data-cases
+                                                                                        :train train-cases
+                                                                                        :test test-cases
+                                                                                        []))]
+                     (let [final-state (run-push (:program individual)
+                                                 (->> (make-push-state)
+                                                      (push-item input2 :input)
+                                                      (push-item input1 :input)))
+                           result (top-item :vector_integer final-state)]
+
+
+                       
+                                        ; print if wrong answer
+                       (when (not= result correct-output)
+                         (println "############################################################")
+                         (println "Wrong result:" input1 "||" correct-output result)
+                         (println "############################################################"))
+                                        ; print case numbers sometimes
+                       (when (or (= (mod case-num 10000) 9999)
+                                 (= (mod case-num 10000) 1))
+                         (prn "At case" case-num ", input =", input1))  
+
+
+                       
+                       ))]
         (if (= data-cases :train)
           (assoc individual :behaviors @behavior :errors errors)
           (assoc individual :test-errors errors))))))
 
 ; Define train and test cases
 (def vectors-summed-train-and-test-cases
-  (train-and-test-cases-from-dataset "vectors-summed" 135 1500))
+  (train-and-test-cases-from-dataset "vectors-summed" 0 15000000))
 
 (defn vectors-summed-initial-report
   [argmap]
@@ -128,3 +131,50 @@
    :final-report-simplifications 5000
    :max-error 1000000000
    })
+
+
+;;;;;;;
+;; Below here is for testing push programs against stored data
+
+(reset! global-max-points 2000)
+
+(reset! global-evalpush-limit 1500)
+
+(defn test-program-on-training
+ [program print-outputs]
+ ((:error-function argmap) program :train print-outputs))
+
+(defn test-program-on-testing
+ [program print-outputs]
+ ((:error-function argmap) program :test print-outputs))
+
+;;This program is an evolved solution
+(def tom-program
+  '(([]) (in1 (in2 vector_integer_pushall) (exec_do*vector_integer (integer_add vector_integer_conj))))
+  )
+
+
+;; This program is hand-written
+#_(def tom-program
+ '(
+    in1 integer_inc exec_do*count
+    (
+      integer_dup integer_mult integer_add
+      )
+    ))
+
+
+(def tom-ind
+  {:program tom-program})
+
+
+;;; This is how you run the program once.
+#_(run-push tom-program
+          (push-item "oldowestact" :input (push-item "clinteastwood" :input (make-push-state))))
+
+;;; This makes sure the program works on all test and train cases:
+
+;(test-program-on-training tom-ind false)
+;(test-program-on-testing tom-ind false)
+
+

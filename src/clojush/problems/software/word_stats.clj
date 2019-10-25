@@ -120,40 +120,37 @@
      (the-actual-word-stats-error-function individual data-cases false))
     ([individual data-cases print-outputs]
       (let [behavior (atom '())
-            errors (flatten
-                     (doall
-                       (for [[input correct-output] (case data-cases
-                                                      :train train-cases
-                                                      :test test-cases
-                                                      [])]
-                         (let [sentences (count (filter #(some #{%} ".?!") input))
-                               words (filter not-empty (string/split input #"\s+"))
-                               words-per-sentence (float (/ (count words) sentences))
-                               final-state (run-push (:program individual)
-                                                     (->> (make-push-state)
-                                                       (push-item input :input)
-                                                       (push-item input :input)
-                                                       (push-item "" :output)))
-                               result (stack-ref :output 0 final-state)]
-                           (when print-outputs
-                             (println (format "\n| Correct output: %s\n| Program output: %s" (pr-str correct-output) (pr-str result))))
-                           ; Record the behavior
-                           (swap! behavior conj result)
-                           ; Errors:
-                           ;  1. Levenshtein distance of outputs
-                           ;  2. If contains a line of the form #"number of sentences: (-?\d+)", then integer distance from correct output; otherwise penalty
-                           ;  3. If contains a line of the form #"average sentence length: (-?\d+.\d+)", then float distance from correct output, rounded to 4 places; otherwise penalty
-                           (vector
-                             (levenshtein-distance correct-output result)
-                             (if-let [result-n (try (Integer/parseInt (second (re-find #"number of sentences: (-?\d+)" result)))
-                                                 (catch Exception e nil))]
-                               (abs (- result-n sentences))
-                               10000) ;Penalty
-                             (if-let [result-f (try (Float/parseFloat (second (re-find #"average sentence length: (-?\d+\.\d+)" result)))
-                                                 (catch Exception e nil))]
-                               (round-to-n-decimal-places (abs (- result-f words-per-sentence)) 4)
-                               10000.0) ;Penalty
-                             )))))]
+            errors (doseq
+                       [[case-num [input1 correct-output]] (map-indexed vector (case data-cases
+                                                                                :train train-cases
+                                                                                :test test-cases
+                                                                                []))]
+                     (let [sentences (count (filter #(some #{%} ".?!") input1))
+                           words (filter not-empty (string/split input1 #"\s+"))
+                           words-per-sentence (float (/ (count words) sentences))
+                           final-state (run-push (:program individual)
+                                                 (->> (make-push-state)
+                                                      (push-item input1 :input)
+                                                      (push-item input1 :input)
+                                                      (push-item "" :output)))
+                           result (stack-ref :output 0 final-state)]
+
+
+                       
+                                        ; print if wrong answer
+                       (when (not= result correct-output)
+                         (println "############################################################")
+                         (println "Wrong result:" input1 "||" correct-output result)
+                         (println "############################################################"))
+                                        ; print case numbers sometimes
+                       (when (or (= (mod case-num 10000) 9999)
+                                 (= (mod case-num 10000) 1))
+                         (prn "At case" case-num ", input =", input1))  
+
+
+
+
+                       ))]
         (if (= data-cases :train)
           (assoc individual :behaviors @behavior :errors errors)
           (assoc individual :test-errors errors))))))
@@ -161,7 +158,7 @@
 ; Define train and test cases
 (def word-stats-train-and-test-cases
   (map #(sort-by (comp count first) %)
-    (train-and-test-cases-from-dataset "word-stats" 64 1000)))
+    (train-and-test-cases-from-dataset "word-stats" 0 1000000000)))
 
 (defn word-stats-initial-report
   [argmap]
@@ -221,3 +218,108 @@
    :error-threshold 0.02
    :max-error 10000
    })
+
+
+
+;;;;;;;
+;; Below here is for testing push programs against stored data
+
+(reset! global-max-points 3200)
+
+(reset! global-evalpush-limit 6000)
+
+(defn test-program-on-training
+ [program print-outputs]
+ ((:error-function argmap) program :train print-outputs))
+
+(defn test-program-on-testing
+ [program print-outputs]
+ ((:error-function argmap) program :test print-outputs))
+
+;;This program is an evolved solution
+#_(def tom-program
+  '(([]) (in1 (vector_integer_pushall) (exec_do*vector_integer (integer_add vector_integer_conj))))
+  )
+
+
+;; This program is hand-written
+(def tom-program
+ '(
+    []
+    exec_do*while ;for each line in the file
+    (
+      file_readline string_split
+      exec_do*while ;for each string in this line
+      (
+        string_length
+        integer_dup
+        vector_integer_dup vector_integer_length
+        integer_gte
+        exec_while ;make sure vector_integer is long enough
+        (
+          0 vector_integer_conj
+          integer_dup
+          vector_integer_dup vector_integer_length
+          integer_gte
+          )
+        ;Inc that integer's index in vector
+        integer_dup vector_integer_dup
+        vector_integer_nth
+        integer_inc integer_swap
+        vector_integer_set
+        string_empty boolean_not
+        )
+      file_EOF boolean_not
+      )
+    ; Have vector of word size counts at this point
+    1 vector_integer_dup vector_integer_length integer_dec
+    exec_do*range
+    (
+      "words of length " print_string
+      integer_dup print_integer
+      ": " print_string
+      vector_integer_dup vector_integer_nth print_integer
+      print_newline
+      )
+    "number of sentences: " print_string
+    file_begin
+    exec_do*while
+    ( ;get all lines in one string
+      file_readline string_concat
+      file_EOF boolean_not
+      )
+    ; count \., \!, and \?
+    string_dup string_dup string_dup
+    \. string_occurrencesofchar
+    \! string_occurrencesofchar
+    \? string_occurrencesofchar
+    integer_add integer_add integer_dup
+    print_integer print_newline
+    "average sentence length: " print_string
+    string_split string_stackdepth
+    float_frominteger float_frominteger float_div print_float
+    ))
+
+
+
+
+
+
+
+(def tom-ind
+  {:program tom-program})
+
+
+;;; This is how you run the program once.
+#_(run-push tom-program
+          (push-item "oldowestact" :input (push-item "clinteastwood" :input (make-push-state))))
+
+;;; This makes sure the program works on all test and train cases:
+
+(test-program-on-training tom-ind false)
+
+
+(test-program-on-testing tom-ind false)
+
+
+

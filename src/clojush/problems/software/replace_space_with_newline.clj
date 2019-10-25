@@ -36,7 +36,7 @@
 ; Define train and test cases
 (def replace-space-with-newline-train-and-test-cases
   (map #(sort-by (comp count first) %)
-    (train-and-test-cases-from-dataset "replace-space-with-newline" 70 1000)))
+    (train-and-test-cases-from-dataset "replace-space-with-newline" 0 10000000)))
 
 (defn replace-space-with-newline-evaluate-program-for-behaviors
   "Evaluates the program on the given list of cases.
@@ -44,13 +44,37 @@
   [program cases]
   (flatten
    (doall
-    (for [[input printed-output int-output] cases]
+    (for [[case-num [input printed-output int-output]] (map-indexed vector cases)]
       (let [final-state (run-push program
                                   (->> (make-push-state)
                                        (push-item input :input)
                                        (push-item "" :output)))
             printed-result (stack-ref :output 0 final-state)
             int-result (stack-ref :integer 0 final-state)]
+
+
+
+      ; print if wrong answer
+      (when (not= printed-result printed-output)
+        (println "############################################################")
+        (println "Wrong result:" input "||" printed-output printed-result)
+        (println "############################################################"))
+                                        ; print case numbers sometimes
+      (when (or (= (mod case-num 10000) 9999)
+                (= (mod case-num 10000) 1))
+        (prn "At case" case-num ", input =", input))  
+
+      
+      ; print if wrong answer
+      (when (not= int-result int-output)
+        (println "############################################################")
+        (println "Wrong result:" input "||" int-output int-result)
+        (println "############################################################"))
+
+
+
+
+        
         (vector printed-result int-result))))))
 
 (defn replace-space-with-newline-errors-from-behaviors
@@ -151,3 +175,64 @@
    :final-report-simplifications 5000
    :max-error 5000
    })
+
+
+
+;;;;;;;
+;; Below here is for testing push programs against stored data
+
+(reset! global-evalpush-limit 1600)
+
+(reset! global-max-points 3200)
+
+(defn test-program-on-training
+ [program print-outputs]
+ ((:error-function argmap) program :train))
+
+(defn test-program-on-testing
+ [program print-outputs]
+ ((:error-function argmap) program :test))
+
+;;This program is an evolved solution
+(def tom-program
+  '(\space \newline in1 string_replacechar print_string \space in1 string_removechar string_length))
+
+#_(def tom-program-BAD
+  '(integer_stackdepth integer_stackdepth exec_do*range
+                       (exec_do*vector_integer in1) integer_dup 42 exec_do*times
+                       (integer_mod integer_swap) integer_inc exec_do*times integer_lte
+                       vector_integer_dup_times integer_stackdepth))
+
+;; This program is hand-written
+#_(def tom-program
+ '(
+    4 in1 integer_lt
+    exec_when
+    (
+      4 print_integer
+      4 integer_dup integer_dup integer_mult integer_dup in1 integer_lt
+      exec_while
+      (
+        print_newline print_integer 
+        integer_inc integer_inc
+        integer_dup integer_dup integer_mult integer_dup in1 integer_lt
+        )
+      )
+    ))
+
+
+(def tom-ind
+  {:program tom-program})
+
+
+;;; This is how you run the program once.
+#_(run-push tom-program
+          (push-item "oldowestact" :input (push-item "clinteastwood" :input (make-push-state))))
+
+;;; This makes sure the program works on all test and train cases:
+
+;(test-program-on-training tom-ind false)
+
+(test-program-on-testing tom-ind false)
+
+

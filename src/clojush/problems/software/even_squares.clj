@@ -36,50 +36,35 @@
      (the-actual-even-squares-error-function individual data-cases false))
     ([individual data-cases print-outputs]
       (let [behavior (atom '())
-            errors (flatten
-                     (doall
-                       (for [[input1 correct-output] (case data-cases
-                                                       :train train-cases
-                                                       :test test-cases
-                                                       [])]
-                         (let [correct-integers (map #(Integer/parseInt %)
-                                                     (remove #(empty? %)
-                                                             (string/split-lines correct-output)))
-                               final-state (run-push (:program individual)
-                                                     (->> (make-push-state)
-                                                       (push-item input1 :input)
-                                                       (push-item "" :output)))
-                               result (stack-ref :output 0 final-state)]
-                           (when print-outputs
-                             (println (format "| Correct output: %s\n| Program output: %s\n" (pr-str correct-output) (pr-str result))))
-                           ; Record the behavior
-                           (swap! behavior conj result)
-                           (let [correct-number-lines (count correct-integers)
-                                 result-lines (if (= result "")
-                                                []
-                                                (string/split-lines result))
-                                 int-parse-strings (filter #(re-matches #"-?\d+" %) result-lines)
-                                 lines-with-integer-parseable-strings (count int-parse-strings)
-                                 lines-without-integer-parseable-strings (- (count result-lines) lines-with-integer-parseable-strings)]
-                             (vector
-                               ; Error 1: Levenshtein distance of printed strings
-                               (levenshtein-distance correct-output result)
-                               ; Error 2: Difference in number of lines with integer-parseable strings. Also, each line without an integer-parseable string contributes 1 error
-                               (+ (abs (- correct-number-lines lines-with-integer-parseable-strings))
-                                  lines-without-integer-parseable-strings)
-                               ; Error 3: For each line in the result with a parseable integer, find the integer error compared to correct integer. Sum these.
-                               (let [correct-result-int-pairs (map vector
-                                                                   correct-integers
-                                                                   (concat (map (fn [int-str]
-                                                                                  (try (Integer/parseInt int-str)
-                                                                                    (catch Exception e :no-result)))
-                                                                                int-parse-strings)
-                                                                           (repeat :no-result)))]
-                                 (apply +' (map (fn [[cor-int res-int]]
-                                                  (if (not (number? res-int))
-                                                    100 ; penalty for not enough lines with parseable integers
-                                                    (abs (- cor-int res-int))))
-                                                correct-result-int-pairs)))))))))]
+            errors (doseq
+                       [[case-num [input1 correct-output]] (map-indexed vector (case data-cases
+                                                                                 :train train-cases
+                                                                                 :test test-cases
+                                                                                 []))]
+                     (let [correct-integers (map #(Integer/parseInt %)
+                                                 (remove #(empty? %)
+                                                         (string/split-lines correct-output)))
+                           final-state (run-push (:program individual)
+                                                 (->> (make-push-state)
+                                                      (push-item input1 :input)
+                                                      (push-item "" :output)))
+                           result (stack-ref :output 0 final-state)]
+
+
+
+                       ; print if wrong answer
+                       (when (not= result correct-output)
+                         (println "############################################################")
+                         (println "Wrong result:" input1 correct-output result)
+                         (println "############################################################"))
+                       ; print case numbers sometimes
+                       (when (or (= (mod case-num 10000) 9999)
+                                 (= (mod case-num 10000) 1))
+                         (prn "At case" case-num ", input =", input1))  
+                       
+                       
+                       ))]
+                     
         (if (= data-cases :train)
           (assoc individual :behaviors @behavior :errors errors)
           (assoc individual :test-errors errors))))))
@@ -87,7 +72,7 @@
 ; Define train and test cases
 (def even-squares-train-and-test-cases
   (map #(sort-by first %)
-    (train-and-test-cases-from-dataset "even-squares" 83 1000)))
+    (train-and-test-cases-from-dataset "even-squares" 0 1000000000)))
 
 (defn even-squares-initial-report
   [argmap]
@@ -146,3 +131,59 @@
    :final-report-simplifications 5000
    :max-error 5000
    })
+
+
+
+;;;;;;;
+;; Below here is for testing push programs against stored data
+
+(reset! global-evalpush-limit 2000)
+
+(reset! global-max-points 1600)
+
+(defn test-program-on-training
+ [program print-outputs]
+ ((:error-function argmap) program :train print-outputs))
+
+(defn test-program-on-testing
+ [program print-outputs]
+ ((:error-function argmap) program :test print-outputs))
+
+;;This program is an evolved solution
+#_(def tom-program
+  '(in1 \! exec_string_iterate
+        (exec_dup char_dup exec_do*while () exec_do*while
+                  (exec_do*while
+                   (print_char integer_gte boolean_empty char_isletter)
+                   integer_stackdepth \! char_eq) integer_pop)))
+
+(def tom-program
+ '(
+    4 in1 integer_lt
+    exec_when
+    (
+      4 print_integer
+      4 integer_dup integer_dup integer_mult integer_dup in1 integer_lt
+      exec_while
+      (
+        print_newline print_integer 
+        integer_inc integer_inc
+        integer_dup integer_dup integer_mult integer_dup in1 integer_lt
+        )
+      )
+    ))
+
+
+(def tom-ind
+  {:program tom-program})
+
+
+;;; This is how you run the program once.
+#_(run-push tom-program
+          (push-item "oldowestact" :input (push-item "clinteastwood" :input (make-push-state))))
+
+;;; This makes sure the program works on all test and train cases:
+
+;(test-program-on-training tom-ind  false)
+
+(test-program-on-testing tom-ind false)

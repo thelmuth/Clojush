@@ -175,5 +175,6 @@
 ;(test-program-on-training tom-ind false)
 
 
-                                        ;(test-program-on-testing tom-ind false)
+(test-program-on-testing tom-ind false)
+
 

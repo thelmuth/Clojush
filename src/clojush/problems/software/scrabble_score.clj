@@ -83,7 +83,7 @@
 
 
                        ; print if wrong answer
-                       (when (or (not= (str result) correct-output))
+                       (when (or (not= result correct-output))
                          (println "############################################################")
                          (println "Wrong result:" (pr-str input1) "||" correct-output result)
                          (println "############################################################"))
@@ -202,7 +202,7 @@
 
 
 ;;; This is how you run the program once.
-(run-push tom-program
+#_(run-push tom-program
           (push-item " \n " :input (make-push-state)))
 
 ;;; This makes sure the program works on all test and train cases:
@@ -210,6 +210,8 @@
 (test-program-on-training tom-ind false)
 
 (test-program-on-testing tom-ind false)
+
+
 
 
 

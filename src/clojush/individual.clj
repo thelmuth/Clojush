@@ -1,23 +1,38 @@
-(ns clojush.individual
-  (:require [clojure.string :as s]))
+(ns clojush.individual)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Individuals are records.
 ;; Populations are vectors of agents with individuals as their states (along with error and
 ;; history information).
 
-(defrecord individual [program errors total-error hah-error rms-error history ancestors parent])
+(defrecord individual [genome program errors behaviors total-error normalized-error weighted-error
+                       novelty meta-errors history ancestors uuid parent-uuids genetic-operators
+                       age grain-size is-random-replacement])
 
-(defn make-individual [& {:keys [program errors total-error hah-error rms-error history ancestors parent]
-                          :or {program nil
+(defn make-individual [& {:keys [genome program errors behaviors total-error normalized-error weighted-error
+                                 novelty meta-errors history ancestors uuid parent-uuids
+                                 genetic-operators age grain-size is-random-replacement]
+                          :or {genome nil
+                               program nil
                                errors nil
+                               behaviors nil
                                total-error nil ;; a non-number is used to indicate no value
-                               hah-error nil
-                               rms-error nil
+                               normalized-error nil
+                               weighted-error nil
+                               novelty nil
+                               meta-errors nil
                                history nil
                                ancestors nil
-                               parent nil}}]
-  (individual. program errors total-error hah-error rms-error history ancestors parent))
+                               uuid (java.util.UUID/randomUUID)
+                               parent-uuids nil
+                               genetic-operators nil
+                               age 0
+                               grain-size 1 ; used for random-screen
+                               is-random-replacement false
+                               }}]
+  (individual. genome program errors behaviors total-error normalized-error weighted-error novelty
+               meta-errors history ancestors uuid parent-uuids genetic-operators age grain-size
+               is-random-replacement))
 
 (defn printable [thing]
   (letfn [(unlazy [[head & tail]]
@@ -29,6 +44,9 @@
 
 (defn individual-string [i]
   (cons 'individual.
-        (let [k '(:program :errors :total-error :hah-error :rms-error :history :ancestors :parent)]
+        (let [k '(:genome :program :errors :behaviors :total-error :normalized-error 
+                          :weighted-error :novelty :meta-errors :history :ancestors :uuid 
+                          :parent-uuids :genetic-operators :age :grain-size 
+                          :is-random-replacement)]
           (interleave k  (map #(printable (get i %)) k)))))
 

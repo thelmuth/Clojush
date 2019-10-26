@@ -1,0 +1,58 @@
+#!/usr/bin/env bash
+
+# refer to https://push-language.hampshire.edu/t/running-batch-experiments-with-hampshires-cluster/691 for documentation
+set -o errexit
+set -o errtrace
+set -o nounset
+set -o pipefail
+#
+
+n="$1"
+fly_user="$2"
+label="$3"
+tag="$4"
+number="$RANDOM"
+
+# from http://stackoverflow.com/a/3104922/907060
+function quote_args {
+  printf '"%s" ' "$@"; echo "";
+}
+# quote each arg so it is quoted in SSH
+lein_command=$(quote_args "${@:5}")
+
+
+homedir="/home/${fly_user}"
+rundir="$homedir/runs/$label-$number"
+repodir="$rundir/Clojush"
+outputdir="$rundir/output"
+ssh ${fly_user}@fly.hampshire.edu "mkdir -p $rundir"
+
+rsync --exclude=out -v --progress \
+  --recursive \
+  --inplace \
+  --links \
+  --perms \
+  --times \
+  --delete \
+  --force \
+  --human-readable \
+  . "${fly_user}@fly.hampshire.edu:${repodir}"
+
+
+ssh ${fly_user}@fly.hampshire.edu "mkdir -p $outputdir"
+
+ssh ${fly_user}@fly.hampshire.edu /opt/pixar/tractor-blade-1.7.2/tractor-spool.py \
+  --engine=fly:8000  \
+  --svckey="${tag}" \
+  --title="$label-$number" \
+  --jobcwd="${repodir}" \
+  --priority=1 \
+  --range 1-${n} \
+  -c "bash -c 'env JAVA_CMD=/usr/java/latest/bin/java /share/apps/bin/lein run $lein_command :label $label >  $outputdir/RANGE.out 2> $outputdir/RANGE.err'"
+
+
+echo "Job ID: ${number}"
+
+echo "Monitor status on http://fly.hampshire.edu:8000/tractor/tv/"
+echo "Once the job has been started, you can monitor the outputs with:"
+echo "ssh ${fly_user}@fly.hampshire.edu \"tail -F $outputdir/{1..$n}.{out,err}\""

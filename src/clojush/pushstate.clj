@@ -1,5 +1,6 @@
 (ns clojush.pushstate
-  (:use [clojush.globals]))
+  (:use [clojush globals util]
+        [clojure.set]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; states, stacks, and instructions
@@ -8,9 +9,9 @@
 
 ;(defmacro define-push-state-structure []
 ;  `(defstruct push-state ~@push-types))
-
+;
 ;(define-push-state-structure)
-
+;
 ;(defn make-push-state
 ;  "Returns an empty push state."
 ;  []
@@ -37,7 +38,7 @@
 (defn register-instruction
   "Add the provided name to the global list of registered instructions."
   [name]
-  (if (some #{name} @registered-instructions)
+  (if false ;;(some #{name} @registered-instructions) ;*****TEMPORARY*****
     (throw (Exception. (str "Duplicate Push instruction defined:" name)))
     (swap! registered-instructions conj name)))
 
@@ -52,7 +53,7 @@
   [state]
   (doseq [t push-types]
     (printf "%s = " t)
-    (println (t state))
+    (prn (t state))
     (flush)))
 
 (defn push-item
@@ -92,7 +93,7 @@
   "Returns a copy of the state with the specified stack popped. This is a utility,
    not for use as an instruction in Push programs."
   [type state]
-  (assoc state type (rest (type state))))
+  (update state type rest))
 
 (defn end-environment
   "Ends the current environment by popping the :environment stack and replacing
@@ -100,8 +101,8 @@
    :return stack is pushed onto the :exec stack."
   [state]
   (let [new-env (top-item :environment state)
-        new-exec (concat (:exec state)
-                         (:exec new-env))]
+        new-exec (list-concat (:exec state)
+                              (:exec new-env))]
     (loop [old-return (:return state)
            new-state (assoc new-env
                             :exec new-exec
@@ -109,7 +110,12 @@
       (if (empty? old-return)
         new-state
         (recur (rest old-return)
-               (push-item (first old-return) :exec new-state))))))
+               (if (:popper (first old-return))
+                 (pop-item (:type (first old-return))
+                           new-state)
+                 (push-item (:item (first old-return)) 
+                            (:type (first old-return)) 
+                            new-state)))))))
 
 (defn registered-for-type
   "Returns a list of all registered instructions with the given type name as a prefix."
@@ -123,3 +129,25 @@
   "Returns a list of all registered instructions aside from random instructions."
   []
   (filter #(not (.endsWith (name %) "_rand")) @registered-instructions))
+
+(defn registered-for-stacks
+  "Takes a list of stacks and returns all instructions that have all
+   of their stack requirements fulfilled. This won't include random instructions
+   unless :random is in the types list. This won't include parenthesis-altering
+   instructions unless :parentheses is in the types list."
+  [types-list]
+  (doseq [[instr instr-fn] @instruction-table]
+    (assert (:stack-types (meta instr-fn)) (format "Instruction %s does not have :stack-types defined in metadata." (name instr))))
+  (map first
+       (filter (fn [[instr instr-fn]]
+                 (and (:stack-types (meta instr-fn))
+                      (clojure.set/subset? (set (:stack-types (meta instr-fn))) (set types-list))))
+               @instruction-table)))
+
+
+(defn push-state-from-stacks
+  "Takes a map of stack names and entire stack states, and returns a new push-state
+   with those stacks set."
+  [& {:as stack-assignments}]
+  (merge (make-push-state) stack-assignments))
+

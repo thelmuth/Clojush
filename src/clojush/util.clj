@@ -315,20 +315,38 @@
                  (vector train-inputs test-inputs))))
            domains))))
 
+(defn load-edn
+  "Load edn from an io/reader source (filename or io/resource)."
+  [source]
+  (try
+    (with-open [r (io/reader source)]
+      (edn/read (java.io.PushbackReader. r)))
+    (catch java.io.IOException e
+      (printf "Couldn't open '%s': %s\n" source (.getMessage e)))
+    (catch RuntimeException e
+      (printf "Error parsing edn file '%s': %s\n" source (.getMessage e)))))
+
 (defn train-and-test-cases-from-dataset
   "Given a namespace and the number of random train and test cases to use,
   creates the training cases (from the edge cases and some random cases)
   and test cases (all from random cases) based on the datasets for the problem."
   [namespace number-random-train number-random-test]
-  (let [edge-train (edn/read-string (slurp (str "data/program-synthesis-benchmark-datasets/datasets/" namespace "/" namespace "-edge.edn")))
+  (let [edge-train (load-edn (str "data/program-synthesis-benchmark-datasets/datasets/" namespace "/" namespace "-edge.edn"))
         edge-train-header (first edge-train)
         edge-train-cases (rest edge-train)
-        random-cases (edn/read-string (slurp (str "data/program-synthesis-benchmark-datasets/datasets/" namespace "/" namespace "-random.edn")))
-         ; This should be faster than (take number-random-train (shuffle (rest (random-cases))))
-        random-train-cases (repeatedly number-random-train #(rand-nth (rest random-cases)))
+        random-cases (load-edn (str "data/program-synthesis-benchmark-datasets/datasets/" namespace "/" namespace "-random.edn"))
+        ;; This should be faster than (take number-random-train (shuffle (rest (random-cases))))
+        ;; The if statement makes this much faster if you need all of the random cases.
+        random-train-cases (if (> number-random-train (count random-cases))
+                             (rest random-cases)
+                             (repeatedly number-random-train #(rand-nth (rest random-cases))))
         train-cases (concat edge-train-cases random-train-cases)
-        test-cases (repeatedly number-random-test #(rand-nth (rest random-cases)))]
+        test-cases (if (> number-random-test (count random-cases))
+                     (rest random-cases)
+                     (repeatedly number-random-test #(rand-nth (rest random-cases))))]
     [train-cases test-cases]))
+
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; from https://github.com/KushalP/mailcheck-clj/blob/master/src/mailcheck/levenshtein.clj

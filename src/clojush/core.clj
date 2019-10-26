@@ -16,13 +16,14 @@
 ;; for more details.
 
 (ns clojush.core
+  (:require [clojush.pushgp.record :as r])
   (:use [clojush.pushgp pushgp report])
   (:gen-class))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; main function
 
-(defn -main 
+(defn -main
   "A main function for Clojush, which assumes that the first argument is the name
    of a problem file that contains an argmap of arguments to PushGP.
    Exits after completion of the call.
@@ -30,12 +31,13 @@
    This allows one to run an example with a call from the OS shell prompt like:
        lein run examples.simple-regression :population-size 3000"
   [& args]
+  (r/new-run!)
   (println "Command line args:" (apply str (interpose \space args)))
   (let [param-list (map #(if (.endsWith % ".ser")
                            (str %)
                            (read-string %))
                         (rest args))]
-    (require (symbol (first args)))
+    (require (symbol (r/config-data! [:problem-file] (first args))))
     (let [example-params (eval (symbol (str (first args) "/argmap")))
           params (merge example-params (apply sorted-map param-list))]
       (println "######################################")
@@ -43,4 +45,4 @@
       (print-params (into (sorted-map) params))
       (println "######################################")
       (pushgp params)
-      (System/exit 0))))
+      (shutdown-agents))))

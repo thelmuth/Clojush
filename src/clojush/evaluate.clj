@@ -1,5 +1,6 @@
 (ns clojush.evaluate
-  (:use [clojush util pushstate random globals individual])
+  (:use [clojush util pushstate random globals individual meta-errors]
+        clojush.pushgp.genetic-operators)
   (:require [clojure.math.numeric-tower :as math]
             [clj-random.core :as random]))
 
@@ -18,29 +19,6 @@
                           population-size)))))
     (printf "\nSolution rates: ")
     (println (doall (map float @solution-rates)))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; calculate meta-errors
-
-(defn calculate-meta-errors
-  "Calculates one meta-error for each meta-error category provided. Each
-   meta-error-category should either be a keyword for a built-in meta category
-   or a function that takes an individual and an argmap and returns a meta error value.
-   The built-in meta categories include:
-     :size (minimize size of program)
-     :compressibility (minimize ammount a program compresses compared to itself)
-     :total-error (minimize total error)
-     :unsolved-cases (maximize number of cases with zero error)"
-  [ind {:keys [meta-error-categories error-threshold] :as argmap}]
-  (let [meta-error-fn (fn [cat]
-                        (cond
-                          (fn? cat) (cat ind argmap)
-                          (= cat :size) (count (:genome ind))
-;                          (= cat :compressibility) 555 ;;TMH fix later
-                          (= cat :total-error) (:total-error ind)
-                          (= cat :unsolved-cases) (count (filter #(> % error-threshold) (:errors ind)))
-                          :else (throw (Exception. (str "Unrecognized meta category: " cat)))))]
-    (doall (map meta-error-fn meta-error-categories))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; evaluate individuals
@@ -87,20 +65,20 @@
                           :normalization :none
                           :max-error 1000}))
   ([i error-function rand-gen
-    {:keys [reuse-errors print-history total-error-method normalization max-error pass-individual-to-error-function]
+    {:keys [reuse-errors print-history total-error-method normalization max-error]
      :as argmap}]
     (random/with-rng rand-gen
       (let [p (:program i)
-            raw-errors (if (or (not reuse-errors) (nil? (:errors i)) (nil? (:total-error i)))
-                         (if pass-individual-to-error-function
-                           (error-function i)
-                           (error-function p)))
+            evaluated-i (if (or (not reuse-errors)
+                                (nil? (:errors i)))
+                         (error-function i)
+                         i)
+            raw-errors (:errors evaluated-i)
             e (vec (if (and reuse-errors (not (nil? (:errors i))))
                      (:errors i)
                      (do
                        (swap! evaluations-count inc)
-                       (normalize-errors raw-errors normalization max-error)
-                       )))
+                       (normalize-errors raw-errors normalization max-error))))
             te (if (and reuse-errors (not (nil? (:total-error i))))
                  (:total-error i)
                  (compute-total-error raw-errors))
@@ -109,16 +87,16 @@
                  (compute-total-error e))
             we (case total-error-method
                  :sum nil
-                 :ifs nil
+                 :ifs nil ; calculated later
+                 :eliteness nil ; calculated later
                  :hah (compute-hah-error e)
                  :rmse (compute-root-mean-square-error e)
                  nil)
-            new-ind (assoc i ; Assign errors and history to i
+            new-ind (assoc evaluated-i ; Assign errors and history to i
                            :errors e
                            :total-error te
                            :weighted-error we
                            :normalized-error ne
-                           :history (if print-history (cons te (:history i)) (:history i))
-                           )
-            me (calculate-meta-errors new-ind argmap)]
-        (assoc new-ind :meta-errors me)))))
+                           :history (if print-history (cons e (:history i)) (:history i)))]
+        new-ind))))
+

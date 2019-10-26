@@ -34,8 +34,11 @@
 (defn a
   [i]
   (fn [state] 
-    (push-item (nth (first (:auxiliary state)) i)
-               :boolean state)))
+    (if (:autoconstructing state)
+      state
+      (push-item (nth (first (:auxiliary state)) i)
+                 :boolean 
+                 state))))
 
 (define-registered a0 (with-meta (a 0) {:stack-types [:boolean]}))
 (define-registered a1 (with-meta (a 1) {:stack-types [:boolean]}))
@@ -43,8 +46,11 @@
 (defn d
   [i]
   (fn [state] 
-    (push-item (nth (second (:auxiliary state)) i)
-               :boolean state)))
+    (if (:autoconstructing state)
+      state
+      (push-item (nth (second (:auxiliary state)) i)
+                 :boolean 
+                 state))))
 
 (define-registered d0 (with-meta (d 0) {:stack-types [:boolean]}))
 (define-registered d1 (with-meta (d 1) {:stack-types [:boolean]}))
@@ -52,22 +58,24 @@
 (define-registered d3 (with-meta (d 3) {:stack-types [:boolean]}))
 
 (def argmap
-  {:error-function (fn [program]
-                     (doall
-                       (for [i (range 64)]
-                         (let [bits (int->bits i 6)
-                               address-bits (vec (take 2 bits))
-                               data-bits (vec (drop 2 bits))
-                               state (run-push program 
-                                               (push-item address-bits :auxiliary 
-                                                          (push-item data-bits :auxiliary 
-                                                                     (make-push-state))))
-                               top-bool (top-item :boolean state)]
-                           (if (= top-bool :no-stack-item)
-                             1000000
-                             (if (= top-bool (nth data-bits (bits->int address-bits)))
-                               0
-                               1))))))
+  {:error-function (fn [individual]
+                     (assoc individual
+                            :errors
+                            (doall
+                             (for [i (range 64)]
+                               (let [bits (int->bits i 6)
+                                     address-bits (vec (take 2 bits))
+                                     data-bits (vec (drop 2 bits))
+                                     state (run-push (:program individual) 
+                                                     (push-item address-bits :auxiliary 
+                                                                (push-item data-bits :auxiliary 
+                                                                           (make-push-state))))
+                                     top-bool (top-item :boolean state)]
+                                 (if (= top-bool :no-stack-item)
+                                   1000000
+                                   (if (= top-bool (nth data-bits (bits->int address-bits)))
+                                     0
+                                     1)))))))
    :atom-generators '(exec_if boolean_and boolean_or boolean_not
                               a0 a1
                               d0 d1 d2 d3
@@ -80,3 +88,4 @@
                                     :uniform-mutation 0.45}
    :parent-selection :tournament
    })
+

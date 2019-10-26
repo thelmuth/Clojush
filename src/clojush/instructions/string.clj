@@ -1,6 +1,7 @@
 (ns clojush.instructions.string
   (:use [clojush pushstate globals]
-        [clojure.string :only [split trim]])
+        [clojure.string :only [split trim]]
+        clojush.instructions.vectors)
   (:require [clojure.string :as string]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -346,7 +347,7 @@
                    (pop-item :char (pop-item :string state))))
       state)))
 
-  (define-registered
+(define-registered
   string_setchar ; Returns a function that sets char at index in string
   ^{:stack-types [:string :char :integer]}
   (fn [state]

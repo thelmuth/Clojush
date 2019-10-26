@@ -69,63 +69,70 @@
                  (wallis-pi-approximation in)))
        inputs))
 
-; Define error function. For now, each run uses different random inputs
-(defn wallis-pi-error-function
-  "Returns the error function for the Wallis Pi problem. Takes as
-   input Wallis Pi data domains."
+(defn make-wallis-pi-error-function-from-cases
+  [train-cases test-cases]
+  (fn the-actual-wallis-pi-error-function
+    ([individual]
+      (the-actual-wallis-pi-error-function individual :train))
+    ([individual data-cases] ;; data-cases should be :train or :test
+     (the-actual-wallis-pi-error-function individual data-cases false))
+    ([individual data-cases print-outputs]
+      (let [behavior (atom '())
+            errors (flatten
+                     (doall
+                       (for [[input1 correct-output] (case data-cases
+                                                       :train train-cases
+                                                       :test test-cases
+                                                       [])]
+                         (let [final-state (run-push (:program individual)
+                                                     (->> (make-push-state)
+                                                       (push-item input1 :input)))
+                               result (round-to-n-decimal-places
+                                        (stack-ref :float 0 final-state)
+                                        5)]
+                           (when print-outputs
+                             (let [res-str (if (float? result)
+                                             (format "%.5f" result)
+                                             (str result))]
+                               (println (format "Correct output: %.5f | Program output: %s" correct-output res-str))))
+                           ; Record the behavior
+                           (swap! behavior conj result)
+                           ; Outputs rounded to 5 decimal places
+                           (vector
+                             ; Error 1: float absolute error
+                             (if (number? result)
+                               (float (abs (- result correct-output))) ;distance from correct integer
+                               1000000.0) ;penalty for no return value
+                             ; Error 2: Levenshtein distance of strings
+                             (levenshtein-distance (str correct-output) (str result))
+                             )))))]
+        (if (= data-cases :train)
+          (assoc individual :behaviors @behavior :errors errors)
+          (assoc individual :test-errors errors))))))
+
+(defn get-wallis-pi-train-and-test
+  "Returns the train and test cases."
   [data-domains]
-  (let [[train-cases test-cases] (map sort (map wallis-pi-test-cases
-                                                (test-and-train-data-from-domains data-domains)))]
-    (when true ;; Change to false to not print test cases
-      (doseq [[i case] (map vector (range) train-cases)]
-        (println (format "Train Case: %3d | Input/Output: %s" i (str case))))
-      (doseq [[i case] (map vector (range) test-cases)]
-        (println (format "Test Case: %3d | Input/Output: %s" i (str case)))))
-    (fn the-actual-wallis-pi-error-function
-      ([program]
-        (the-actual-wallis-pi-error-function program :train))
-      ([program data-cases] ;; data-cases should be :train or :test
-        (the-actual-wallis-pi-error-function program data-cases false))
-      ([program data-cases print-outputs]
-        (let [behavior (atom '())
-              errors (flatten
-                       (doall
-                         (for [[input1 correct-output] (case data-cases
-                                                                    :train train-cases
-                                                                    :test test-cases
-                                                                    [])]
-                           (let [final-state (run-push program
-                                                       (->> (make-push-state)
-                                                         (push-item input1 :input)))
-                                 result (round-to-n-decimal-places
-                                          (stack-ref :float 0 final-state)
-                                          5)]
-                             (when print-outputs
-                               (let [res-str (if (float? result)
-                                               (format "%.5f" result)
-                                               (str result))]
-                                 (println (format "Correct output: %.5f | Program output: %s" correct-output res-str))))
-                             ; Record the behavior
-                             (when @global-print-behavioral-diversity
-                               (swap! behavior conj result))
-                             ; Outputs rounded to 5 decimal places
-                             (vector
-                               ; Error 1: float absolute error
-                               (if (number? result)
-                                 (float (abs (- result correct-output))) ;distance from correct integer
-                                 1000000.0) ;penalty for no return value
-                               ; Error 2: Levenshtein distance of strings
-                               (levenshtein-distance (str correct-output) (str result))
-                               )))))]
-          (when @global-print-behavioral-diversity
-            (swap! population-behaviors conj @behavior))
-          errors)))))
+  (map sort (map wallis-pi-test-cases
+                 (test-and-train-data-from-domains data-domains))))
+
+; Define train and test cases
+(def wallis-pi-train-and-test-cases
+  (get-wallis-pi-train-and-test wallis-pi-data-domains))
+
+(defn wallis-pi-initial-report
+  [argmap]
+  (println "Train and test cases:")
+  (doseq [[i case] (map vector (range) (first wallis-pi-train-and-test-cases))]
+    (println (format "Train Case: %3d | Input/Output: %s" i (str case))))
+  (doseq [[i case] (map vector (range) (second wallis-pi-train-and-test-cases))]
+    (println (format "Test Case: %3d | Input/Output: %s" i (str case))))
+  (println ";;******************************"))
 
 (defn wallis-pi-report
   "Custom generational report."
   [best population generation error-function report-simplifications]
-  (let [best-program (not-lazy (:program best))
-        best-test-errors (error-function best-program :test)
+  (let [best-test-errors (:test-errors (error-function best :test))
         best-total-test-error (apply +' best-test-errors)]
     (println ";;******************************")
     (printf ";; -*- Wallis Pi problem report - generation %s\n" generation)(flush)
@@ -138,7 +145,7 @@
         (println (format "Test Case  %3d | Error: %s" i (str error)))))
     (println ";;------------------------------")
     (println "Outputs of best individual on training cases:")
-    (error-function best-program :train true)
+    (error-function best :train true)
     (println ";;******************************")
     )) ;; To do validation, could have this function return an altered best individual
        ;; with total-error > 0 if it had error of zero on train but not on validation
@@ -147,7 +154,8 @@
 
 ; Define the argmap
 (def argmap
-  {:error-function (wallis-pi-error-function wallis-pi-data-domains)
+  {:error-function (make-wallis-pi-error-function-from-cases (first wallis-pi-train-and-test-cases)
+                                                             (second wallis-pi-train-and-test-cases))
    :atom-generators wallis-pi-atom-generators
    :max-points 2400
    :max-genome-size-in-initial-program 300
@@ -165,7 +173,7 @@
    :uniform-mutation-rate 0.01
    :uniform-mutation-constant-tweak-rate 0.9
    :problem-specific-report wallis-pi-report
-   :print-behavioral-diversity true
+   :problem-specific-initial-report wallis-pi-initial-report
    :report-simplifications 0
    :final-report-simplifications 5000
    :error-threshold 0.001

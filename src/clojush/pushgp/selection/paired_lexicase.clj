@@ -1,6 +1,6 @@
 (ns clojush.pushgp.selection.paired-lexicase
   (:use [clojush random]
-        clojush.selection.lexicase))
+        clojush.pushgp.selection.lexicase))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

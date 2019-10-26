@@ -12,7 +12,7 @@
    For example, if order-lexicase-retention-rate == 0.5, then at each step we
    keep any individual with error at least as good as the median individual on
    that test case."
-  [pop location {:keys [order-lexicase-retention-rate] :as argmap}]
+  [pop {:keys [order-lexicase-retention-rate] :as argmap}]
   (assert (and (<= 0 order-lexicase-retention-rate)
                (<= order-lexicase-retention-rate 1))
           ":order-lexicase-retention-rate must be in the range [0.0 1.0]")

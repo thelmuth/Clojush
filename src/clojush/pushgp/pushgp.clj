@@ -328,6 +328,11 @@
    (random/with-rng (random/make-mersennetwister-rng (:random-seed @push-argmap))
      ;; set globals from parameters
      (reset-globals)
+     ;; Set initial training case for counterexample-driven GP
+     (when (:counterexample-driven @push-argmap)
+       (swap! push-argmap assoc :sub-training-cases
+              (take (:counterexample-driven-number-of-initial-training-cases @push-argmap)
+                    (lshuffle (:training-cases @push-argmap)))))
      (initial-report @push-argmap) ;; Print the inital report
      (r/uuid! (:run-uuid @push-argmap))
      (print-params (r/config-data! [:argmap] (dissoc @push-argmap :run-uuid)))

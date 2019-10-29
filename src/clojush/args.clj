@@ -73,12 +73,31 @@
 
          :training-cases '()
           ;; The list of training cases (inputs and outputs). Used for some parent
-          ;; selection methods, such as downsampled lexicase.
+          ;; selection methods, such as downsampled lexicase and counterexample-driven GP.
 
          :sub-training-cases '()
-          ;; The subsample of the training cases used for downsampled lexicase.
+          ;; The subsample of the training cases used for downsampled lexicase and
+          ;; counterexample-driven GP.
 
+         :counterexample-driven false
+          ;; If true, will enable counterexample-drive GP, which means that
+          ;; it will start with a single training case, and will increase the
+          ;; set of training cases each time a program is found that passes all
+          ;; training cases, until one is found that passes all available cases.
+
+         :counterexample-driven-case-generator :hard-coded
+          ;; Method for generating cases for checker to check when a program is
+          ;; found that passes all current sub-cases.
+          ;; Options: :hard-coded
+          ;; Possible future options: auto-generated
          
+         :counterexample-driven-case-checker :automatic
+          ;; Method for checking whether a program passes all cases.
+          ;; Options: :human, :automatic
+
+         :counterexample-driven-number-of-initial-training-cases 10
+          ;; The number of cases to start with when using counterexample-driven GP
+
           ;;----------------------------------------
           ;; Genetic operator probabilities
           ;;----------------------------------------

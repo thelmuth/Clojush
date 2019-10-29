@@ -1,5 +1,6 @@
 (ns clojush.pushgp.report
   (:use [clojush util globals pushstate simplification individual]
+        [clojush.pushgp counterexample-driven-gp]
         [clojure.data.json :only (json-str)])
   (:require [clojure.string :as string]
             [config :as config]
@@ -341,6 +342,7 @@
            parent-selection print-homology-data max-point-evaluations
            print-error-frequencies-by-case normalization autoconstructive
            print-selection-counts print-preselection-fraction exit-on-success
+           counterexample-driven
            ;; The following are for CSV or JSON logs
            print-csv-logs print-json-logs csv-log-filename json-log-filename
            log-fitnesses-for-all-cases json-log-program-strings
@@ -610,21 +612,25 @@
     (when visualize
       (swap! viz-data-atom update-in [:history-of-errors-of-best] conj (:errors best))
       (swap! viz-data-atom assoc :generation generation))
-    (cond
-      ; Succeed
-      (and exit-on-success
-           (or (<= (:total-error best) error-threshold)
-               (:success best)))
-      [:success best]
-      ; Fail max generations
-      (>= generation max-generations)
-      [:failure best]
-      ; Fail max point evaluations
-      (>= @point-evaluations-count max-point-evaluations)
-      [:failure best]
-      ; Continue
-      :else
-      [:continue best])))
+    (let [counterexample-driven-success (if counterexample-driven
+                                          (check-counterexample-driven-results population best argmap)
+                                          true)]
+      (cond
+                                        ; Succeed
+        (and exit-on-success
+             counterexample-driven-success
+             (or (<= (:total-error best) error-threshold)
+                 (:success best)))
+        [:success best]
+                                        ; Fail max generations
+        (>= generation max-generations)
+        [:failure best]
+                                        ; Fail max point evaluations
+        (>= @point-evaluations-count max-point-evaluations)
+        [:failure best]
+                                        ; Continue
+        :else
+        [:continue best]))))
 
 (defn remove-function-values [argmap]
   (into {} (filter (fn [[k v]] (not (fn? v)))

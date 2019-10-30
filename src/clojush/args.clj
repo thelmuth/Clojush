@@ -2,7 +2,18 @@
   (:require [clj-random.core :as random])
   (:use [clojush globals random util pushstate]
         [clojush.instructions.tag]
-        [clojush.pushgp report]))
+        ;[clojush.pushgp report]
+        ))
+
+(defn default-problem-specific-initial-report
+  "Customize this for your own problem. It will be called at the beginning of the initial report."
+  [argmap]
+  :no-problem-specific-initial-report-function-defined)
+
+(defn default-problem-specific-report
+  "Customize this for your own problem. It will be called at the beginning of the generational report."
+  [best population generation error-function report-simplifications]
+  :no-problem-specific-report-function-defined)
 
 (def push-argmap
   (atom (sorted-map
@@ -98,6 +109,10 @@
          :counterexample-driven-number-of-initial-training-cases 10
           ;; The number of cases to start with when using counterexample-driven GP
 
+         :output-stacks :integer
+          ;; Gives the stacks to take outputs from. Should just be single stack
+          ;; if one output, and a vector of stacks if multiple
+         
           ;;----------------------------------------
           ;; Genetic operator probabilities
           ;;----------------------------------------

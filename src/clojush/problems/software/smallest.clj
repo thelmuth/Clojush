@@ -57,7 +57,7 @@
    [[input1 input2 input3] output]."
   [inputs]
   (map #(vector %
-                (apply min %))
+                (str (apply min %)))
        inputs))
 
 (defn make-smallest-error-function-from-cases
@@ -71,24 +71,24 @@
 
       (let [behavior (atom '())
             errors (doall
-                     (for [[[input1 input2 input3 input4] out-int] (case data-cases
-                                                                     :train train-cases
-                                                                     :test test-cases
-                                                                     data-cases)]
-                       (let [final-state (run-push (:program individual)
-                                                   (->> (make-push-state)
-                                                     (push-item input4 :input)
-                                                     (push-item input3 :input)
-                                                     (push-item input2 :input)
-                                                     (push-item input1 :input)
-                                                     (push-item "" :output)))
-                             printed-result (stack-ref :output 0 final-state)]
+                    (for [[[input1 input2 input3 input4] correct-output] (case data-cases
+                                                                           :train train-cases
+                                                                           :test test-cases
+                                                                           data-cases)]
+                      (let [final-state (run-push (:program individual)
+                                                  (->> (make-push-state)
+                                                       (push-item input4 :input)
+                                                       (push-item input3 :input)
+                                                       (push-item input2 :input)
+                                                       (push-item input1 :input)
+                                                       (push-item "" :output)))
+                            printed-result (stack-ref :output 0 final-state)]
                          (when print-outputs
-                           (println (format "Correct output: %-19s | Program output: %-19s" (str out-int) printed-result)))
+                           (println (format "Correct output: %-19s | Program output: %-19s" correct-output printed-result)))
                          ; Record the behavior
                          (swap! behavior conj printed-result)
                          ; Each test case is either right or wrong
-                         (if (= printed-result (str out-int))
+                         (if (= printed-result correct-output)
                            0
                            1))))]
 
@@ -166,4 +166,5 @@
    :report-simplifications 0
    :final-report-simplifications 5000
    :max-error 1
+   :output-stacks :output
    })

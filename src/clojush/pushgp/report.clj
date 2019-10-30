@@ -13,16 +13,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; helper functions
 
-(defn default-problem-specific-initial-report
-  "Customize this for your own problem. It will be called at the beginning of the initial report."
-  [argmap]
-  :no-problem-specific-initial-report-function-defined)
-
-(defn default-problem-specific-report
-  "Customize this for your own problem. It will be called at the beginning of the generational report."
-  [best population generation error-function report-simplifications]
-  :no-problem-specific-report-function-defined)
-
 (defn git-last-commit-hash
   "Returns the last Git commit hash"
   []
@@ -43,6 +33,7 @@
              (cond
                (= param :random-seed) (random/seed-to-string val)
                (= param :training-cases) (pr-str val)
+               (= param :sub-training-cases) (pr-str val)
                :else val))))
 
 (defn print-genome
@@ -613,7 +604,7 @@
       (swap! viz-data-atom update-in [:history-of-errors-of-best] conj (:errors best))
       (swap! viz-data-atom assoc :generation generation))
     (let [counterexample-driven-success (if counterexample-driven
-                                          (check-counterexample-driven-results population best argmap)
+                                          (check-counterexample-driven-results best argmap)
                                           true)]
       (cond
                                         ; Succeed

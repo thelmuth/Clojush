@@ -1,4 +1,4 @@
-(defproject clojush "3.24.1-1-SNAPSHOT"
+(defproject clojush "3.27.0-1-SNAPSHOT"
   :description "The Push programming language and the PushGP genetic programming
                 system implemented in Clojure. See http://pushlanguage.com"
   :license {:name "Eclipse Public License"
@@ -21,6 +21,8 @@
                  [quil "2.8.0"]]
   :plugins [[lein-codox "0.10.6"]
             [lein-shell "0.5.0"]
+            ;[lein-gorilla "0.4.0"]
+            ;[cider/cider-nrepl "0.21.1"]
             [lein-cloverage "1.0.13"]
             [net.totakke/lein-libra "0.1.2"]]
   :profiles {:text {:plugins [[venantius/ultra "0.5.4"]]}}

@@ -53,6 +53,10 @@
          :max-generations 1001
           ;; The maximum number of generations to run GP.
 
+         :max-program-executions 10e100
+          ;; The maximum number of program executions (running on a single case
+          ;; counts once) to run GP.
+
          :max-point-evaluations 10e100
           ;; The limit for the number of point (instruction) evaluations to
           ;; execute during the run.
@@ -361,7 +365,8 @@
          :parent-selection :lexicase
           ;; The parent selection method. Options include :tournament, :lexicase, :epsilon-lexicase,
           ;; :elitegroup-lexicase, :uniform, :leaky-lexicase, :random-threshold-lexicase,
-          ;; :random-toggle-lexicase, :randomly-truncated-lexicase, :novelty-search, :downsampled-lexcase
+          ;; :random-toggle-lexicase, :randomly-truncated-lexicase, :truncated-lexicase,
+          ;; :novelty-search, :downsampled-lexcase
 
          :epsilon-lexicase-version :semi-dynamic
           ;; The version of epsilon-lexicase selection to use.
@@ -388,6 +393,10 @@
          :randomly-truncated-lexicase-probability 1
           ;; The probability that an application of randomly-truncated-lexicase-selection
           ;; will consider only a random subset of the test cases, rather than all of them.
+
+         :truncated-lexicase-factor 0.1
+          ;; When using truncated-lexicase for parent selection, gives the proportion
+          ;; of thraining cases to use during selection.
 
          :lexicase-leakage 0.1
           ;; If using leaky lexicase selection, the probability that a selection event will return
@@ -1087,7 +1096,7 @@
                             (untag-instruction-erc 10000)
                             (tagged-instruction-erc 10000)
                             'integer_tagged_instruction]
-                           (if (use-type :integer) '[integer_tag_exec_instruction] [])
+                           (if (use-type :exec) '[integer_tag_exec_instruction] [])
                            (if (use-type :code) '[integer_tag_code_instruction] [])
                            (if (use-type :integer) '[integer_tag_integer_instruction] [])
                            (if (use-type :float) '[integer_tag_float_instruction] [])

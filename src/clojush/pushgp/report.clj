@@ -331,6 +331,7 @@
            print-errors print-history print-cosmos-data print-timings
            problem-specific-report total-error-method
            parent-selection print-homology-data max-point-evaluations
+           max-program-executions
            print-error-frequencies-by-case normalization autoconstructive
            print-selection-counts print-preselection-fraction exit-on-success
            counterexample-driven
@@ -347,6 +348,7 @@
   (println ";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;")
   (println ";; -*- Report at generation" generation)
   (let [point-evaluations-before-report @point-evaluations-count
+        program-executions-before-report @program-executions-count
         err-fn (if (= total-error-method :rmse) :weighted-error :total-error)
         sorted (sort-by err-fn < population)
         err-fn-best (if (not= parent-selection :downsampled-lexicase)
@@ -566,9 +568,12 @@
         (r/generation-data! [:population-report :number-random-replacements]
                (count (filter :is-random-replacement population)))))
     (println "--- Run Statistics ---")
-    (println "Number of program evaluations used so far:" @evaluations-count)
+    (println "Number of individuals evaluated (running on all training cases counts as 1 evaluation):" @evaluations-count)
+    (println "Number of program executions (running on a single case counts as 1 execution):" program-executions-before-report)
     (println "Number of point (instruction) evaluations so far:" point-evaluations-before-report)
     (reset! point-evaluations-count point-evaluations-before-report)
+    (reset! program-executions-count program-executions-before-report)
+
     (println "--- Timings ---")
     (println "Current time:" (System/currentTimeMillis) "milliseconds")
     (when print-timings
@@ -607,21 +612,25 @@
                                           (check-counterexample-driven-results best argmap)
                                           true)]
       (cond
-                                        ; Succeed
+        ; Succeed
         (and exit-on-success
              counterexample-driven-success
              (or (<= (:total-error best) error-threshold)
                  (:success best)))
         [:success best]
-                                        ; Fail max generations
+        ; Fail max generations
         (>= generation max-generations)
         [:failure best]
-                                        ; Fail max point evaluations
+        ; Fail max program executions
+        (>= @program-executions-count max-program-executions)
+        [:failure best]
+        ; Fail max point evaluations
         (>= @point-evaluations-count max-point-evaluations)
         [:failure best]
-                                        ; Continue
+        ; Continue
         :else
         [:continue best]))))
+
 
 (defn remove-function-values [argmap]
   (into {} (filter (fn [[k v]] (not (fn? v)))

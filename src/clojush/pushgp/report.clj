@@ -609,9 +609,12 @@
       (swap! viz-data-atom update-in [:history-of-errors-of-best] conj (:errors best))
       (swap! viz-data-atom assoc :generation generation))
     (let [counterexample-driven-success (if counterexample-driven
-                                          (check-counterexample-driven-results best argmap)
+                                          (check-counterexample-driven-results sorted argmap)
                                           true)]
       (cond
+        ; Succeed for counterexample-driven GP
+        counterexample-driven-success
+        [:success counterexample-driven-success]
         ; Succeed
         (and exit-on-success
              counterexample-driven-success

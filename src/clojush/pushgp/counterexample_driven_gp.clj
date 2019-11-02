@@ -106,7 +106,7 @@
           :else
           (conj new-cases counterexample-case))))))
 
-(def generations-since-last-case-addition (atom 0))
+(def generations-since-last-case-addition (atom -1))
 
 (defn add-cases-to-sub-training-cases
   "Adds new-cases to existing sub-training-cases. Also updates
@@ -124,7 +124,8 @@
 (defn generational-case-addition
   "Adds one case that best program doesn't pass to sub-training-cases.
   Returns nil."
-  [best argmap]
+  [best {:keys [counterexample-driven-case-generator training-cases
+                counterexample-driven-case-checker] :as argmap}]
   (let [all-cases (case counterexample-driven-case-generator
                     :hard-coded training-cases
                     :else (throw (str "Unrecognized option for :counterexample-driven-case-generator: "
@@ -163,8 +164,8 @@
   (if (> (:total-error (first sorted-pop)) error-threshold)
     ; This handles best individuals that don't pass all current tests
     (do
-      (when (=< 1 counterexample-driven-add-case-every-X-generations generations-since-last-addition)
-        (generational-case-addition (first sorted-pop) ))
+      (when (<= 1 counterexample-driven-add-case-every-X-generations @generations-since-last-case-addition)
+        (generational-case-addition (first sorted-pop) argmap))
       false)
     ; This handles best individuals that pass all current cases
     (let [best-or-new-cases (check-if-all-correct-and-return-new-cases-if-not sorted-pop argmap)]

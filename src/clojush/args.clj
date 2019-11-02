@@ -94,6 +94,10 @@
           ;; The subsample of the training cases used for downsampled lexicase and
           ;; counterexample-driven GP.
 
+          ;;----------------------------------------
+          ;; Counterexample-driven GP
+          ;;----------------------------------------
+
          :counterexample-driven false
           ;; If true, will enable counterexample-drive GP, which means that
           ;; it will start with a single training case, and will increase the
@@ -113,10 +117,16 @@
          :counterexample-driven-number-of-initial-training-cases 10
           ;; The number of cases to start with when using counterexample-driven GP
 
+         :counterexample-driven-add-case-every-X-generations 0
+          ;; If a positive integer, will add a case to the sub-training-cases
+          ;; every this many genreations after a case was last added.
+          ;; Good value might be something that adds 10-20 cases throughout run.
+
          :output-stacks :integer
           ;; Gives the stacks to take outputs from. Should just be single stack
-          ;; if one output, and a vector of stacks if multiple
-         
+          ;; if one output, and a vector of stacks if multiple. Used by
+          ;; counterexample-driven GP
+
           ;;----------------------------------------
           ;; Genetic operator probabilities
           ;;----------------------------------------

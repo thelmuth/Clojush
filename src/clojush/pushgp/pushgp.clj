@@ -199,7 +199,9 @@
     (println "Cases for this generation:" (pr-str (:sub-training-cases @push-argmap))))
   ; print cases for counterexample-driven GP
   (when (:counterexample-driven @push-argmap)
-    (println "Cases for this generation:" (pr-str (:sub-training-cases @push-argmap))))
+    (println "\nNumber of cases this generation:" (count (:sub-training-cases @push-argmap)))
+    (println "Cases for this generation:" (pr-str (:sub-training-cases @push-argmap)))
+    (println))
   ; compute errors
   (compute-errors pop-agents rand-gens novelty-archive @push-argmap)
   (println "Done computing errors.")

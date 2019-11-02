@@ -62,7 +62,7 @@
                          output-stacks))
                (top-item output-stacks final-state))))))
 
-(defn check-if-all-correct-and-update-sub-cases-if-not
+(defn check-if-all-correct-and-return-new-cases-if-not
   "Finds the best program's behavior on all generated cases and checks if all outputs
   are correct with the given case checker.
   Returns solution individual if there is one.
@@ -96,15 +96,9 @@
           ; Didn't find a solution; if rest of population is empty, return new-cases
           (empty? pop)
           (conj new-cases counterexample-case)
-          ; If there's more pop, see if next program also has 0 on training error, including
-          ; on new-cases and the just-added case, which is first in :sub-training-cases.
+          ; If there's more pop, see if next program also has 0 on training error.
           ; If so, recur
-          (and (<= (+' (:total-error (first pop))) error-threshold)
-               (<=
-                (apply +'
-                       (:errors (error-function (first pop)
-                                                (conj new-cases (first (:sub-training-cases @push-argmap))))))
-                error-threshold))
+          (<= (+' (:total-error (first pop))) error-threshold)
           (recur (first pop)
                  (rest pop)
                  (conj new-cases counterexample-case))
@@ -112,6 +106,45 @@
           :else
           (conj new-cases counterexample-case))))))
 
+(def generations-since-last-case-addition (atom 0))
+
+(defn add-cases-to-sub-training-cases
+  "Adds new-cases to existing sub-training-cases. Also updates
+  atom signifying number of generations since last addition.
+  Returns nil."
+  [new-cases]
+  (reset! generations-since-last-case-addition 0)
+  (swap! push-argmap (fn [current-argmap] ; if cases, concat them to old cases
+                       (assoc current-argmap
+                              :sub-training-cases
+                              (concat (distinct new-cases)
+                                      (:sub-training-cases current-argmap)))))
+  nil)
+
+(defn generational-case-addition
+  "Adds one case that best program doesn't pass to sub-training-cases.
+  Returns nil."
+  [best argmap]
+  (let [all-cases (case counterexample-driven-case-generator
+                    :hard-coded training-cases
+                    :else (throw (str "Unrecognized option for :counterexample-driven-case-generator: "
+                                      counterexample-driven-case-generator)))
+        best-results-on-all-cases (run-best-on-all-cases best all-cases argmap)
+        counterexample-case (case counterexample-driven-case-checker
+                              :automatic (counterexample-check-results-automatic
+                                          all-cases best-results-on-all-cases)
+                              :human (counterexample-check-results-human
+                                      all-cases best-results-on-all-cases))]
+    (cond
+      ; This shouldn't happen, but could
+      (= counterexample-case :passes-all-cases)
+      nil
+      ; This could happen. If so, just ignore it and add another next generation
+      (some #{counterexample-case} (:sub-training-cases @push-argmap))
+      nil
+      ; Add the case to training cases
+      :else
+      (add-cases-to-sub-training-cases (list counterexample-case)))))
 
 (defn check-counterexample-driven-results
   "Returns true if a program has been found that passes all generated training
@@ -122,20 +155,22 @@
    - if so, generate new cases and have checker check if any program passes all of those
     - if so, return that program as a success
     - else, have checker pick case that has wrong answer, have checker give right answer, and add that case to sub-training-cases. return false
-   - else, return false"
-  [sorted-pop {:keys [error-threshold] :as argmap}]
-  (if (> (:total-error (first sorted-pop)) error-threshold)
-    false ; This case handles best individuals that don't pass all current tests
+   - else, return false
 
-    ;(check-if-all-correct-and-update-sub-cases-if-not best argmap) ;; remove this line and uncomment false above
-    (let [best-or-new-cases (check-if-all-correct-and-update-sub-cases-if-not sorted-pop argmap)]
+  If not individuals pass all cases, check if need to add a generational case."
+  [sorted-pop {:keys [error-threshold counterexample-driven-add-case-every-X-generations] :as argmap}]
+  (swap! generations-since-last-case-addition inc)
+  (if (> (:total-error (first sorted-pop)) error-threshold)
+    ; This handles best individuals that don't pass all current tests
+    (do
+      (when (=< 1 counterexample-driven-add-case-every-X-generations generations-since-last-addition)
+        (generational-case-addition (first sorted-pop) ))
+      false)
+    ; This handles best individuals that pass all current cases
+    (let [best-or-new-cases (check-if-all-correct-and-return-new-cases-if-not sorted-pop argmap)]
       (if (= (type best-or-new-cases) clojush.individual.individual)
         best-or-new-cases ; if an individual, it is a success, so return it
         ; Otherwise, add in the new cases, and return false.
         (do
-          (swap! push-argmap (fn [current-argmap] ; if cases, concat them to old cases
-                               (assoc current-argmap
-                                      :sub-training-cases
-                                      (concat (distinct best-or-new-cases)
-                                              (:sub-training-cases current-argmap)))))
+          (add-cases-to-sub-training-cases best-or-new-cases)
           false)))))

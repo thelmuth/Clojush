@@ -174,4 +174,5 @@
    :final-report-simplifications 5000
    :error-threshold 1.0E-3
    :max-error 1000000.0
+   :output-stacks :float
    })

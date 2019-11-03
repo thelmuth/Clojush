@@ -168,4 +168,5 @@
    :report-simplifications 0
    :final-report-simplifications 5000
    :max-error 1
+   :output-stacks :boolean
    })

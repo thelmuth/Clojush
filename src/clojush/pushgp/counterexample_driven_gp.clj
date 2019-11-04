@@ -84,10 +84,10 @@
                                           all-cases best-results-on-all-cases))]
         (when (some #{counterexample-case} (:sub-training-cases @push-argmap))
           (println "Houston, we have a problem. This case is already in the training cases, and has been passed by this program.")
-          (println (:sub-training-cases @push-argmap))
-          (println "new case: " counterexample-case)
-          (println best)
-          (println "run it on new case:" (run-best-on-all-cases best (list counterexample-case) argmap))
+          (prn "existing cases: " (:sub-training-cases @push-argmap))
+          (prn "new case: " counterexample-case)
+          (prn "best individual: " best)
+          (println "run it on new case:" (first (run-best-on-all-cases best (list counterexample-case) argmap)))
           (throw (Exception. "Added a new case already in training cases. See above.")))
         (cond
           ; Found a solution, return it

@@ -613,14 +613,14 @@
       (swap! viz-data-atom assoc :generation generation))
     (let [counterexample-driven-success (if counterexample-driven
                                           (check-counterexample-driven-results sorted argmap)
-                                          true)]
+                                          false)]
       (cond
         ; Succeed for counterexample-driven GP
         counterexample-driven-success
         [:success counterexample-driven-success]
         ; Succeed
         (and exit-on-success
-             counterexample-driven-success
+             (not counterexample-driven)
              (or (<= (:total-error best) error-threshold)
                  (:success best)))
         [:success best]

@@ -66,7 +66,7 @@
                           :max-error 1000}))
   ([i error-function rand-gen
     {:keys [reuse-errors print-history total-error-method normalization max-error
-            parent-selection counterexample-driven]
+            parent-selection counterexample-driven static-downsampled-training-set]
      :as argmap}]
     (random/with-rng rand-gen
       (let [p (:program i)
@@ -75,7 +75,8 @@
                           i
                           ;;
                           (or (= parent-selection :downsampled-lexicase)
-                              counterexample-driven)
+                              counterexample-driven
+                              static-downsampled-training-set)
                           (error-function i (:sub-training-cases argmap))
                           ;;
                           :else

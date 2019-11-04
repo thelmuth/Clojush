@@ -88,11 +88,12 @@
 
          :training-cases '()
           ;; The list of training cases (inputs and outputs). Used for some parent
-          ;; selection methods, such as downsampled lexicase and counterexample-driven GP.
+          ;; selection methods, such as downsampled lexicase, counterexample-driven GP,
+          ;; and static downsampled training set.
 
          :sub-training-cases '()
-          ;; The subsample of the training cases used for downsampled lexicase and
-          ;; counterexample-driven GP.
+          ;; The subsample of the training cases used for downsampled lexicase,
+          ;; counterexample-driven GP, and static downsampled training set.
 
           ;;----------------------------------------
           ;; Counterexample-driven GP
@@ -126,6 +127,18 @@
           ;; Gives the stacks to take outputs from. Should just be single stack
           ;; if one output, and a vector of stacks if multiple. Used by
           ;; counterexample-driven GP
+
+          ;;----------------------------------------
+          ;; Static Downsampled Training Set
+          ;;----------------------------------------
+
+         :static-downsampled-training-set false
+          ;; If true, will enable static downsampled training set, which means that
+          ;; the training set will be composed of a single downsampled set that does
+          ;; not change throughout the run
+
+         :static-downsampled-number-of-training-cases 10
+          ;; The number of cases to use when using static downsampled training set
 
           ;;----------------------------------------
           ;; Genetic operator probabilities

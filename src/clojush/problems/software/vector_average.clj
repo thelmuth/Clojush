@@ -175,4 +175,5 @@
    :error-threshold 1.0E-3
    :max-error 1000000.0
    :output-stacks :float
+   :single-vector-input true
    })

@@ -44,11 +44,12 @@
 (defn run-best-on-all-cases
   "Runs the program best on all generated cases, and returns a list of the
   behaviors/results of the program on those cases."
-  [best all-cases {:keys [output-stacks] :as argmap}]
+  [best all-cases {:keys [output-stacks single-vector-input] :as argmap}]
   (doall (for [[input correct-output] all-cases]
-           (let [inputs (if (coll? input)
-                          input
-                          (list input))
+           (let [inputs (if (or single-vector-input
+                                (not (coll? input)))
+                          (list input)
+                          input)
                  start-state (reduce (fn [push-state in]
                                        (push-item in :input push-state))
                                      (push-item "" :output (make-push-state))
@@ -87,7 +88,7 @@
           (prn "existing cases: " (:sub-training-cases @push-argmap))
           (prn "new case: " counterexample-case)
           (prn "best individual: " best)
-          (println "run it on new case:" (first (run-best-on-all-cases best (list counterexample-case) argmap)))
+          (prn "run it on new case:" (first (run-best-on-all-cases best (list counterexample-case) argmap)))
           (throw (Exception. "Added a new case already in training cases. See above.")))
         (cond
           ; Found a solution, return it

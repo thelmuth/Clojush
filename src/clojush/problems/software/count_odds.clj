@@ -172,4 +172,5 @@
    :report-simplifications 0
    :final-report-simplifications 5000
    :max-error 1000
+   :single-vector-input true
    })

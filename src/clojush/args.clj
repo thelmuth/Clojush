@@ -128,6 +128,11 @@
           ;; if one output, and a vector of stacks if multiple. Used by
           ;; counterexample-driven GP
 
+         :single-vector-input false
+          ;; true if the input for the problem is a single vector of something, false
+          ;; otherwise. This is a bit hacky of a workaround for telling whether to treat
+          ;; the inputs from test cases as inputs or vectors of inputs when using CDGP.
+
           ;;----------------------------------------
           ;; Static Downsampled Training Set
           ;;----------------------------------------

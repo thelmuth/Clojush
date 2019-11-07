@@ -178,6 +178,6 @@
    :report-simplifications 0
    :final-report-simplifications 5000
    :max-error 5000
-   :output-stacks :vector-integer
+   :output-stacks :vector_integer
    :single-vector-input true
    })

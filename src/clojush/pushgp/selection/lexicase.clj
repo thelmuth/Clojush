@@ -20,8 +20,10 @@
 (defn lexicase-selection
   "Returns an individual that does the best on the fitness cases when considered one at a
   time in random order."
-  [pop argmap]
-  (loop [survivors pop
+  [pop {:keys [lexicase-pool-size] :as argmap}]
+  (loop [survivors (if (nil? lexicase-pool-size)
+                     pop
+                     (repeatedly lexicase-pool-size #(lrand-nth pop)))
          cases (shuffle-cases pop argmap)]
     (if (or (empty? cases)
             (empty? (rest survivors))

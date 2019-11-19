@@ -384,7 +384,12 @@
          ;; When set to integer > 1, sets the batch size for batch lexicase selection.
          ;; Should work with any parent selection that uses an individual's :errors,
          ;; such as lexicase, epsilon-lexicase, etc.
-         
+
+         :lexicase-pool-size nil
+          ;; When non-nil, should be a positive integer indicating the pool size (equivalent
+          ;; to a tournament size) when using pooled lexicase. For example, if set to 100,
+          ;; will randomly sample 100 individuals from the population and then run lexicase on them.
+
          :tournament-size 7
           ;; If using tournament selection, the size of the tournaments.
 

@@ -3,7 +3,7 @@
         [clojush.pushgp.selection preselection tournament lexicase epsilon-lexicase
          elitegroup-lexicase random-threshold-lexicase random-toggle-lexicase 
          randomly-truncated-lexicase novelty rarified-lexicase subset-tournament
-         fitness-proportionate]))
+         fitness-proportionate knobelty]))
 
 (defn select
   "Returns a selected parent."
@@ -39,6 +39,7 @@
                                      (lrand-nth preselected)
                                      (lexicase-selection preselected argmap))
                    :novelty-search (novelty-tournament-selection preselected argmap)
+                   :knobelty (knobelty-selection preselected argmap)
                    :uniform (lrand-nth preselected)
                    :rarified-lexicase (rarified-lexicase-selection preselected argmap)
                    :subset-tournament (subset-tournament-selection preselected argmap)

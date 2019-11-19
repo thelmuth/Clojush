@@ -87,6 +87,7 @@
   ;;
   ;; calculate novelty when novelty-search or novelty meta errors are used
   (when (or (= (:parent-selection argmap) :novelty-search)
+            (= (:parent-selection argmap) :knobelty)
             (some #{:novelty} (:meta-error-categories argmap)))
     (calculate-novelty pop-agents novelty-archive argmap))
   ;; calculates novelty lexicase meta errors

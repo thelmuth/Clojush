@@ -332,7 +332,7 @@
           ;; The parent selection method. Options include :tournament, :lexicase, :epsilon-lexicase,
           ;; :elitegroup-lexicase, :uniform, :leaky-lexicase, :random-threshold-lexicase,
           ;; :random-toggle-lexicase, :randomly-truncated-lexicase, :truncated-lexicase,
-          ;; :novelty-search, :downsampled-lexcase
+          ;; :novelty-search, :downsampled-lexcase, :knobelty
 
          :epsilon-lexicase-version :semi-dynamic
           ;; The version of epsilon-lexicase selection to use.
@@ -496,6 +496,11 @@
          :novelty-number-of-neighbors-k 25
           ;; The number of neighbors to consider when calculating the sparseness with
           ;; regard to the nearest neighbors. Paper claims it is "robust to modest variation."
+
+         :knobelty-novelty-probability 0.2
+          ;; When using :knobelty parent selection, gives the probability of using novelty
+          ;; search selection vs. lexicase selection. The default of 0.2 is what worked
+          ;; best in the original paper.
 
          :selection-delay false
           ;; If  this is truthy, then it should be a positive integer d, and all parents

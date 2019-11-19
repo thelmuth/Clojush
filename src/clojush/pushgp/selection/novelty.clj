@@ -116,10 +116,8 @@
 (defn novelty-tournament-selection
   "Returns an individual that does the best out of a tournament based on novelty."
   [pop {:keys [tournament-size] :as argmap}]
-  (let [tournament-set (doall (for [_ (range tournament-size)]
-                                (lrand-nth pop)))]
-    (reduce (fn [i1 i2] (if (> (:novelty i1) (:novelty i2)) i1 i2))
-            tournament-set)))
+  (let [tournament-set (repeatedly tournament-size #(lrand-nth pop))]
+    (apply max-key :novelty tournament-set)))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

@@ -33,52 +33,60 @@
   file_readchar
   ^{:stack-types [:char]}
   (fn [state]
-    (let [file (top-item :input state)
-          first-char (first file)
-          inp-result (push-item (apply str (rest file))
-                                :input
-                                (pop-item :input state))]
-      (if (= file "")
-        state
-        (push-item first-char
-                   :char
-                   inp-result)))))
+    (if (:autoconstructing state)
+      state
+      (let [file (top-item :input state)
+            first-char (first file)
+            inp-result (push-item (apply str (rest file))
+                                  :input
+                                  (pop-item :input state))]
+        (if (= file "")
+          state
+          (push-item first-char
+                     :char
+                     inp-result))))))
 
 (define-registered
   file_readline
   ^{:stack-types [:string]}
   (fn [state]
-    (let [file (top-item :input state)
-          index (inc (.indexOf file "\n"))
-          has-no-newline (= 0 index)
-          inp-result (push-item (if has-no-newline
-                                  ""
-                                  (subs file index))
-                                :input
-                                (pop-item :input state))]
-      (if (= file "")
-        state
-        (if has-no-newline
-          (push-item file :string inp-result)
-          (push-item (subs file 0 index)
-                     :string
-                     inp-result))))))
+    (if (:autoconstructing state)
+      state
+      (let [file (top-item :input state)
+            index (inc (.indexOf file "\n"))
+            has-no-newline (= 0 index)
+            inp-result (push-item (if has-no-newline
+                                    ""
+                                    (subs file index))
+                                  :input
+                                  (pop-item :input state))]
+        (if (= file "")
+          state
+          (if has-no-newline
+            (push-item file :string inp-result)
+            (push-item (subs file 0 index)
+                       :string
+                       inp-result)))))))
 
 (define-registered
   file_EOF
   ^{:stack-types [:boolean]}
   (fn [state]
-    (let [file (top-item :input state)
-          result (empty? file)]
-      (push-item result :boolean state))))
+    (if (:autoconstructing state)
+      state
+      (let [file (top-item :input state)
+            result (empty? file)]
+        (push-item result :boolean state)))))
 
 (define-registered
   file_begin
   ^{:stack-types [:input]}
   (fn [state]
-    (push-item (stack-ref :input 1 state)
-               :input
-               (pop-item :input state))))
+    (if (:autoconstructing state)
+      state
+      (push-item (stack-ref :input 1 state)
+                 :input
+                 (pop-item :input state)))))
 
 ; Atom generators
 (def word-stats-atom-generators
@@ -196,7 +204,7 @@
                        (for [[input [correct-output sentences words-per-sentence]] (case data-cases
                                                                                      :train train-cases
                                                                                      :test test-cases
-                                                                                     [])]
+                                                                                     data-cases)]
                          (let [final-state (run-push (:program individual)
                                                      (->> (make-push-state)
                                                        (push-item input :input)
@@ -222,9 +230,9 @@
                                (round-to-n-decimal-places (abs (- result-f words-per-sentence)) 4)
                                10000.0) ;Penalty
                              )))))]
-        (if (= data-cases :train)
-          (assoc individual :behaviors @behavior :errors errors)
-          (assoc individual :test-errors errors))))))
+        (if (= data-cases :test)
+          (assoc individual :test-errors errors)
+          (assoc individual :behaviors @behavior :errors errors))))))
 
 (defn get-word-stats-train-and-test
   "Returns the train and test cases."
@@ -273,6 +281,7 @@
 (def argmap
   {:error-function (make-word-stats-error-function-from-cases (first word-stats-train-and-test-cases)
                                                               (second word-stats-train-and-test-cases))
+   :training-cases (first word-stats-train-and-test-cases)
    :atom-generators word-stats-atom-generators
    :max-points 3200
    :max-genome-size-in-initial-program 400
@@ -295,3 +304,4 @@
    :error-threshold 0.02
    :max-error 10000
    })
+

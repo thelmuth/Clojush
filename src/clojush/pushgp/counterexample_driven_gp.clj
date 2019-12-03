@@ -1,5 +1,5 @@
 (ns clojush.pushgp.counterexample-driven-gp
-  (:use [clojush random args pushstate interpreter globals individual]))
+  (:use [clojush random args pushstate interpreter globals individual util]))
 
 ; NOTE: When using counterexample-driven GP, only uses the current set of training
 ;       cases when simplifying at the end of a run. While intentional for now,
@@ -11,10 +11,14 @@
   if so and false otherwise. If not, also updates :sub-training-cases by
   adding a wrong case.
   This version is automatic, using the known right answers."
-  [all-cases best-results-on-all-cases]
+  [all-cases best-results-on-all-cases {:keys [output-stacks]}]
   (let [wrong-cases (remove #(= % :right-answer-on-case)
                             (map (fn [case best-result]
-                                   (if (= (last case) best-result)
+                                   (if (if (= output-stacks :float)
+                                         ; NOTE: this won't work for Number IO and other problems with printed float outputs
+                                         (= (round-to-n-decimal-places (last case) 4)
+                                            (round-to-n-decimal-places best-result 4))
+                                         (= (last case) best-result))
                                      :right-answer-on-case
                                      case))
                                  all-cases
@@ -80,7 +84,7 @@
       (let [best-results-on-all-cases (run-best-on-all-cases best all-cases argmap)
             counterexample-case (case counterexample-driven-case-checker
                                   :automatic (counterexample-check-results-automatic
-                                              all-cases best-results-on-all-cases)
+                                              all-cases best-results-on-all-cases argmap)
                                   :human (counterexample-check-results-human
                                           all-cases best-results-on-all-cases))]
         (when (some #{counterexample-case} (:sub-training-cases @push-argmap))
@@ -134,7 +138,7 @@
         best-results-on-all-cases (run-best-on-all-cases best all-cases argmap)
         counterexample-case (case counterexample-driven-case-checker
                               :automatic (counterexample-check-results-automatic
-                                          all-cases best-results-on-all-cases)
+                                          all-cases best-results-on-all-cases argmap)
                               :human (counterexample-check-results-human
                                       all-cases best-results-on-all-cases))]
     (cond

@@ -101,7 +101,7 @@
                            (vector
                              ; Error 1: float absolute error
                              (if (number? result)
-                               (float (abs (- result correct-output))) ;distance from correct integer
+                               (float (abs (- result correct-output))) ;distance from correct float
                                1000000.0) ;penalty for no return value
                              ; Error 2: Levenshtein distance of strings
                              (levenshtein-distance (str correct-output) (str result))

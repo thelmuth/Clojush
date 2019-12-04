@@ -26,11 +26,11 @@
         rand-gen (random/make-mersennetwister-rng (random/lrand-bytes (:mersennetwister random/*seed-length*)))]
     (loop [n 0
            best {:errors '(1) :total-error 1e100}]
-      (when (= 0 (mod n 1))
+      (when (= 0 (mod n 1000))
         (println)
-        (println "Evaluating individual" n)
-        (println "Executions used:" @program-executions-count)
-        (println "Best zeros to start errors:" (num-starting-zeros-of-inds-errors best)))
+        (println "Ind:" n)
+        (println "Executions:" @program-executions-count)
+        (println "Best zeros:" (num-starting-zeros-of-inds-errors best)))
       (if (>= @program-executions-count (:max-program-executions argmap))
         (do (println "FAILURE")
             (println "Best found individual:" best)
@@ -48,13 +48,22 @@
                                               argmap)]
           (if (empty? (remove #(= % 0) (:errors individual)))
             (do
-              (println "SUCCESS")
-              (println ";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;")
-              (prn individual))
+              (println "\n;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;")
+              (println "SUCCESSFUL INDIVIDUAL")
+              (prn individual)
+              (println "\n;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;")
+              (println "Testing unsimplified on test data")
+              ((:problem-specific-report argmap)
+               (assoc individual :total-error (apply +' (:errors individual)))
+               '(individual)
+               n
+               (:error-function argmap)
+               (:final-report-simplifications argmap))
+              (println "\n;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;")
+              (println "Simplifying and re-testing")
+              (final-report n individual argmap))
             (recur (inc n)
                    (max-key num-starting-zeros-of-inds-errors
                             best individual)
                    #_(min-key :total-error
                             best individual))))))))
-
-;; Can I make error functions lazy to only run until first non-zero error?

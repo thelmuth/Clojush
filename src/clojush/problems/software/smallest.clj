@@ -71,27 +71,27 @@
 
       (let [behavior (atom '())
             errors (doall
-                     (for [[[input1 input2 input3 input4] out-int] (case data-cases
-                                                                     :train train-cases
-                                                                     :test test-cases
-                                                                     data-cases)]
-                       (let [final-state (run-push (:program individual)
-                                                   (->> (make-push-state)
-                                                     (push-item input4 :input)
-                                                     (push-item input3 :input)
-                                                     (push-item input2 :input)
-                                                     (push-item input1 :input)
-                                                     (push-item "" :output)))
-                             printed-result (stack-ref :output 0 final-state)]
-                         (when print-outputs
-                           (println (format "Correct output: %-19s | Program output: %-19s" (str out-int) printed-result)))
-                         ; Record the behavior
-                         (swap! behavior conj printed-result)
-                         ; Each test case is either right or wrong
-                         (if (= printed-result (str out-int))
-                           0
-                           1))))]
-
+                    (for [[[input1 input2 input3 input4] out-int] (case data-cases
+                                                                    :train train-cases
+                                                                    :test test-cases
+                                                                    data-cases)]
+                      (let [final-state (run-push (:program individual)
+                                                  (->> (make-push-state)
+                                                       (push-item input4 :input)
+                                                       (push-item input3 :input)
+                                                       (push-item input2 :input)
+                                                       (push-item input1 :input)
+                                                       (push-item "" :output)))
+                            printed-result (stack-ref :output 0 final-state)]
+                        (when print-outputs
+                          (println (format "Correct output: %-19s | Program output: %-19s" (str out-int) printed-result)))
+                                        ; Record the behavior
+                        (swap! behavior conj printed-result)
+                                        ; Each test case is either right or wrong
+                        (if (= printed-result (str out-int))
+                          0
+                          1))))]
+        
         (if (= data-cases :test)
           (assoc individual :test-errors errors)
           (assoc individual :behaviors @behavior :errors errors)

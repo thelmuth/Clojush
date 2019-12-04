@@ -17,7 +17,8 @@
 
 (ns clojush.core
   (:require [clojush.pushgp.record :as r])
-  (:use [clojush.pushgp pushgp report])
+  (:use [clojush.pushgp pushgp report]
+        clojush.random-individual-search)
   (:gen-class))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -44,5 +45,7 @@
       (println "Parameters set at command line or in problem file argmap; may or may not be default:")
       (print-params (into (sorted-map) params))
       (println "######################################")
-      (pushgp params)
+      (if (:random-individual-search params)
+        (push-random-individual-search params)
+        (pushgp params))
       (shutdown-agents))))

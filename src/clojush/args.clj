@@ -19,6 +19,11 @@
          :run-uuid nil
           ;; This will be set to a new type 4 pseudorandom UUID on every run.
 
+         :random-individual-search false
+          ;; When true, will not run GP, but will instead generate random
+          ;; individuals until a solution is found or the max-program-executions
+          ;; is exceeded.
+         
           ;;----------------------------------------
           ;; Standard GP arguments
           ;;----------------------------------------

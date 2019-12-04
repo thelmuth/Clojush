@@ -76,25 +76,24 @@
      (the-actual-csl-error-function individual data-cases false))
     ([individual data-cases print-outputs]
       (let [behavior (atom '())
-            errors (doall
-                     (for [[[input1 input2 input3] correct-output] (case data-cases
-                                                                     :train train-cases
-                                                                     :test test-cases
-                                                                     data-cases)]
-                       (let [final-state (run-push (:program individual)
-                                                   (->> (make-push-state)
-                                                     (push-item input3 :input)
-                                                     (push-item input2 :input)
-                                                     (push-item input1 :input)))
-                             result (top-item :boolean final-state)]
-                         (when print-outputs
-                           (println (format "Correct output: %5b | Program output: %s" correct-output (str result))))
-                         ; Record the behavior
-                         (swap! behavior conj result)
-                         ; Error is boolean error
-                         (if (= result correct-output)
-                           0
-                           1))))]
+            errors (for [[[input1 input2 input3] correct-output] (unchunk (case data-cases
+                                                                            :train train-cases
+                                                                            :test test-cases
+                                                                            data-cases))]
+                     (let [final-state (run-push (:program individual)
+                                                 (->> (make-push-state)
+                                                      (push-item input3 :input)
+                                                      (push-item input2 :input)
+                                                      (push-item input1 :input)))
+                           result (top-item :boolean final-state)]
+                       (when print-outputs
+                         (println (format "Correct output: %5b | Program output: %s" correct-output (str result))))
+                                        ; Record the behavior
+                       (swap! behavior conj result)
+                                        ; Error is boolean error
+                       (if (= result correct-output)
+                         0
+                         1)))]
         (if (= data-cases :test)
           (assoc individual :test-errors errors)
           (assoc individual :behaviors @behavior :errors errors)

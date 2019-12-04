@@ -88,22 +88,21 @@
      (the-actual-double-letters-error-function individual data-cases false))
     ([individual data-cases print-outputs]
       (let [behavior (atom '())
-            errors (doall
-                     (for [[input correct-output] (case data-cases
-                                                    :train train-cases
-                                                    :test test-cases
-                                                    data-cases)]
-                       (let [final-state (run-push (:program individual)
-                                                   (->> (make-push-state)
-                                                     (push-item input :input)
-                                                     (push-item "" :output)))
-                             printed-result (stack-ref :output 0 final-state)]
-                         (when print-outputs
-                           (println (format "| Correct output: %s\n| Program output: %s\n" (pr-str correct-output) (pr-str printed-result))))
-                         ; Record the behavior
-                         (swap! behavior conj printed-result)
-                         ; Error is Levenshtein distance
-                         (levenshtein-distance correct-output printed-result))))]
+            errors (for [[input correct-output] (unchunk (case data-cases
+                                                           :train train-cases
+                                                           :test test-cases
+                                                           data-cases))]
+                     (let [final-state (run-push (:program individual)
+                                                 (->> (make-push-state)
+                                                      (push-item input :input)
+                                                      (push-item "" :output)))
+                           printed-result (stack-ref :output 0 final-state)]
+                       (when print-outputs
+                         (println (format "| Correct output: %s\n| Program output: %s\n" (pr-str correct-output) (pr-str printed-result))))
+                                        ; Record the behavior
+                       (swap! behavior conj printed-result)
+                                        ; Error is Levenshtein distance
+                       (levenshtein-distance correct-output printed-result)))]
         (if (= data-cases :test)
           (assoc individual :test-errors errors)
           (assoc individual :behaviors @behavior :errors errors)

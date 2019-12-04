@@ -5,6 +5,13 @@
         [clojush.pushgp report genetic-operators]))
 
 
+(defn num-starting-zeros-of-inds-errors
+  [ind]
+  (if (not= (first (:errors ind)) 0)
+    0
+    (count (first (partition-by #(= % 0)
+                                (:errors ind))))))
+
 (defn push-random-individual-search
   "Conducts a search by generating random individuals, testing each until one is found that passes all training cases."
   [args]
@@ -18,15 +25,16 @@
                       (/ (:max-points @push-argmap) 4))
         rand-gen (random/make-mersennetwister-rng (random/lrand-bytes (:mersennetwister random/*seed-length*)))]
     (loop [n 0
-           best {:total-error 10e100}]
-      (when (= 0 (mod n 100))
+           best {:errors '(1) :total-error 1e100}]
+      (when (= 0 (mod n 1))
         (println)
         (println "Evaluating individual" n)
         (println "Executions used:" @program-executions-count)
-        (println "Best error so far:" (:total-error best)))
-      (if (> @program-executions-count (:max-program-executions argmap))
+        (println "Best zeros to start errors:" (num-starting-zeros-of-inds-errors best)))
+      (if (>= @program-executions-count (:max-program-executions argmap))
         (do (println "FAILURE")
-            (println "Best found individual:" best))
+            (println "Best found individual:" best)
+            )
         (let [ind-genome (genesis argmap)
               ind-program (assoc ind-genome :program
                                  (case (:genome-representation argmap)
@@ -38,10 +46,15 @@
                                               (:error-function argmap)
                                               rand-gen
                                               argmap)]
-          (if (= (:total-error individual) 0)
+          (if (empty? (remove #(= % 0) (:errors individual)))
             (do
               (println "SUCCESS")
               (println ";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;")
               (prn individual))
             (recur (inc n)
-                   (min-key :total-error best individual))))))))
+                   (max-key num-starting-zeros-of-inds-errors
+                            best individual)
+                   #_(min-key :total-error
+                            best individual))))))))
+
+;; Can I make error functions lazy to only run until first non-zero error?

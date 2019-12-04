@@ -87,24 +87,23 @@
      (the-actual-negative-to-zero-error-function individual data-cases false))
     ([individual data-cases print-outputs]
       (let [behavior (atom '())
-            errors (doall
-                     (for [[input1 correct-output] (case data-cases
-                                                     :train train-cases
-                                                     :test test-cases
-                                                     data-cases)]
-                       (let [final-state (run-push (:program individual)
-                                                   (->> (make-push-state)
-                                                     (push-item input1 :input)))
-                             result (top-item :vector_integer final-state)]
-                         (when print-outputs
-                           (println (format "| Correct output: %s\n| Program output: %s\n" (pr-str correct-output) (pr-str result))))
-                         ; Record the behavior
-                         (swap! behavior conj result)
-                         ; Error is Levenshtein distance of vectors
-                         (if (vector? result)
-                           (levenshtein-distance correct-output result)
-                           5000) ; penalty for no return value
-                         )))]
+            errors (for [[input1 correct-output] (unchunk (case data-cases
+                                                            :train train-cases
+                                                            :test test-cases
+                                                            data-cases))]
+                     (let [final-state (run-push (:program individual)
+                                                 (->> (make-push-state)
+                                                      (push-item input1 :input)))
+                           result (top-item :vector_integer final-state)]
+                       (when print-outputs
+                         (println (format "| Correct output: %s\n| Program output: %s\n" (pr-str correct-output) (pr-str result))))
+                                        ; Record the behavior
+                       (swap! behavior conj result)
+                                        ; Error is Levenshtein distance of vectors
+                       (if (vector? result)
+                         (levenshtein-distance correct-output result)
+                         5000) ; penalty for no return value
+                       ))]
         (if (= data-cases :test)
           (assoc individual :test-errors errors)
           (assoc individual :behaviors @behavior :errors errors)

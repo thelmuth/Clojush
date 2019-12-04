@@ -129,37 +129,36 @@
      (the-actual-x-word-lines-error-function individual data-cases false))
     ([individual data-cases print-outputs]
       (let [behavior (atom '())
-            errors (flatten
-                     (doall
-                       (for [[[input1 input2] correct-output] (case data-cases
-                                                                :train train-cases
-                                                                :test test-cases
-                                                                data-cases)]
-                         (let [final-state (run-push (:program individual)
-                                                     (->> (make-push-state)
+            errors (lazy-flatten-single-nesting
+                    (for [[[input1 input2] correct-output] (unchunk (case data-cases
+                                                                      :train train-cases
+                                                                      :test test-cases
+                                                                      data-cases))]
+                      (let [final-state (run-push (:program individual)
+                                                  (->> (make-push-state)
                                                        (push-item input2 :input)
                                                        (push-item input1 :input)
                                                        (push-item "" :output)))
-                               result (stack-ref :output 0 final-state)]
-                           (when print-outputs
-                             (println (format "| Correct output: %s\n| Program output: %s\n" (pr-str correct-output) (pr-str result))))
-                           ; Record the behavior
-                           (swap! behavior conj result)
-                           (vector
-                             ; First error is Levenshtein distance of printed strings
-                             (levenshtein-distance correct-output result)
-                             ; Second error is integer distance from the correct number of newlines
-                             (abs (- (count (filter #(= % \newline) correct-output))
-                                     (count (filter #(= % \newline) result))))
-                             ; Third error is summed error of integer distances over the lines of the correct number of words per line
-                             (+ (apply + (map #(abs (- input2
-                                                       (count (string/split (string/trim %) #"\s+"))))
-                                              (butlast (string/split-lines result))))
-                                (abs (- (count (string/split (string/trim (last (string/split-lines correct-output))) #"\s+"))
-                                        (count (string/split (string/trim (let [last-line (last (string/split-lines result))]
-                                                                            (if last-line last-line "")))
-                                                             #"\s+")))))
-                             )))))]
+                            result (stack-ref :output 0 final-state)]
+                        (when print-outputs
+                          (println (format "| Correct output: %s\n| Program output: %s\n" (pr-str correct-output) (pr-str result))))
+                                        ; Record the behavior
+                        (swap! behavior conj result)
+                        (vector
+                                        ; First error is Levenshtein distance of printed strings
+                         (levenshtein-distance correct-output result)
+                                        ; Second error is integer distance from the correct number of newlines
+                         (abs (- (count (filter #(= % \newline) correct-output))
+                                 (count (filter #(= % \newline) result))))
+                                        ; Third error is summed error of integer distances over the lines of the correct number of words per line
+                         (+ (apply + (map #(abs (- input2
+                                                   (count (string/split (string/trim %) #"\s+"))))
+                                          (butlast (string/split-lines result))))
+                            (abs (- (count (string/split (string/trim (last (string/split-lines correct-output))) #"\s+"))
+                                    (count (string/split (string/trim (let [last-line (last (string/split-lines result))]
+                                                                        (if last-line last-line "")))
+                                                         #"\s+")))))
+                         ))))]
         (if (= data-cases :test)
           (assoc individual :test-errors errors)
           (assoc individual :behaviors @behavior :errors errors))))))

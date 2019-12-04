@@ -70,6 +70,7 @@
      :as argmap}]
     (random/with-rng rand-gen
       (let [p (:program i)
+            ;x (println "1:" @program-executions-count)
             evaluated-i (cond
                           (and reuse-errors (not (nil? (:errors i))))
                           i
@@ -79,30 +80,37 @@
                           ;;
                           :else
                           (error-function i))
+            ;y (println "2:" @program-executions-count)
             raw-errors (:errors evaluated-i)
-            e (vec (if (and reuse-errors (not (nil? (:errors i))))
-                     (:errors i)
-                     (do
-                       (swap! evaluations-count inc)
-                       (normalize-errors raw-errors normalization max-error))))
-            te (if (and reuse-errors (not (nil? (:total-error i))))
-                 (:total-error i)
-                 (compute-total-error raw-errors))
-            ne (if (and reuse-errors (not (nil? (:normalized-error i))))
-                 (:normalized-error i)
-                 (compute-total-error e))
-            we (case total-error-method
-                 :sum nil
-                 :ifs nil ; calculated later
-                 :eliteness nil ; calculated later
-                 :hah (compute-hah-error e)
-                 :rmse (compute-root-mean-square-error e)
-                 nil)
+            ;y (println "3:" @program-executions-count)
+            ;; e (vec (if (and reuse-errors (not (nil? (:errors i))))
+            ;;          (:errors i)
+            ;;          (do
+            ;;            (swap! evaluations-count inc)
+            ;;            (normalize-errors raw-errors normalization max-error))))
+            ;y (println "4:" @program-executions-count)
+            ;; te (if (and reuse-errors (not (nil? (:total-error i))))
+            ;;      (:total-error i)
+            ;;      (compute-total-error raw-errors))
+            ;; ne (if (and reuse-errors (not (nil? (:normalized-error i))))
+            ;;      (:normalized-error i)
+            ;;      (compute-total-error e))
+            ;; we (case total-error-method
+            ;;      :sum nil
+            ;;      :ifs nil ; calculated later
+            ;;      :eliteness nil ; calculated later
+            ;;      :hah (compute-hah-error e)
+            ;;      :rmse (compute-root-mean-square-error e)
+            ;;      nil)
             new-ind (assoc evaluated-i ; Assign errors and history to i
-                           :errors e
-                           :total-error te
-                           :weighted-error we
-                           :normalized-error ne
-                           :history (if print-history (cons e (:history i)) (:history i)))]
+                           :errors raw-errors
+                           ;; :total-error te
+                           ;; :weighted-error we
+                           ;; :normalized-error ne
+                           )
+            ;y (println "5:" @program-executions-count)
+            ]
+        ;(println "6:" @program-executions-count)
+        
         new-ind))))
 

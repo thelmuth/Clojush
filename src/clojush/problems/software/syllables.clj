@@ -91,30 +91,29 @@
      (the-actual-syllables-error-function individual data-cases false))
     ([individual data-cases print-outputs]
       (let [behavior (atom '())
-            errors (flatten
-                     (doall
-                       (for [[input correct-output] (case data-cases
-                                                      :train train-cases
-                                                      :test test-cases
-                                                      data-cases)]
-                         (let [final-state (run-push (:program individual)
-                                                     (->> (make-push-state)
-                                                       (push-item input :input)
-                                                       (push-item "" :output)))
-                               printed-result (stack-ref :output 0 final-state)]
-                           (when print-outputs
-                             (println (format "\n| Correct output: %s\n| Program output: %s" (pr-str correct-output) (pr-str printed-result))))
-                           ; Record the behavior
-                           (swap! behavior conj printed-result)
-                           ; Error is Levenshtein distance and, if ends in an integer, distance from correct integer
-                           (vector
-                             (levenshtein-distance correct-output printed-result)
-                             (if-let [num-result (try (Integer/parseInt (last (string/split printed-result #"\s+")))
+            errors (lazy-flatten-single-nesting
+                    (for [[input correct-output] (unchunk (case data-cases
+                                                            :train train-cases
+                                                            :test test-cases
+                                                            data-cases))]
+                       (let [final-state (run-push (:program individual)
+                                                   (->> (make-push-state)
+                                                        (push-item input :input)
+                                                        (push-item "" :output)))
+                             printed-result (stack-ref :output 0 final-state)]
+                         (when print-outputs
+                           (println (format "\n| Correct output: %s\n| Program output: %s" (pr-str correct-output) (pr-str printed-result))))
+                                        ; Record the behavior
+                         (swap! behavior conj printed-result)
+                                        ; Error is Levenshtein distance and, if ends in an integer, distance from correct integer
+                         (vector
+                          (levenshtein-distance correct-output printed-result)
+                          (if-let [num-result (try (Integer/parseInt (last (string/split printed-result #"\s+")))
                                                    (catch Exception e nil))]
-                               (abs (- (Integer/parseInt (last (string/split correct-output #"\s+")))
-                                       num-result)) ;distance from correct integer
-                               1000)
-                             )))))]
+                            (abs (- (Integer/parseInt (last (string/split correct-output #"\s+")))
+                                    num-result)) ;distance from correct integer
+                            1000)
+                          ))))]
         (if (= data-cases :test)
           (assoc individual :test-errors errors)
           (assoc individual :behaviors @behavior :errors errors))))))

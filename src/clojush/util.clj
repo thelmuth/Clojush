@@ -8,6 +8,19 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; utilities
 
+(defn unchunk [s]
+  (when (seq s)
+    (lazy-seq
+      (cons (first s)
+            (unchunk (next s))))))
+
+(defn lazy-flatten-single-nesting
+  [colls]
+  (lazy-seq
+    (when (seq colls)
+      (concat (first colls)
+              (lazy-flatten-single-nesting (rest colls))))))
+
 (def literals
   (atom
     {:integer integer?

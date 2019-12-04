@@ -26,7 +26,7 @@
         rand-gen (random/make-mersennetwister-rng (random/lrand-bytes (:mersennetwister random/*seed-length*)))]
     (loop [n 0
            best {:errors '(1) :total-error 1e100}]
-      (when (= 0 (mod n 1000))
+      (when (= 0 (mod n 10))
         (println)
         (println "Ind:" n)
         (println "Executions:" @program-executions-count)

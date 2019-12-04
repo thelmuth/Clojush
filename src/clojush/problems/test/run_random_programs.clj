@@ -1,5 +1,4 @@
 (ns clojush.problems.test.run-random-programs
-  (:require [dire.core :refer [with-handler!]])
   (:use clojush.pushgp.pushgp
         [clojush pushstate interpreter random util globals]
         clojush.instructions.tag

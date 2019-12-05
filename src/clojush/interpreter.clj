@@ -13,35 +13,43 @@
   ;(def debug-recent-instructions (cons instruction debug-recent-instructions))
   ;(def debug-recent-state state)
   (swap! point-evaluations-count inc)
-  (if (= instruction nil) ;; tests for nil and ignores it
-    state
-    (let [literal-type (recognize-literal instruction)]
-      (cond
-        ;
-        literal-type 
-        (push-item instruction literal-type state)
-        ;
-        (and (vector? instruction) (= [] instruction)) 
-        (push-item [] :vector_integer 
-                   (push-item [] :vector_float 
-                              (push-item [] :vector_string 
-                                         (push-item [] :vector_boolean state))))
-        ;
-        (and (symbol? instruction) 
-             (re-seq #"in\d+" (name instruction))) 
-        (handle-input-instruction instruction state)
-        ;
-        (tag-instruction? instruction) 
-        (handle-tag-instruction instruction state)
-        ;
-        (tagged-code-macro? instruction) 
-        (handle-tag-code-macro instruction state)
-        ;
-        (contains? @instruction-table instruction) 
-        ((instruction @instruction-table) state)
-        ;
-        :else 
-        (throw (Exception. (str "Undefined instruction: " (pr-str instruction))))))))
+  (try
+    (if (= instruction nil) ;; tests for nil and ignores it
+      state
+      (let [literal-type (recognize-literal instruction)]
+        (cond
+                                        ;
+          literal-type 
+          (push-item instruction literal-type state)
+                                        ;
+          (and (vector? instruction) (= [] instruction)) 
+          (push-item [] :vector_integer 
+                     (push-item [] :vector_float 
+                                (push-item [] :vector_string 
+                                           (push-item [] :vector_boolean state))))
+                                        ;
+          (and (symbol? instruction) 
+               (re-seq #"in\d+" (name instruction))) 
+          (handle-input-instruction instruction state)
+                                        ;
+          (tag-instruction? instruction) 
+          (handle-tag-instruction instruction state)
+                                        ;
+          (tagged-code-macro? instruction) 
+          (handle-tag-code-macro instruction state)
+                                        ;
+          (contains? @instruction-table instruction) 
+          ((instruction @instruction-table) state)
+                                        ;
+          :else 
+          (throw (Exception. (str "Undefined instruction: " (pr-str instruction)))))))
+    (catch Throwable e
+      (println "\n---------------------------------------")
+      (println "Exception caught in instruction:" instruction)
+      (println "Push state:")
+      (prn state)
+      (println "---------------------------------------")
+      (throw e))))
 
 (def saved-state-sequence (atom []))
 

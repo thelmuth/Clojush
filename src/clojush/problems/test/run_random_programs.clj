@@ -119,15 +119,15 @@
         (assoc individual
            :errors '(2999 2999 2999)
            :final-state final-state))
-      (catch Exception e
-        (println "Caught exception:" (.getMessage e))
+      (catch Throwable e
+        (println "\nCaught exception:" (.getMessage e))
         (println "---------------------------------------")
         (println "Program:")
         (prn (:program individual))
-        (println "---------------------------------------")
+        (println "\n---------------------------------------")
         (println "Start state:")
         (prn start-state)
-        (println "---------------------------------------")
+        (println "\n---------------------------------------")
         (throw e)
         ))))
 

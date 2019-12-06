@@ -173,3 +173,14 @@
 ;;              (dec n)))))
 
 ;; (list-it 5000)
+
+(defn list-it2
+  [times]
+  (loop [thing '(true)
+         n times]
+    (if (<= n 0)
+      thing
+      (recur (subst thing true thing)
+             (dec n)))))
+
+(count-points (list-it2 11))

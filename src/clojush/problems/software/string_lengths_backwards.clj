@@ -104,7 +104,7 @@
                      (for [[input1 correct-output] (case data-cases
                                                      :train train-cases
                                                      :test test-cases
-                                                     [])]
+                                                     data-cases)]
                        (let [final-state (run-push (:program individual)
                                                    (->> (make-push-state)
                                                      (push-item input1 :input)
@@ -116,9 +116,9 @@
                          (swap! behavior conj result)
                          ; Error is Levenshtein distance
                          (levenshtein-distance correct-output result))))]
-        (if (= data-cases :train)
-          (assoc individual :behaviors @behavior :errors errors)
-          (assoc individual :test-errors errors))))))
+        (if (= data-cases :test)
+          (assoc individual :test-errors errors)
+          (assoc individual :behaviors @behavior :errors errors))))))
 
 (defn get-string-lengths-backwards-train-and-test
   "Returns the train and test cases."
@@ -166,6 +166,8 @@
 (def argmap
   {:error-function (make-string-lengths-backwards-error-function-from-cases (first string-lengths-backwards-train-and-test-cases)
                                                                             (second string-lengths-backwards-train-and-test-cases))
+   :training-cases (first string-lengths-backwards-train-and-test-cases)
+   :sub-training-cases '()
    :atom-generators string-lengths-atom-generators
    :max-points 1200
    :max-genome-size-in-initial-program 150

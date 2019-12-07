@@ -42,6 +42,10 @@
          :max-generations 1001
           ;; The maximum number of generations to run GP.
 
+         :max-program-executions 10e100
+          ;; The maximum number of program executions (running on a single case
+          ;; counts once) to run GP.
+
          :max-point-evaluations 10e100
           ;; The limit for the number of point (instruction) evaluations to
           ;; execute during the run.
@@ -54,6 +58,9 @@
           ;; Maximum size of push programs and push code, as counted by points
           ;; in the program. 1/4 this limit is used as the limit for sizes of
           ;; Plush genomes.
+
+         :max-nested-depth 200
+          ;; Maximum nested depth of push code and other nested objects.
 
          :max-genome-size-in-initial-program 50
           ;; Maximum size of initial Plush genomes in generation 0. Keep in mind
@@ -71,6 +78,14 @@
           ;; When true, children produced through direct reproduction will not be
           ;; re-evaluated but will have the error vector of their parent.
 
+         :training-cases '()
+          ;; The list of training cases (inputs and outputs). Used for some parent
+          ;; selection methods, such as downsampled lexicase.
+
+         :sub-training-cases '()
+          ;; The subsample of the training cases used for downsampled lexicase.
+
+         
           ;;----------------------------------------
           ;; Genetic operator probabilities
           ;;----------------------------------------
@@ -217,7 +232,7 @@
           ;; :replace-child-that-exceeds-size-limit-with to :empty. Also, empty-genome individuals
           ;; will not be selected as parents. You will probably also want to provide a high value
           ;; for :max-generations. If :autoconstructive is :revertable, rather than true, then
-          ;; :genetic-operator-probabilities will be {[:make-next-operator-revertable 
+          ;; :genetic-operator-probabilities will be {[:make-next-operator-revertable
           ;; :autoconstruction] 1.0}.
 
          :autoconstructive-diversification-test :gecco2016
@@ -319,8 +334,13 @@
          :parent-selection :lexicase
           ;; The parent selection method. Options include :tournament, :lexicase, :epsilon-lexicase,
           ;; :elitegroup-lexicase, :uniform, :leaky-lexicase, :random-threshold-lexicase,
-          ;; :random-toggle-lexicase, :randomly-truncated-lexicase, :novelty-search
+          ;; :random-toggle-lexicase, :randomly-truncated-lexicase, :truncated-lexicase,
+          ;; :novelty-search, :downsampled-lexcase
 
+         :epsilon-lexicase-version :semi-dynamic
+          ;; The version of epsilon-lexicase selection to use.
+          ;; Options: :semi-dynamic (default and recommended), :dynamic, :static
+         
          :epsilon-lexicase-epsilon nil
           ;; When parent-selection is :epsilon-lexicase,
           ;; the value for epsilon. If nil, automatic epsilon lexicase selection will be used.
@@ -331,17 +351,21 @@
           ;; the best.
 
          :random-threshold-lexicase-probability 1
-          ;; The probability that each filtering step in random threshold lexicase selection will 
-          ;; allow candidates with errors equal to or better than a randomly chosen threshold to 
+          ;; The probability that each filtering step in random threshold lexicase selection will
+          ;; allow candidates with errors equal to or better than a randomly chosen threshold to
           ;; survive, rather than just the best.
 
          :random-toggle-lexicase-probability 1
-          ;; The probability that each filtering step in random toggle lexicase selection will 
+          ;; The probability that each filtering step in random toggle lexicase selection will
           ;; allow just the best to survive, rather than all individuals in the pool.
 
          :randomly-truncated-lexicase-probability 1
           ;; The probability that an application of randomly-truncated-lexicase-selection
           ;; will consider only a random subset of the test cases, rather than all of them.
+
+         :truncated-lexicase-factor 0.1
+          ;; When using truncated-lexicase for parent selection, gives the proportion
+          ;; of thraining cases to use during selection.
 
          :lexicase-leakage 0.1
           ;; If using leaky lexicase selection, the probability that a selection event will return
@@ -350,12 +374,12 @@
          :lexicase-slippage 0
           ;; If using lexicase, leaky lexicase, epsilon lexicase, or random threshold lexicase
           ;; selection, the probability that each step of the lexicase selection process will
-          ;; "slip" and return a random candidate from the current pool, rather than continuing 
+          ;; "slip" and return a random candidate from the current pool, rather than continuing
           ;; to filter the pool.
 
          :sort-meta-errors-for-lexicase :random
           ;; If using lexicase selection, determines how meta-errors will be sorted among
-          ;; the actual errors. Options are :random (errors and meta-errors are shuffled 
+          ;; the actual errors. Options are :random (errors and meta-errors are shuffled
           ;; together), :first (meta-errors come first), or :last (meta-errors come last).
 
          :case-batch-size 1
@@ -382,15 +406,15 @@
           ;; normalization.
 
          :meta-error-categories []
-          ;; A vector containing meta-error categories that can be used for parent selection, 
-          ;; but that do not affect total error or the determination of whether an individual 
-          ;; is considered to be a solution. Each meta-error-category should either be a function 
-          ;; (which must be namespace-qualified if provided in a command-line argument) or a 
-          ;; keyword corresponding to a pre-defined meta-error function. In either case the 
+          ;; A vector containing meta-error categories that can be used for parent selection,
+          ;; but that do not affect total error or the determination of whether an individual
+          ;; is considered to be a solution. Each meta-error-category should either be a function
+          ;; (which must be namespace-qualified if provided in a command-line argument) or a
+          ;; keyword corresponding to a pre-defined meta-error function. In either case the
           ;; function should take an individual, an evaluated population, and an argmap, and
-          ;; it should return a numeric meta error value or collection of values, for which 
-          ;; lower is interpreted as better. For keyword :foo, the corresponding meta-error 
-          ;; function will be clojush.meta-errors/foo-meta-error. See clojush.meta-errors for 
+          ;; it should return a numeric meta error value or collection of values, for which
+          ;; lower is interpreted as better. For keyword :foo, the corresponding meta-error
+          ;; function will be clojush.meta-errors/foo-meta-error. See clojush.meta-errors for
           ;; the current options for pre-defined meta-error functions.
 
          :improvement-discount 0.5
@@ -398,9 +422,9 @@
           ;; improvement-related meta-errors.
 
          :error-change-recency-limit 5
-          ;; The number of generations within which an error change must have occurred to 
+          ;; The number of generations within which an error change must have occurred to
           ;; have a :no-recent-error-change meta-error value of zero.
-                                
+
          :lineage-redundancy-window nil
           ;; If truthy, should be an integer which will be the number of history elements
           ;; used to calculate :lineage-redundancy meta-errors.
@@ -477,12 +501,12 @@
           ;; regard to the nearest neighbors. Paper claims it is "robust to modest variation."
 
          :selection-delay false
-          ;; If  this is truthy, then it should be a positive integer d, and all parents 
-          ;; will be selected with :uniform selection, but also, in each generation for 
-          ;; which (mod generation d) is 0, before producing offspring, the population  
+          ;; If  this is truthy, then it should be a positive integer d, and all parents
+          ;; will be selected with :uniform selection, but also, in each generation for
+          ;; which (mod generation d) is 0, before producing offspring, the population
           ;; will be replaced with the results of repeated selection (using the specified
-          ;; :parent-selection method) from an archive of all of the individuals that have  
-          ;; been produced since the previous time this was done.  
+          ;; :parent-selection method) from an archive of all of the individuals that have
+          ;; been produced since the previous time this was done.
 
          :preserve-frontier false
           ;; If truthy, then each child population will be replaced, after its errors have
@@ -490,6 +514,25 @@
           ;; individuals are repeatedly selected, without re-selection, from the concatenation
           ;; of the parent population with the collection of evaluated children. If the value
           ;; is :with-replacement, then individuals can be selected multiple times.
+
+         :downsample-factor 1
+          ;; Determines the proportion of cases to use when using downsampled lexicase.
+          ;; When set to 1, has no effect. Should be in the range (0, 1].
+
+         :use-ALPS false
+          ;; When true, will enable the Age-Layered Population Structure. This is available
+          ;; with any parent selection technique. With this implementation of ALPS, parents
+          ;; for children of a given layer can be selected from that layer or any layer below
+          ;; it. In other words, each layer has an age limit, and parents of individuals in
+          ;; each layer can be of any age below the age limit.
+
+         :ALPS-number-of-layers 10
+          ;; The number of layers for the population when using ALPS
+
+         :ALPS-age-limit-system :polynomial
+          ;; The age limiting system used for ALPS.
+          ;; Options: :polynomial, :linear, :exponential, :fibonacci
+          ;; :polynomial, the default, is what is used in the first ALPS paper
 
           ;;----------------------------------------
           ;; Arguments related to the Push interpreter
@@ -556,6 +599,10 @@
 
          :print-homology-data false
           ;; If true, prints the homology statistics.
+
+         :print-lexicase-best-programs false
+          ;; If true, prints the program with most elite cases and program with the
+          ;; most zero errors when using lexicase selection.
 
          :exit-on-success true
           ;; When true, will exit the run when there is an individual with a zero-error vector
@@ -962,7 +1009,15 @@
                                        autoconstructive_integer_rand
                                        autoconstructive_boolean_rand
                                        genome_autoconstructing
-                                       genome_if_autoconstructing))))]
+                                       genome_if_autoconstructing)))
+                    :umad (into (registered-for-stacks
+                                     (if (:autoconstructive-environments @push-argmap)
+                                       [:integer :boolean :exec :float :tag :environment]
+                                       [:integer :boolean :exec :float :tag]))
+                                   '(genome_parent1
+                                      genome_uniform_deletion
+                                      genome_uniform_addition
+                                      genome_uniform_addition_and_deletion)))]
       (when (not (some #{instr} (:atom-generators @push-argmap)))
         (swap! push-argmap assoc :atom-generators (conj (:atom-generators @push-argmap) instr))))
     ;;
@@ -1036,7 +1091,7 @@
                             (untag-instruction-erc 10000)
                             (tagged-instruction-erc 10000)
                             'integer_tagged_instruction]
-                           (if (use-type :integer) '[integer_tag_exec_instruction] [])
+                           (if (use-type :exec) '[integer_tag_exec_instruction] [])
                            (if (use-type :code) '[integer_tag_code_instruction] [])
                            (if (use-type :integer) '[integer_tag_integer_instruction] [])
                            (if (use-type :float) '[integer_tag_float_instruction] [])

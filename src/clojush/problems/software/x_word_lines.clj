@@ -149,7 +149,7 @@
                        (for [[[input1 input2] correct-output] (case data-cases
                                                                 :train train-cases
                                                                 :test test-cases
-                                                                [])]
+                                                                data-cases)]
                          (let [final-state (run-push (:program individual)
                                                      (->> (make-push-state)
                                                        (push-item input2 :input)
@@ -175,9 +175,9 @@
                                                                             (if last-line last-line "")))
                                                              #"\s+")))))
                              )))))]
-        (if (= data-cases :train)
-          (assoc individual :behaviors @behavior :errors errors)
-          (assoc individual :test-errors errors))))))
+        (if (= data-cases :test)
+          (assoc individual :test-errors errors)
+          (assoc individual :behaviors @behavior :errors errors))))))
 
 (defn get-x-word-lines-train-and-test
   "Returns the train and test cases."
@@ -226,6 +226,8 @@
 (def argmap
   {:error-function (make-x-word-lines-error-function-from-cases (first x-word-lines-train-and-test-cases)
                                                                 (second x-word-lines-train-and-test-cases))
+   :training-cases (first x-word-lines-train-and-test-cases)
+   :sub-training-cases '()
    :atom-generators x-word-lines-atom-generators
    :max-points 3200
    :max-genome-size-in-initial-program 400

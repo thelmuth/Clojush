@@ -7,9 +7,10 @@
          simplification translate]
         [clojush.instructions boolean code common numbers random-instructions string char vectors
          tag zip environment input-output genome gtm]
-        [clojush.pushgp breed report]
+        [clojush.pushgp breed report genetic-operators]
         [clojush.pushgp.selection
-         selection epsilon-lexicase elitegroup-lexicase implicit-fitness-sharing novelty eliteness]
+         selection epsilon-lexicase elitegroup-lexicase implicit-fitness-sharing novelty eliteness
+         fitness-proportionate downsampled-lexicase]
         [clojush.experimental.decimation]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -39,19 +40,7 @@
            max-genome-size-in-initial-program atom-generators genome-representation]
     :as argmap}]
   (let [population-agents (vec (repeatedly population-size
-                                           #(make-individual
-                                             :genome (case genome-representation
-                                                       :plush (strip-random-insertion-flags
-                                                               (random-plush-genome
-                                                                max-genome-size-in-initial-program
-                                                                atom-generators
-                                                                argmap))
-                                                       :plushy (random-plushy-genome
-                                                                (* 1.165
-                                                                   max-genome-size-in-initial-program)
-                                                                atom-generators
-                                                                argmap))
-                                             :genetic-operators :random)))]
+                                           #(genesis argmap)))]
     (mapv #(if use-single-thread
              (atom %)
              (agent % :error-handler agent-error-handler))
@@ -191,6 +180,12 @@
     :plushy (population-translate-plushy-to-push pop-agents @push-argmap))
   (timer @push-argmap :reproduction)
   (println "Computing errors... ")
+  ; select cases if using downsampled lexicase
+  (when (= (:parent-selection @push-argmap) :downsampled-lexicase)
+    (swap! push-argmap assoc :sub-training-cases
+           (down-sample @push-argmap))
+    (println "Cases for this generation:" (pr-str (:sub-training-cases @push-argmap))))
+  ; compute errors
   (compute-errors pop-agents rand-gens novelty-archive @push-argmap)
   (println "Done computing errors.")
   (when (and (:preserve-frontier argmap)
@@ -250,13 +245,20 @@
     (calculate-implicit-fitness-sharing pop-agents @push-argmap))
   ;; calculate epsilons for epsilon lexicase selection
   (when (and (= (:parent-selection @push-argmap) :epsilon-lexicase)
+             (= (:epsilon-lexicase-version @push-argmap) :semi-dynamic)
              (= (:case-batch-size @push-argmap) 1)) ; only do this if case-batch-size is 1, since otherwise need to recalculate for every batch.
     (let [epsilons (calculate-epsilons-for-epsilon-lexicase (map deref pop-agents) @push-argmap)]
       (println "Epsilons for epsilon lexicase:" epsilons)
       (reset! epsilons-for-epsilon-lexicase epsilons)))
+  (when (and (= (:parent-selection @push-argmap) :epsilon-lexicase)
+             (= (:epsilon-lexicase-version @push-argmap) :static))
+    (calculate-fitness-for-static-epsilon-lexicase pop-agents @push-argmap))
+  ;; calculate eliteness when total-error-method necessitates
   (when (= (:total-error-method @push-argmap) :eliteness)
     (calculate-eliteness pop-agents @push-argmap))
   (timer @push-argmap :other)
+  (when (= (:parent-selection @push-argmap) :fitness-proportionate)
+    (calculate-fitness-proportionate-probabilities pop-agents @push-argmap))
   ;; report and check for success
   (let [[outcome best] (report-and-check-for-success (vec (doall (map deref pop-agents)))
                                                      generation @push-argmap)]
@@ -334,4 +336,3 @@
            (if (nil? next-novelty-archive)
              return-val
              (recur (inc generation) next-novelty-archive))))))))
-

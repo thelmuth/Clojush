@@ -38,7 +38,7 @@
            (fn [] (apply str (repeatedly (lrand-int 50) (fn [] (lrand-nth (map char (range 32 127))))))) ;String ERC
            )
           ;; Kitchen sink instructions
-          (registered-for-stacks [:integer :boolean :string :char :exec :print :code :parentheses :vector_boolean :vector_integer :vector_float :vector_string])
+          (registered-for-stacks [:float :integer :boolean :string :char :exec :print :code :parentheses :vector_boolean :vector_integer :vector_float :vector_string])
 
 
           ))

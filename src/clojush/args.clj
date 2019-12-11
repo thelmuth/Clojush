@@ -122,6 +122,13 @@
           ;; every this many genreations after a case was last added.
           ;; Good value might be something that adds 10-20 cases throughout run.
 
+         :counterexample-driven-fitness-threshold-for-new-case 1.0
+          ;; Should be a number in range [0.0, 1.0]. When using counterexample-driven
+          ;; GP, determines the proportion of cases that must be passed by an individual
+          ;; before adding a new case. At 1.0, some individual needs to pass all cases
+          ;; in order to add a new one. At 0.0, any individual will have a new case
+          ;; added for it. The CDGP papers recommend a value near 0.75-0.8.
+
          :output-stacks :integer
           ;; Gives the stacks to take outputs from. Should just be single stack
           ;; if one output, and a vector of stacks if multiple. Used by

@@ -25,11 +25,15 @@
                                  best-results-on-all-cases))]
     (if (empty? wrong-cases)
       :passes-all-cases ; program passes all generated cases
-      (let [counterexample-case-to-add (lrand-nth wrong-cases)]
-        ; add case to sub-training-cases
-        (println "Adding case to sub-training-cases:" (pr-str counterexample-case-to-add))
-        ;(print "Press enter to continue...") (flush) (read-line)
-        counterexample-case-to-add)))) ; return counterexample since program does not pass all generated cases
+      (let [wrong-cases-besides-those-already-added (remove #(some #{%} (:sub-training-cases @push-argmap))
+                                                            wrong-cases)]
+        (if (empty? wrong-cases-besides-those-already-added)
+          :passes-all-cases-besides-those-in-sub-training-cases
+          (let [counterexample-case-to-add (lrand-nth wrong-cases-besides-those-already-added)]
+            ; add case to sub-training-cases
+            (println "Adding case to sub-training-cases:" (pr-str counterexample-case-to-add))
+            ;(print "Press enter to continue...") (flush) (read-line)
+            counterexample-case-to-add)))))) ; return counterexample since program does not pass all generated cases
 
 (defn counterexample-check-results-human
   "Checks if the best program passed all generated cases, returning true
@@ -44,6 +48,13 @@
   [all-cases best-results-on-all-cases]
   :stub)
 
+
+(defn proportion-of-passed-cases
+  "Returns the proportion of cases with 0 error for this individual."
+  [ind]
+  (let [errors (:errors ind)
+        num-zero-errors (count (filter zero? errors))]
+    (/ num-zero-errors (count errors))))
 
 (defn run-best-on-all-cases
   "Runs the program best on all generated cases, and returns a list of the
@@ -73,7 +84,8 @@
   Returns solution individual if there is one.
   Returns set of new counterexample cases if not a solution."
   [sorted-pop {:keys [counterexample-driven-case-generator counterexample-driven-case-checker
-                      training-cases error-threshold error-function] :as argmap}]
+                      training-cases error-threshold error-function
+                      counterexample-driven-fitness-threshold-for-new-case] :as argmap}]
   (let [all-cases (case counterexample-driven-case-generator
                     :hard-coded training-cases
                     :else (throw (str "Unrecognized option for :counterexample-driven-case-generator: "
@@ -86,7 +98,10 @@
                                   :automatic (counterexample-check-results-automatic
                                               all-cases best-results-on-all-cases argmap)
                                   :human (counterexample-check-results-human
-                                          all-cases best-results-on-all-cases))]
+                                          all-cases best-results-on-all-cases))
+            new-cases-with-new-case (if (= counterexample-case :passes-all-cases-besides-those-in-sub-training-cases)
+                                      new-cases
+                                      (conj new-cases counterexample-case))]
         (when (some #{counterexample-case} (:sub-training-cases @push-argmap))
           (println "Houston, we have a problem. This case is already in the training cases, and has been passed by this program.")
           (prn "existing cases: " (:sub-training-cases @push-argmap))
@@ -100,16 +115,19 @@
           best
           ; Didn't find a solution; if rest of population is empty, return new-cases
           (empty? pop)
-          (conj new-cases counterexample-case)
+          new-cases-with-new-case
           ; If there's more pop, see if next program also has 0 on training error.
           ; If so, recur
-          (<= (+' (:total-error (first pop))) error-threshold)
+          (if (>= counterexample-driven-fitness-threshold-for-new-case 1.0)
+            (<= (:total-error (first pop)) error-threshold)
+            (> (proportion-of-passed-cases (first pop))
+               counterexample-driven-fitness-threshold-for-new-case))
           (recur (first pop)
                  (rest pop)
-                 (conj new-cases counterexample-case))
+                 new-cases-with-new-case)
           ; If here, no more individuals with 0 training error, so return false
           :else
-          (conj new-cases counterexample-case))))))
+          new-cases-with-new-case)))))
 
 (def generations-since-last-case-addition (atom -1))
 
@@ -164,9 +182,13 @@
    - else, return false
 
   If not individuals pass all cases, check if need to add a generational case."
-  [sorted-pop {:keys [error-threshold counterexample-driven-add-case-every-X-generations] :as argmap}]
+  [sorted-pop {:keys [error-threshold counterexample-driven-add-case-every-X-generations
+                      counterexample-driven-fitness-threshold-for-new-case] :as argmap}]
   (swap! generations-since-last-case-addition inc)
-  (if (> (:total-error (first sorted-pop)) error-threshold)
+  (if (if (>= counterexample-driven-fitness-threshold-for-new-case 1.0)
+        (> (:total-error (first sorted-pop)) error-threshold)
+        (< (proportion-of-passed-cases (first sorted-pop))
+           counterexample-driven-fitness-threshold-for-new-case))
     ; This handles best individuals that don't pass all current tests
     (do
       (when (<= 1 counterexample-driven-add-case-every-X-generations @generations-since-last-case-addition)

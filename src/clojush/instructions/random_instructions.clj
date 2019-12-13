@@ -1,5 +1,5 @@
 (ns clojush.instructions.random-instructions
-  (:use [clojush pushstate random globals translate])
+  (:use [clojush pushstate random globals translate args])
   (:require [clojure.math.numeric-tower :as math]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -54,7 +54,7 @@
       (binding [*out* *err*]
         (println "code_rand_atom: global-atom-generators is empty.")
         state)
-      (push-item (random-atom @global-atom-generators)
+      (push-item (random-atom @global-atom-generators @push-argmap)
                  :code
                  state))))
 

@@ -39,6 +39,19 @@
             )
           (registered-for-stacks [:integer :boolean :string :char :exec :print])))
 
+(def boosted-atom-generators
+  '("Check sum is "
+    \space
+    64
+    in1
+    print_string
+    char_allfromstring
+    exec_do*times
+    integer_fromchar
+    integer_add
+    integer_mod
+    char_frominteger
+    print_char))
 
 ;; Define test cases
 (defn checksum-input
@@ -166,6 +179,7 @@
                                                             (second checksum-train-and-test-cases))
    :training-cases (first checksum-train-and-test-cases)
    :atom-generators checksum-atom-generators
+   :boosted-atom-generators boosted-atom-generators
    :max-points 3200
    :max-genome-size-in-initial-program 400
    :evalpush-limit 1500

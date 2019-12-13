@@ -36,6 +36,15 @@
                                  (fn [] (lrand))))
           ;; The instructions that pushgp will use in random code.
 
+         :boosted-atom-generators nil
+          ;; If not nil, should be a list of instructions/atom generators
+          ;; to use at an increased rate compared to other atom generators
+
+         :boosted-atom-generators-probability 0.9
+          ;; Probability to use an atom generator from the boosted-atom-generators
+          ;; instead of from the normal list of atom generators. Used only if
+          ;; :boosted-atom-generators is not nil
+
          :population-size 1000
           ;; Number of individuals in the population.
 

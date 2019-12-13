@@ -29,6 +29,13 @@
             )
           (registered-for-stacks [:integer :boolean :vector_integer :exec])))
 
+(def boosted-atom-generators
+  '(in1
+    in2
+    exec_noop
+    vector_integer_reverse
+    vector_integer_eq))
+
 
 ;; Define test cases
 (defn mirror-image-input
@@ -186,6 +193,7 @@
    :training-cases (first mirror-image-train-and-test-cases)
    :sub-training-cases '()
    :atom-generators mirror-image-atom-generators
+   :boosted-atom-generators boosted-atom-generators
    :max-points 1200
    :max-genome-size-in-initial-program 150
    :evalpush-limit 600

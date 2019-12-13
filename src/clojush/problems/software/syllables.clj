@@ -53,6 +53,56 @@
           (registered-for-stacks [:integer :boolean :string :char :exec :print])))
 
 
+
+(def boosted-atom-generators
+  '(in1
+    0
+    true
+    false
+    "The number of syllables is "
+    \a
+    \e
+    \i
+    \o
+    \u
+    \y
+    "aeiouy"
+
+    char_allfromstring
+    char_eq
+    char_dup
+
+    string_occurrencesofchar
+    string_first
+    string_rest
+    string_dup
+    string_nth
+    string_parse_to_chars
+    string_replace
+    string_replacechar
+
+    integer_add
+    integer_inc
+
+    exec_noop
+    exec_if
+    exec_when
+    exec_do*count
+    exec_do*range
+    exec_do*times
+    exec_do*while
+    exec_dup
+    exec_dup_times
+    exec_while
+    exec_string_iterate
+
+    print_string
+    print_integer))
+
+#_(def tom-program
+  '(char_empty \y integer_empty "aeiouy" \i char_eq char_allfromstring char_isletter \a \o integer_empty char_isdigit "The number of syllables is " print_string boolean_stackdepth exec_do*count (in1 string_occurrencesofchar boolean_dup_times) boolean_stackdepth print_integer))
+
+
 ;; A list of data domains for the problem. Each domain is a vector containing
 ;; a "set" of inputs and two integers representing how many cases from the set
 ;; should be used as training and testing cases respectively. Each "set" of
@@ -169,6 +219,7 @@
    :training-cases (first syllables-train-and-test-cases)
    :sub-training-cases '()
    :atom-generators syllables-atom-generators
+   :boosted-atom-generators boosted-atom-generators
    :max-points 3200
    :max-genome-size-in-initial-program 400
    :evalpush-limit 1600

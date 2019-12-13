@@ -29,6 +29,62 @@
             )
           (registered-for-stacks [:integer :boolean :vector_integer :exec])))
 
+(def boosted-atom-generators
+  '(in1
+    0
+
+    exec_noop
+    exec_if
+    exec_when
+    exec_do*count
+    exec_do*range
+    exec_do*times
+    exec_do*while
+    exec_dup
+    exec_dup_times
+    exec_while
+    exec_stackdepth
+    exec_do*vector_integer
+
+    vector_integer_reverse
+    vector_integer_pushall
+    vector_integer_dup_items
+    vector_integer_dup_times
+    vector_integer_dup
+    vector_integer_emptyvector
+    vector_integer_first
+    vector_integer_rest
+    vector_integer_nth
+    vector_integer_butlast
+    vector_integer_last
+    vector_integer_swap
+    vector_integer_length
+    vector_integer_indexof
+    vector_integer_replacefirst
+
+    integer_stackdepth
+    integer_fromboolean
+    integer_dup
+    integer_swap
+    integer_yank
+    integer_rot
+    integer_add
+    integer_sub
+    integer_eq
+    
+    
+    boolean_frominteger
+    boolean_stackdepth
+    ))
+
+
+(def tom-program
+  '(in1 exec_swap (boolean_dup_items integer_stackdepth)
+        (exec_empty vector_integer_rest vector_integer_pushall integer_stackdepth
+                    exec_stackdepth exec_do*while (integer_fromboolean integer_yank
+                                                                       boolean_frominteger integer_dup))))
+
+
 ;; Define test cases
 (defn random-sequence-with-at-least-one-zero
   [max-extra-zeros max-additional-values]
@@ -159,6 +215,7 @@
    :training-cases (first last-index-of-zero-train-and-test-cases)
    :sub-training-cases '()
    :atom-generators last-index-of-zero-atom-generators
+   :boosted-atom-generators boosted-atom-generators
    :max-points 1200
    :max-genome-size-in-initial-program 150
    :evalpush-limit 600

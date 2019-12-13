@@ -46,6 +46,58 @@
             )
           (registered-for-stacks [:integer :boolean :string :exec :print])))
 
+
+(def boosted-atom-generators
+  '(in1
+    in2
+    in3
+    in4
+    in5
+    "Student has a "
+    " grade."
+    "A"
+    "B"
+    "C"
+    "D"
+    "F"
+
+    exec_noop
+    exec_if
+    exec_when
+    exec_flush
+
+    boolean_not
+    boolean_and
+    boolean_or
+
+    integer_add
+    integer_sub
+    integer_div
+    integer_mult
+    integer_lt
+    integer_lte
+    integer_gt
+    integer_gte
+    integer_eq
+    integer_dup
+
+    string_dup
+    string_swap
+    string_rot
+    string_yank
+    string_dup_times
+    string_concat
+    
+    print_string
+    ))
+
+#_(def tom-program
+  '("F" "Student has a " print_string "D" in2 in4 in5 integer_sub string_yank
+    string_dup_times in1 "C" in1 in3 in5 "C" "B" in2 integer_div string_dup_times
+    in5 string_dup_times string_yank string_dup_times "A" "A" in5 string_dup_times
+    string_yank print_string " grade." print_string))
+
+
 ;; A list of data domains for the problem. Each domain is a vector containing
 ;; a "set" of inputs and two integers representing how many cases from the set
 ;; should be used as training and testing cases respectively. Each "set" of
@@ -210,6 +262,7 @@
                                                          (second grade-train-and-test-cases))
    :training-cases (first grade-train-and-test-cases)
    :atom-generators grade-atom-generators
+   :boosted-atom-generators boosted-atom-generators
    :max-points 1600
    :max-genome-size-in-initial-program 200
    :evalpush-limit 800

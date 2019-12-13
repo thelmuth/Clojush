@@ -61,6 +61,29 @@
             )
           (registered-for-stacks [:string :char :integer :boolean :vector_integer :exec])))
 
+(def boosted-atom-generators
+  '(in1
+    0
+    scrabble-letter-values
+
+    exec_noop
+    exec_string_iterate
+    integer_fromchar
+    integer_add
+    vector_integer_nth
+    ))
+
+#_(def tom-program
+ '(
+    0 in1 exec_string_iterate
+    (
+      [0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 3 3 2 1 4 2 4 1 8 5 1 3 1 1 3 10 1 1 1 1 4 4 8 4 10 0 0 0 0 0 0 1 3 3 2 1 4 2 4 1 8 5 1 3 1 1 3 10 1 1 1 1 4 4 8 4 10 0 0 0 0]
+      integer_fromchar vector_integer_nth
+      integer_add
+      )
+    ))
+
+
 ;; Define test cases
 (defn scrabble-score-input
   "Makes a Scrabble Score input of length len."
@@ -191,6 +214,7 @@
    :training-cases (first scrabble-score-train-and-test-cases)
    :sub-training-cases '()
    :atom-generators scrabble-score-atom-generators
+   :boosted-atom-generators boosted-atom-generators
    :max-points 4000
    :max-genome-size-in-initial-program 500
    :evalpush-limit 2000

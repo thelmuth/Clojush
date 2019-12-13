@@ -31,6 +31,18 @@
             )
           (registered-for-stacks [:float :integer :print])))
 
+(def boosted-atom-generators
+  '(in1
+    in2
+    exec_noop
+    float_frominteger
+    float_add
+    float_dup
+    integer_dup
+    print_float))
+
+; in2 float_frominteger in1 float_add print_float
+
 ;; A list of data domains for the number IO problem. Each domain is a vector containing
 ;; a "set" of inputs and two integers representing how many cases from the set
 ;; should be used as training and testing cases respectively. Each "set" of
@@ -139,6 +151,7 @@
                                                              (second number-io-train-and-test-cases))
    :training-cases (first number-io-train-and-test-cases)
    :atom-generators num-io-atom-generators
+   :boosted-atom-generators boosted-atom-generators
    :max-points 800
    :max-genome-size-in-initial-program 100
    :evalpush-limit 200

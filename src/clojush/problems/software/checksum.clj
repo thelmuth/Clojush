@@ -44,13 +44,19 @@
     \space
     64
     in1
-    print_string
     char_allfromstring
+    char_frominteger
+    char_dup
+
+    exec_noop
     exec_do*times
+    exec_string_iterate
+    exec_while
     integer_fromchar
     integer_add
     integer_mod
-    char_frominteger
+    integer_dup
+    print_string
     print_char))
 
 ;; Define test cases

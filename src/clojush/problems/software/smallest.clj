@@ -34,6 +34,21 @@
             )
           (registered-for-stacks [:integer :boolean :exec :print])))
 
+
+(def boosted-atom-generators
+  '(in1
+    in2
+    in3
+    in4
+
+    exec_noop
+    integer_min
+    print_integer
+    ))
+
+#_(def tom-program
+  '(in3 in4 in2 exec_dup integer_min in1 integer_min print_integer))
+
 ;; A list of data domains for the problem. Each domain is a vector containing
 ;; a "set" of inputs and two integers representing how many cases from the set
 ;; should be used as training and testing cases respectively. Each "set" of
@@ -146,6 +161,7 @@
    :training-cases (first smallest-train-and-test-cases)
    :sub-training-cases '()
    :atom-generators smallest-atom-generators
+   :boosted-atom-generators boosted-atom-generators
    :max-points 800
    :max-genome-size-in-initial-program 100
    :evalpush-limit 200

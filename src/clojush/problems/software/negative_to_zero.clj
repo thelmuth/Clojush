@@ -34,6 +34,49 @@
             )
           (registered-for-stacks [:integer :boolean :vector_integer :exec])))
 
+(def boosted-atom-generators
+  '(in1
+    0
+    []
+    
+    vector_integer_dup
+    vector_integer_replace
+    vector_integer_replacefirst
+    vector_integer_conj
+    vector_integer_first
+    vector_integer_rest
+    vector_integer_emptyvector
+    vector_integer_length
+    vector_integer_nth
+    vector_integer_pushall
+    vector_integer_swap
+    vector_integer_rot
+
+    integer_min
+    integer_max
+    integer_lt
+    integer_gt
+    integer_dup
+    integer_swap
+    
+    exec_noop
+    exec_do*vector_integer    
+    exec_if
+    exec_when
+    exec_do*count
+    exec_do*range
+    exec_do*times
+    exec_do*while
+    exec_dup
+    exec_dup_times
+    exec_while
+    ))
+
+#_(def tom-program
+  '(boolean_stackdepth in1 vector_integer_dup exec_do*vector_integer
+                       (integer_min exec_do*times boolean_stackdepth
+                                    vector_integer_replace vector_integer_stackdepth)))
+
 
 ;; Define test cases
 (defn negative-to-zero-input
@@ -159,6 +202,7 @@
    :training-cases (first negative-to-zero-train-and-test-cases)
    :sub-training-cases '()
    :atom-generators negative-to-zero-atom-generators
+   :boosted-atom-generators boosted-atom-generators
    :max-points 2000
    :max-genome-size-in-initial-program 250
    :evalpush-limit 1500

@@ -46,6 +46,18 @@
           (registered-for-stacks [:integer :boolean :string :char :exec :print])))
 
 
+(def boosted-atom-generators
+  '(in1
+    \space
+    \newline
+    exec_noop
+    string_replacechar
+    string_removechar
+    string_length
+    string_dup
+    print_string
+    ))
+
 ;; A list of data domains for the problem. Each domain is a vector containing
 ;; a "set" of inputs and two integers representing how many cases from the set
 ;; should be used as training and testing cases respectively. Each "set" of
@@ -188,6 +200,7 @@
    :training-cases (first replace-space-with-newline-train-and-test-cases)
    :sub-training-cases '()
    :atom-generators replace-space-with-newline-atom-generators
+   :boosted-atom-generators boosted-atom-generators
    :max-points 3200
    :max-genome-size-in-initial-program 400
    :evalpush-limit 1600

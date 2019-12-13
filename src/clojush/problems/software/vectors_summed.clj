@@ -31,6 +31,38 @@
             )
           (registered-for-stacks [:integer :vector_integer :exec])))
 
+(def boosted-atom-generators
+  '(in1
+    in2
+    []
+    vector_integer_pushall
+    vector_integer_conj
+    vector_integer_first
+    vector_integer_rest
+    vector_integer_length
+    vector_integer_nth
+    vector_integer_dup
+    vector_integer_swap
+    vector_integer_rot
+
+    exec_noop
+    exec_do*vector_integer
+    exec_do*count
+    exec_do*range
+    exec_do*times
+    exec_dup
+    exec_dup_times
+    exec_while
+
+    integer_add
+    integer_dup
+    integer_swap
+    ))
+
+#_(def tom-program
+  '(([]) (in1 (in2 vector_integer_pushall) (exec_do*vector_integer (integer_add vector_integer_conj))))
+  )
+
 
 ;; Define test cases
 (defn vectors-summed-input
@@ -159,6 +191,7 @@
                                                                   (second vectors-summed-train-and-test-cases))
    :training-cases (first vectors-summed-train-and-test-cases)
    :atom-generators vectors-summed-atom-generators
+   :boosted-atom-generators boosted-atom-generators
    :max-points 2000
    :max-genome-size-in-initial-program 250
    :evalpush-limit 1500

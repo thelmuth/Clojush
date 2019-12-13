@@ -30,6 +30,26 @@
             )
           (registered-for-stacks [:integer :boolean :string :exec])))
 
+(def boosted-atom-generators
+  '(in1
+    in2
+    in3
+    true
+    false
+    
+    integer_lt
+    exec_noop
+    exec_if
+    exec_when
+    boolean_and
+    boolean_or
+    boolean_not
+    string_length
+    string_dup
+    boolean_dup
+    integer_dup
+    ))
+
 
 ;; Define test cases
 (defn csl-input
@@ -149,6 +169,7 @@
    :training-cases (first compare-string-lengths-train-and-test-cases)
    :sub-training-cases '()
    :atom-generators csl-atom-generators
+   :boosted-atom-generators boosted-atom-generators
    :max-points 1600
    :max-genome-size-in-initial-program 200
    :evalpush-limit 600

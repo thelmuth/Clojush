@@ -31,6 +31,21 @@
             )
           (registered-for-stacks [:integer :boolean :exec :print])))
 
+
+(def boosted-atom-generators
+  '(in1
+    in2
+    in3
+
+    exec_noop
+    integer_min
+    integer_max
+    print_integer
+    ))
+
+#_(def tom-program
+  '(in1 in2 integer_min in3 in1 in2 integer_max integer_min integer_max print_integer))
+
 ;; A list of data domains for the median problem. Each domain is a vector containing
 ;; a "set" of inputs and two integers representing how many cases from the set
 ;; should be used as training and testing cases respectively. Each "set" of
@@ -139,6 +154,7 @@
                                                           (second median-train-and-test-cases))
    :training-cases (first median-train-and-test-cases)
    :atom-generators median-atom-generators
+   :boosted-atom-generators boosted-atom-generators
    :max-points 800
    :max-genome-size-in-initial-program 100
    :evalpush-limit 200

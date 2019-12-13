@@ -32,6 +32,29 @@
           (registered-for-stacks [:integer :boolean :exec])))
 
 
+(def boosted-atom-generators
+  '(in1
+    0
+    1
+
+    exec_noop
+    exec_do*count
+    
+    integer_inc
+    integer_dup
+    integer_mult
+    integer_add
+    integer_swap
+    ))
+
+#_(def tom-program
+ '(
+    in1 integer_inc exec_do*count
+    (
+      integer_dup integer_mult integer_add
+      )
+    ))
+
 ;; A list of data domains for the problem. Each domain is a vector containing
 ;; a "set" of inputs and two integers representing how many cases from the set
 ;; should be used as training and testing cases respectively. Each "set" of
@@ -136,6 +159,7 @@
                                                                   (second sum-of-squares-train-and-test-cases))
    :training-cases (first sum-of-squares-train-and-test-cases)
    :atom-generators sum-of-squares-atom-generators
+   :boosted-atom-generators boosted-atom-generators
    :max-points 1600
    :max-genome-size-in-initial-program 200
    :evalpush-limit 4000

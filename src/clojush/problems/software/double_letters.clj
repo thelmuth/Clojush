@@ -31,6 +31,40 @@
             )
           (registered-for-stacks [:integer :boolean :string :char :exec :print])))
 
+(def boosted-atom-generators
+  '(in1
+    \!
+    2
+    3
+
+    exec_noop
+    exec_string_iterate
+    exec_dup
+    exec_if
+    exec_when
+    exec_do*count
+    exec_do*range
+    exec_do*times
+    exec_do*while
+    exec_dup_times
+    exec_while
+    char_dup
+    char_isletter
+    char_eq
+    char_allfromstring
+    char_dup_times
+    string_dup
+    integer_dup
+    print_char
+    ))
+
+
+#_(def tom-program
+  '(in1 \! exec_string_iterate
+        (exec_dup char_dup exec_do*while () exec_do*while
+                  (exec_do*while
+                   (print_char integer_gte boolean_empty char_isletter)
+                   integer_stackdepth \! char_eq) integer_pop)))
 
 ;; Define test cases
 (defn double-letters-input
@@ -159,6 +193,7 @@
    :training-cases (first double-letters-train-and-test-cases)
    :sub-training-cases '()
    :atom-generators double-letters-atom-generators
+   :boosted-atom-generators boosted-atom-generators
    :max-points 3200
    :max-genome-size-in-initial-program 400
    :evalpush-limit 1600

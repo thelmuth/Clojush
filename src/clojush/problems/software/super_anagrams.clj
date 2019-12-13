@@ -35,6 +35,64 @@
             )
           (registered-for-stacks [:string :char :integer :boolean :exec])))
 
+(def boosted-atom-generators
+  '(in1
+    in2
+    \!
+
+    true
+    false
+
+    exec_noop
+    exec_if
+    exec_when
+    exec_do*count
+    exec_do*range
+    exec_do*times
+    exec_do*while
+    exec_dup
+    exec_dup_times
+    exec_while
+    exec_string_iterate
+    exec_flush
+
+    string_dup
+    string_contains
+    string_containschar
+    string_replacefirstchar
+    string_eq
+    string_empty
+    string_first
+    string_rest
+    string_indexofchar
+    string_occurrencesofchar
+    string_parse_to_chars
+    string_swap
+    string_nth
+    string_setchar
+    
+    char_dup
+    char_eq
+    char_allfromstring
+    char_empty
+    
+    boolean_not
+    boolean_and
+    boolean_or
+    boolean_dup
+    
+    ))
+
+#_(def tom-program
+ '(
+    in2 in1 exec_string_iterate
+    (
+      string_dup char_dup
+      string_containschar boolean_not exec_when (false exec_flush) ;test if char is in string
+      \! string_replacefirstchar
+      )
+    true
+    ))
 
 ;; Define test cases
 (defn super-anagrams-input
@@ -196,6 +254,7 @@
                                                                   (second super-anagrams-train-and-test-cases))
    :training-cases (first super-anagrams-train-and-test-cases)
    :atom-generators super-anagrams-atom-generators
+   :boosted-atom-generators boosted-atom-generators
    :max-points 3200
    :max-genome-size-in-initial-program 400
    :evalpush-limit 1600

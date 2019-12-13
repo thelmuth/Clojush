@@ -34,6 +34,62 @@
             )
           (registered-for-stacks [:integer :boolean :string :char :exec :print])))
 
+(def boosted-atom-generators
+  '(in1
+    \newline
+    \-
+    0
+    -1
+    10
+
+    exec_noop
+    exec_if
+    exec_when
+    exec_do*count
+    exec_do*range
+    exec_do*times
+    exec_do*while
+    exec_dup
+    exec_dup_times
+    exec_while
+    exec_string_iterate
+
+    integer_gte
+    integer_gt
+    integer_lt
+    integer_lte
+    integer_eq
+    integer_add
+    integer_sub
+    integer_div
+    integer_mult
+    integer_dup
+    integer_swap
+    integer_rot
+
+    string_frominteger
+    string_reverse
+    string_first
+    string_rest
+    string_nth
+    string_dup
+
+    char_isdigit
+    char_dup
+
+    print_char
+    print_string
+    print_integer
+    print_newline
+    ))
+
+#_(def tom-program
+  '(boolean_stackdepth exec_s in1 char_stackdepth
+                       (exec_when (integer_gte in1 string_butlast integer_sub string_frominteger))
+                       exec_string_iterate
+                       (string_first \newline) char_isdigit exec_y print_char))
+
+
 (defn my-rand-long
   "replaces rand-int when need longs"
   [end]
@@ -144,6 +200,7 @@
                                                           (second digits-train-and-test-cases))
    :training-cases (first digits-train-and-test-cases)
    :atom-generators digits-atom-generators
+   :boosted-atom-generators boosted-atom-generators
    :max-points 1200
    :max-genome-size-in-initial-program 150
    :evalpush-limit 600

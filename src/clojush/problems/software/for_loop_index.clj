@@ -34,6 +34,30 @@
             )
           (registered-for-stacks [:integer :boolean :exec :print])))
 
+(def boosted-atom-generators
+  '(in1
+    in2
+    in3
+    integer_dup
+    integer_add
+    integer_dup_times
+    integer_inc
+    integer_gt
+    integer_lt
+    exec_noop
+    exec_if
+    exec_when
+    exec_do*count
+    exec_do*range
+    exec_do*times
+    exec_do*while
+    exec_dup
+    exec_dup_times
+    exec_while
+    print_integer
+    print_newline))
+
+
 
 ;; Define test cases
 (defn loop-input
@@ -152,6 +176,7 @@
    :training-cases (first for-loop-index-train-and-test-cases)
    :sub-training-cases '()
    :atom-generators loop-atom-generators
+   :boosted-atom-generators boosted-atom-generators
    :max-points 1200
    :max-genome-size-in-initial-program 150
    :evalpush-limit 600

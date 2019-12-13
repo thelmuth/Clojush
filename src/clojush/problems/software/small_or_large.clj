@@ -31,6 +31,27 @@
             )
           (registered-for-stacks [:integer :boolean :exec :string :print])))
 
+(def boosted-atom-generators
+  '(in1
+    999
+    1000
+    1999
+    2000
+    "small"
+    "large"
+    integer_lt
+    integer_gt
+    integer_lte
+    integer_gte
+    integer_dup
+    exec_noop
+    exec_if
+    exec_when
+    print_string
+    ))
+
+;(in1 1000 integer_lt exec_if ("small" print_string) (in1 1999 integer_gt exec_if ("large" print_string) ())
+
 
 ;; A list of data domains for the problem. Each domain is a vector containing
 ;; a "set" of inputs and two integers representing how many cases from the set
@@ -138,6 +159,7 @@
    :training-cases (first small-or-large-train-and-test-cases)
    :sub-training-cases '()
    :atom-generators small-or-large-atom-generators
+   :boosted-atom-generators boosted-atom-generators
    :max-points 800
    :max-genome-size-in-initial-program 100
    :evalpush-limit 300

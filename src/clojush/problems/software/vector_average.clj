@@ -29,6 +29,45 @@
           (registered-for-stacks [:vector_float :float :integer :exec])))
 
 
+(def boosted-atom-generators
+  '(in1
+
+    exec_noop
+    exec_do*vector_float
+    exec_if
+    exec_when
+    exec_do*count
+    exec_do*range
+    exec_do*times
+    exec_do*while
+    exec_dup
+    exec_dup_times
+    exec_while
+
+    float_add
+    float_sub
+    float_mult
+    float_div
+    float_frominteger
+    float_stackdepth
+    float_dup_items
+    float_dup
+
+    integer_fromfloat
+    
+    vector_float_length
+    vector_float_dup
+    vector_float_first
+    vector_float_rest
+    
+    ))
+
+
+#_(def tom-program
+  '(in1 integer_stackdepth exec_do*vector_float (float_add integer_stackdepth) float_stackdepth float_dup float_dup_items integer_div float_mod integer_dec exec_do*range float_inc float_div)
+  )
+
+
 ;; Define test cases
 (defn vector-average-input
   "Makes a Vector Average input vector of length len."
@@ -154,6 +193,7 @@
    :training-cases (first vector-average-train-and-test-cases)
    :sub-training-cases '()
    :atom-generators vector-average-atom-generators
+   :boosted-atom-generators boosted-atom-generators
    :max-points 1600
    :max-genome-size-in-initial-program 200
    :evalpush-limit 800

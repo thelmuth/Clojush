@@ -29,6 +29,41 @@
             )
           (registered-for-stacks [:string :vector_string :integer :boolean :exec :print])))
 
+
+(def boosted-atom-generators
+  '(in1
+    string_length
+    string_empty
+    vector_string_reverse
+    vector_string_pushall
+    vector_string_dup_items
+    vector_string_dup_times
+    vector_string_dup
+    vector_string_emptyvector
+    vector_string_first
+    vector_string_rest
+    vector_string_nth
+    vector_string_butlast
+    vector_string_last
+    vector_string_swap
+    integer_empty
+
+    exec_noop
+    exec_do*vector_string
+    exec_if
+    exec_when
+    exec_do*count
+    exec_do*range
+    exec_do*times
+    exec_do*while
+    exec_dup
+    exec_dup_times
+    exec_while
+    print_integer
+    print_newline
+    ))
+
+
 ;; Define test cases
 (defn string-generator
   "Makes a random string of length len."
@@ -153,6 +188,7 @@
    :training-cases (first string-lengths-backwards-train-and-test-cases)
    :sub-training-cases '()
    :atom-generators string-lengths-atom-generators
+   :boosted-atom-generators boosted-atom-generators
    :max-points 1200
    :max-genome-size-in-initial-program 150
    :evalpush-limit 600

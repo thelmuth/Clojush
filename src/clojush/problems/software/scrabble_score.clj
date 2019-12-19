@@ -62,16 +62,16 @@
           (registered-for-stacks [:string :char :integer :boolean :vector_integer :exec])))
 
 (def boosted-atom-generators
-  '(in1
-    0
-    scrabble-letter-values
+  (list 'in1
+        0
+        scrabble-letter-values
 
-    exec_noop
-    exec_string_iterate
-    integer_fromchar
-    integer_add
-    vector_integer_nth
-    ))
+        'exec_noop
+        'exec_string_iterate
+        'integer_fromchar
+        'integer_add
+        'vector_integer_nth
+        ))
 
 #_(def tom-program
  '(

@@ -417,6 +417,10 @@
           ;; function will be clojush.meta-errors/foo-meta-error. See clojush.meta-errors for
           ;; the current options for pre-defined meta-error functions.
 
+         :pareto-tournament-objectives [:total-error :size]
+          ;; When using :pareto-tournament parent selection, uses these objectives
+          ;; as those that determine dominance for selection.
+
          :improvement-discount 0.5
           ;; The factor by successively older improvements are discounted when calculating
           ;; improvement-related meta-errors.

@@ -13,10 +13,11 @@
         (empty? obs) ; if here, indB is not better on any objective than indA, and is not equal to indA, so indB is dominated by indA
         true
 
-        (< (get indB %) (get indA %)) ; if here, indB is better on an objective, so it is not dominated by indA
+        (< (get indB (first obs)) (get indA (first obs))) ; if here, indB is better on an objective, so it is not dominated by indA
         false
 
         ; recur on next objective
+        :else
         (recur (rest obs))))))
 
 (defn non-dominated?
@@ -34,7 +35,7 @@
    :total-error
    :size
    :age"
-  [pop {:keys [tournament-size pareto-tournament-objectives] :as argmap}]
+  [pop {:keys [tournament-size pareto-tournament-objectives]}]
   (let [tournament-set (repeatedly tournament-size #(lrand-nth pop))
         tournament-set-with-size (if (some #{:size} pareto-tournament-objectives)
                                    (map (fn [ind]
@@ -43,8 +44,5 @@
                                         tournament-set)
                                    tournament-set)
         pareto-front (filter #(non-dominated? % tournament-set-with-size pareto-tournament-objectives)
-                             tournament-set-with-size)
-]
+                             tournament-set-with-size)]
     (lrand-nth pareto-front)))
-
-;; Need to test this. probably need to generate random inds, and check pareto front for correctness

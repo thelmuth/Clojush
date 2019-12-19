@@ -102,9 +102,15 @@
               pop-agents))
   (when-not use-single-thread (apply await pop-agents))) ;; SYNCHRONIZE
 
+(defn generate-random-individual
+  "Creates a random individual. Needed for easy use with produce-new-offspring."
+  [agt location rand-gen population argmap]
+  (genesis argmap))
+
 (defn produce-new-offspring
   [pop-agents child-agents rand-gens
-   {:keys [decimation-ratio population-size decimation-tournament-size use-single-thread]
+   {:keys [decimation-ratio population-size decimation-tournament-size use-single-thread
+           pareto-tournament-objectives]
     :as argmap}]
   (let [pop (if (>= decimation-ratio 1)
               (vec (doall (map deref pop-agents)))
@@ -117,7 +123,10 @@
     (dotimes [i population-size]
       ((if use-single-thread swap! send)
        (nth child-agents i)
-       breed
+       (if (and (= i 0)
+                (some #{:age} pareto-tournament-objectives)) ;only replace first child
+         generate-random-individual
+         breed) ;introduce one new random program if using age-based pareto-tournament selection
        i (nth rand-gens i) pop argmap)))
   (when-not use-single-thread (apply await child-agents))) ;; SYNCHRONIZE
 

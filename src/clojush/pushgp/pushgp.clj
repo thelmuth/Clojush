@@ -10,7 +10,7 @@
         [clojush.pushgp breed report genetic-operators]
         [clojush.pushgp.selection
          selection epsilon-lexicase elitegroup-lexicase implicit-fitness-sharing novelty eliteness
-         fitness-proportionate downsampled-lexicase]
+         fitness-proportionate downsampled-lexicase weighted-lexicase]
         [clojush.experimental.decimation]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

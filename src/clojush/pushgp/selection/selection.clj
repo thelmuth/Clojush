@@ -3,7 +3,7 @@
         [clojush.pushgp.selection preselection tournament lexicase epsilon-lexicase
          elitegroup-lexicase random-threshold-lexicase random-toggle-lexicase 
          randomly-truncated-lexicase novelty rarified-lexicase subset-tournament
-         fitness-proportionate]))
+         fitness-proportionate weighted-lexicase]))
 
 (defn select
   "Returns a selected parent."

@@ -89,53 +89,60 @@
                                            (remove empty? (string/split in #" ")))))))
        inputs))
 
-; Define error function. For now, each run uses different random inputs
-(defn pig-latin-error-function
-  "Returns the error function for the Pig Latin problem. Takes as
-   input Pig Latin data domains."
+(defn make-pig-latin-error-function-from-cases
+  [train-cases test-cases]
+  (fn the-actual-pig-latin-error-function
+    ([individual]
+      (the-actual-pig-latin-error-function individual :train))
+    ([individual data-cases] ;; data-cases should be :train or :test
+     (the-actual-pig-latin-error-function individual data-cases false))
+    ([individual data-cases print-outputs]
+      (let [behavior (atom '())
+            errors (doall
+                     (for [[input correct-output] (case data-cases
+                                                    :train train-cases
+                                                    :test test-cases
+                                                    data-cases)]
+                       (let [final-state (run-push (:program individual)
+                                                   (->> (make-push-state)
+                                                     (push-item input :input)
+                                                     (push-item "" :output)))
+                             result (stack-ref :output 0 final-state)]
+                         (when print-outputs
+                           (println (format "\n| Correct output: %s\n| Program output: %s" (pr-str correct-output) (pr-str result))))
+                         ; Record the behavior
+                         (swap! behavior conj result)
+                         ; Error is Levenshtein distance for printed string
+                         (levenshtein-distance correct-output result)
+                         )))]
+        (if (= data-cases :test)
+          (assoc individual :test-errors errors)
+          (assoc individual :behaviors @behavior :errors errors))))))
+
+(defn get-pig-latin-train-and-test
+  "Returns the train and test cases."
   [data-domains]
-  (let [[train-cases test-cases] (map #(sort-by (comp count first) %)
-                                      (map pig-latin-test-cases
-                                           (test-and-train-data-from-domains data-domains)))]
-    (when true ;; Change to false to not print test cases
-      (doseq [[i case] (map vector (range) train-cases)]
-        (println (format "Train Case: %3d | Input/Output: %s" i (str case))))
-      (doseq [[i case] (map vector (range) test-cases)]
-        (println (format "Test Case: %3d | Input/Output: %s" i (str case)))))
-    (fn the-actual-pig-latin-error-function
-      ([program]
-        (the-actual-pig-latin-error-function program :train))
-      ([program data-cases] ;; data-cases should be :train or :test
-        (the-actual-pig-latin-error-function program data-cases false))
-      ([program data-cases print-outputs]
-        (let [behavior (atom '())
-              errors (doall
-                       (for [[input correct-output] (case data-cases
-                                                      :train train-cases
-                                                      :test test-cases
-                                                      [])]
-                         (let [final-state (run-push program
-                                                     (->> (make-push-state)
-                                                       (push-item input :input)
-                                                       (push-item "" :output)))
-                               result (stack-ref :output 0 final-state)]
-                           (when print-outputs
-                             (println (format "\n| Correct output: %s\n| Program output: %s" (pr-str correct-output) (pr-str result))))
-                           ; Record the behavior
-                           (when @global-print-behavioral-diversity
-                             (swap! behavior conj result))
-                           ; Error is Levenshtein distance for printed string
-                           (levenshtein-distance correct-output result)
-                           )))]
-          (when @global-print-behavioral-diversity
-            (swap! population-behaviors conj @behavior))
-          errors)))))
+  (map #(sort-by (comp count first) %)
+       (map pig-latin-test-cases
+            (test-and-train-data-from-domains data-domains))))
+
+; Define train and test cases
+(def pig-latin-train-and-test-cases
+  (get-pig-latin-train-and-test pig-latin-data-domains))
+
+(defn pig-latin-initial-report
+  [argmap]
+  (println "Train and test cases:")
+  (doseq [[i case] (map vector (range) (first pig-latin-train-and-test-cases))]
+    (println (format "Train Case: %3d | Input/Output: %s" i (str case))))
+  (doseq [[i case] (map vector (range) (second pig-latin-train-and-test-cases))]
+    (println (format "Test Case: %3d | Input/Output: %s" i (str case))))
+  (println ";;******************************"))
 
 (defn pig-latin-report
   "Custom generational report."
   [best population generation error-function report-simplifications]
-  (let [best-program (not-lazy (:program best))
-        best-test-errors (error-function best-program :test)
+  (let [best-test-errors (:test-errors (error-function best :test))
         best-total-test-error (apply +' best-test-errors)]
     (println ";;******************************")
     (printf ";; -*- Pig Latin problem report - generation %s\n" generation)(flush)
@@ -148,7 +155,7 @@
         (println (format "Test Case  %3d | Error: %s" i (str error)))))
     (println ";;------------------------------")
     (println "Outputs of best individual on training cases:")
-    (error-function best-program :train true)
+    (error-function best :train true)
     (println ";;******************************")
     )) ;; To do validation, could have this function return an altered best individual
        ;; with total-error > 0 if it had error of zero on train but not on validation
@@ -157,7 +164,9 @@
 
 ; Define the argmap
 (def argmap
-  {:error-function (pig-latin-error-function pig-latin-data-domains)
+  {:error-function (make-pig-latin-error-function-from-cases (first pig-latin-train-and-test-cases)
+                                                             (second pig-latin-train-and-test-cases))
+   :training-cases (first pig-latin-train-and-test-cases)
    :atom-generators pig-latin-atom-generators
    :max-points 4000
    :max-genome-size-in-initial-program 500
@@ -174,7 +183,7 @@
    :alignment-deviation 10
    :uniform-mutation-rate 0.01
    :problem-specific-report pig-latin-report
-   :print-behavioral-diversity true
+   :problem-specific-initial-report pig-latin-initial-report
    :report-simplifications 0
    :final-report-simplifications 5000
    :max-error 5000

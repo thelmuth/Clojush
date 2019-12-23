@@ -33,52 +33,60 @@
   file_readchar
   ^{:stack-types [:char]}
   (fn [state]
-    (let [file (top-item :input state)
-          first-char (first file)
-          inp-result (push-item (apply str (rest file))
-                                :input
-                                (pop-item :input state))]
-      (if (= file "")
-        state
-        (push-item first-char
-                   :char
-                   inp-result)))))
+    (if (:autoconstructing state)
+      state
+      (let [file (top-item :input state)
+            first-char (first file)
+            inp-result (push-item (apply str (rest file))
+                                  :input
+                                  (pop-item :input state))]
+        (if (= file "")
+          state
+          (push-item first-char
+                     :char
+                     inp-result))))))
 
 (define-registered
   file_readline
   ^{:stack-types [:string]}
   (fn [state]
-    (let [file (top-item :input state)
-          index (inc (.indexOf file "\n"))
-          has-no-newline (= 0 index)
-          inp-result (push-item (if has-no-newline
-                                  ""
-                                  (subs file index))
-                                :input
-                                (pop-item :input state))]
-      (if (= file "")
-        state
-        (if has-no-newline
-          (push-item file :string inp-result)
-          (push-item (subs file 0 index)
-                     :string
-                     inp-result))))))
+    (if (:autoconstructing state)
+      state
+      (let [file (top-item :input state)
+            index (inc (.indexOf file "\n"))
+            has-no-newline (= 0 index)
+            inp-result (push-item (if has-no-newline
+                                    ""
+                                    (subs file index))
+                                  :input
+                                  (pop-item :input state))]
+        (if (= file "")
+          state
+          (if has-no-newline
+            (push-item file :string inp-result)
+            (push-item (subs file 0 index)
+                       :string
+                       inp-result)))))))
 
 (define-registered
   file_EOF
   ^{:stack-types [:boolean]}
   (fn [state]
-    (let [file (top-item :input state)
-          result (empty? file)]
-      (push-item result :boolean state))))
+    (if (:autoconstructing state)
+      state
+      (let [file (top-item :input state)
+            result (empty? file)]
+        (push-item result :boolean state)))))
 
 (define-registered
   file_begin
   ^{:stack-types [:input]}
   (fn [state]
-    (push-item (stack-ref :input 1 state)
-               :input
-               (pop-item :input state))))
+    (if (:autoconstructing state)
+      state
+      (push-item (stack-ref :input 1 state)
+                 :input
+                 (pop-item :input state)))))
 
 ; Atom generators
 (def word-stats-atom-generators
@@ -182,67 +190,74 @@
                            (float (/ (count words) num-sentences))))))
        inputs))
 
-; Define error function. For now, each run uses different random inputs
-(defn word-stats-error-function
-  "Returns the error function for the Word Stats problem. Takes as
-   input Word Stats data domains."
+(defn make-word-stats-error-function-from-cases
+  [train-cases test-cases]
+  (fn the-actual-word-stats-error-function
+    ([individual]
+      (the-actual-word-stats-error-function individual :train))
+    ([individual data-cases] ;; data-cases should be :train or :test
+     (the-actual-word-stats-error-function individual data-cases false))
+    ([individual data-cases print-outputs]
+      (let [behavior (atom '())
+            errors (flatten
+                     (doall
+                       (for [[input [correct-output sentences words-per-sentence]] (case data-cases
+                                                                                     :train train-cases
+                                                                                     :test test-cases
+                                                                                     data-cases)]
+                         (let [final-state (run-push (:program individual)
+                                                     (->> (make-push-state)
+                                                       (push-item input :input)
+                                                       (push-item input :input)
+                                                       (push-item "" :output)))
+                               result (stack-ref :output 0 final-state)]
+                           (when print-outputs
+                             (println (format "\n| Correct output: %s\n| Program output: %s" (pr-str correct-output) (pr-str result))))
+                           ; Record the behavior
+                           (swap! behavior conj result)
+                           ; Errors:
+                           ;  1. Levenshtein distance of outputs
+                           ;  2. If contains a line of the form #"number of sentences: (-?\d+)", then integer distance from correct output; otherwise penalty
+                           ;  3. If contains a line of the form #"average sentence length: (-?\d+.\d+)", then float distance from correct output, rounded to 4 places; otherwise penalty
+                           (vector
+                             (levenshtein-distance correct-output result)
+                             (if-let [result-n (try (Integer/parseInt (second (re-find #"number of sentences: (-?\d+)" result)))
+                                                 (catch Exception e nil))]
+                               (abs (- result-n sentences))
+                               10000) ;Penalty
+                             (if-let [result-f (try (Float/parseFloat (second (re-find #"average sentence length: (-?\d+\.\d+)" result)))
+                                                 (catch Exception e nil))]
+                               (round-to-n-decimal-places (abs (- result-f words-per-sentence)) 4)
+                               10000.0) ;Penalty
+                             )))))]
+        (if (= data-cases :test)
+          (assoc individual :test-errors errors)
+          (assoc individual :behaviors @behavior :errors errors))))))
+
+(defn get-word-stats-train-and-test
+  "Returns the train and test cases."
   [data-domains]
-  (let [[train-cases test-cases] (map #(sort-by (comp count first) %)
-                                      (map word-stats-test-cases
-                                           (test-and-train-data-from-domains data-domains)))]
-    (when true ;; Change to false to not print test cases
-      (doseq [[i case] (map vector (range) train-cases)]
-        (println (format "Train Case: %3d | Input/Output: %s" i (str case))))
-      (doseq [[i case] (map vector (range) test-cases)]
-        (println (format "Test Case: %3d | Input/Output: %s" i (str case)))))
-    (fn the-actual-word-stats-error-function
-      ([program]
-        (the-actual-word-stats-error-function program :train))
-      ([program data-cases] ;; data-cases should be :train or :test
-        (the-actual-word-stats-error-function program data-cases false))
-      ([program data-cases print-outputs]
-        (let [behavior (atom '())
-              errors (flatten
-                       (doall
-                         (for [[input [correct-output sentences words-per-sentence]] (case data-cases
-                                                                                       :train train-cases
-                                                                                       :test test-cases
-                                                                                       [])]
-                           (let [final-state (run-push program
-                                                       (->> (make-push-state)
-                                                         (push-item input :input)
-                                                         (push-item input :input)
-                                                         (push-item "" :output)))
-                                 result (stack-ref :output 0 final-state)]
-                             (when print-outputs
-                               (println (format "\n| Correct output: %s\n| Program output: %s" (pr-str correct-output) (pr-str result))))
-                             ; Record the behavior
-                             (when @global-print-behavioral-diversity
-                               (swap! behavior conj result))
-                             ; Errors:
-                             ;  1. Levenshtein distance of outputs
-                             ;  2. If contains a line of the form #"number of sentences: (-?\d+)", then integer distance from correct output; otherwise penalty
-                             ;  3. If contains a line of the form #"average sentence length: (-?\d+.\d+)", then float distance from correct output, rounded to 4 places; otherwise penalty
-                             (vector
-                               (levenshtein-distance correct-output result)
-                               (if-let [result-n (try (Integer/parseInt (second (re-find #"number of sentences: (-?\d+)" result)))
-                                                   (catch Exception e nil))]
-                                 (abs (- result-n sentences))
-                                 10000) ;Penalty
-                               (if-let [result-f (try (Float/parseFloat (second (re-find #"average sentence length: (-?\d+\.\d+)" result)))
-                                                   (catch Exception e nil))]
-                                 (round-to-n-decimal-places (abs (- result-f words-per-sentence)) 4)
-                                 10000.0) ;Penalty
-                               )))))]
-          (when @global-print-behavioral-diversity
-            (swap! population-behaviors conj @behavior))
-          errors)))))
+  (map #(sort-by (comp count first) %)
+       (map word-stats-test-cases
+            (test-and-train-data-from-domains data-domains))))
+
+; Define train and test cases
+(def word-stats-train-and-test-cases
+  (get-word-stats-train-and-test word-stats-data-domains))
+
+(defn word-stats-initial-report
+  [argmap]
+  (println "Train and test cases:")
+  (doseq [[i case] (map vector (range) (first word-stats-train-and-test-cases))]
+    (println (format "Train Case: %3d | Input/Output: %s" i (str case))))
+  (doseq [[i case] (map vector (range) (second word-stats-train-and-test-cases))]
+    (println (format "Test Case: %3d | Input/Output: %s" i (str case))))
+  (println ";;******************************"))
 
 (defn word-stats-report
   "Custom generational report."
   [best population generation error-function report-simplifications]
-  (let [best-program (not-lazy (:program best))
-        best-test-errors (error-function best-program :test)
+  (let [best-test-errors (:test-errors (error-function best :test))
         best-total-test-error (apply +' best-test-errors)]
     (println ";;******************************")
     (printf ";; -*- Word Stats problem report - generation %s\n" generation)(flush)
@@ -255,7 +270,7 @@
         (println (format "Test Case  %3d | Error: %s" i (str error)))))
     (println ";;------------------------------")
     (println "Outputs of best individual on training cases:")
-    (error-function best-program :train true)
+    (error-function best :train true)
     (println ";;******************************")
     )) ;; To do validation, could have this function return an altered best individual
        ;; with total-error > 0 if it had error of zero on train but not on validation
@@ -264,7 +279,9 @@
 
 ; Define the argmap
 (def argmap
-  {:error-function (word-stats-error-function word-stats-data-domains)
+  {:error-function (make-word-stats-error-function-from-cases (first word-stats-train-and-test-cases)
+                                                              (second word-stats-train-and-test-cases))
+   :training-cases (first word-stats-train-and-test-cases)
    :atom-generators word-stats-atom-generators
    :max-points 3200
    :max-genome-size-in-initial-program 400
@@ -281,9 +298,10 @@
    :alignment-deviation 10
    :uniform-mutation-rate 0.01
    :problem-specific-report word-stats-report
-   :print-behavioral-diversity true
+   :problem-specific-initial-report word-stats-initial-report
    :report-simplifications 0
    :final-report-simplifications 5000
    :error-threshold 0.02
    :max-error 10000
    })
+

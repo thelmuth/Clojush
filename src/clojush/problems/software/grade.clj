@@ -1,7 +1,10 @@
 ;; grade.clj
 ;; Tom Helmuth, thelmuth@cs.umass.edu
 ;;
-;; Problem Source: Program Repair Benchmark Paper (add citation later)
+;; Problem Source:
+;;   C. Le Goues et al., "The ManyBugs and IntroClass Benchmarks for Automated Repair of C Programs,"
+;;   in IEEE Transactions on Software Engineering, vol. 41, no. 12, pp. 1236-1256, Dec. 1 2015.
+;;   doi: 10.1109/TSE.2015.2454513
 ;;
 ;; Given 5 integer inputs, all in range [0,100]. The first four represent the
 ;; lower numeric thresholds for achieving an A, B, C, and D, and will be
@@ -117,64 +120,71 @@
                      " grade."))
        inputs))
 
-; Define error function. For now, each run uses different random inputs
-(defn grade-error-function
-  "Returns the error function for the Grade problem. Takes as
-   input Grade data domains."
+(defn make-grade-error-function-from-cases
+  [train-cases test-cases]
+  (fn the-actual-grade-error-function
+    ([individual]
+      (the-actual-grade-error-function individual :train))
+    ([individual data-cases] ;; data-cases should be :train or :test
+     (the-actual-grade-error-function individual data-cases false))
+    ([individual data-cases print-outputs]
+      (let [behavior (atom '())
+            errors (flatten
+                     (doall
+                       (for [[[input1 input2 input3 input4 input5] correct-output] (case data-cases
+                                                                                     :train train-cases
+                                                                                     :test test-cases
+                                                                                     data-cases)]
+                         (let [final-state (run-push (:program individual)
+                                                     (->> (make-push-state)
+                                                       (push-item input5 :input)
+                                                       (push-item input4 :input)
+                                                       (push-item input3 :input)
+                                                       (push-item input2 :input)
+                                                       (push-item input1 :input)
+                                                       (push-item "" :output)))
+                               printed-result (stack-ref :output 0 final-state)]
+                           (when print-outputs
+                             (println (format "Correct output: %-19s | Program output: %-19s" (pr-str correct-output) (pr-str printed-result))))
+                           ; Record the behavior
+                           (swap! behavior conj printed-result)
+                           ; Error is Levenshtein distance and, if correct format, distance from correct letter grade character
+                           (vector
+                             (levenshtein-distance correct-output printed-result)
+                             (let [printed-letter (second (re-find #"^Student has a (.) grade.$" printed-result))
+                                   correct-letter (second (re-find #"^Student has a (.) grade.$" correct-output))]
+                               (if printed-letter
+                                 (abs (- (int (first correct-letter))
+                                         (int (first printed-letter)))) ;distance from correct character
+                                 1000))
+                             )))))]
+        (if (= data-cases :test)
+          (assoc individual :test-errors errors)
+          (assoc individual :behaviors @behavior :errors errors))))))
+
+(defn get-grade-train-and-test
+  "Returns the train and test cases."
   [data-domains]
-  (let [[train-cases test-cases] (map grade-test-cases
-                                      (test-and-train-data-from-domains data-domains))]
-    (when true ;; Change to false to not print test cases
-      (doseq [[i case] (map vector (range) train-cases)]
-        (println (format "Train Case: %3d | Input/Output: %s" i (str case))))
-      (doseq [[i case] (map vector (range) test-cases)]
-        (println (format "Test Case: %3d | Input/Output: %s" i (str case)))))
-    (fn the-actual-grade-error-function
-      ([program]
-        (the-actual-grade-error-function program :train))
-      ([program data-cases] ;; data-cases should be :train or :test
-        (the-actual-grade-error-function program data-cases false))
-      ([program data-cases print-outputs]
-        (let [behavior (atom '())
-              errors (flatten
-                       (doall
-                         (for [[[input1 input2 input3 input4 input5] correct-output] (case data-cases
-                                                                                       :train train-cases
-                                                                                       :test test-cases
-                                                                                       [])]
-                           (let [final-state (run-push program
-                                                       (->> (make-push-state)
-                                                         (push-item input5 :input)
-                                                         (push-item input4 :input)
-                                                         (push-item input3 :input)
-                                                         (push-item input2 :input)
-                                                         (push-item input1 :input)
-                                                         (push-item "" :output)))
-                                 printed-result (stack-ref :output 0 final-state)]
-                             (when print-outputs
-                               (println (format "Correct output: %-19s | Program output: %-19s" (pr-str correct-output) (pr-str printed-result))))
-                             ; Record the behavior
-                             (when @global-print-behavioral-diversity
-                               (swap! behavior conj printed-result))
-                             ; Error is Levenshtein distance and, if correct format, distance from correct letter grade character
-                             (vector
-                               (levenshtein-distance correct-output printed-result)
-                               (let [printed-letter (second (re-find #"^Student has a (.) grade.$" printed-result))
-                                     correct-letter (second (re-find #"^Student has a (.) grade.$" correct-output))]
-                                 (if printed-letter
-                                   (abs (- (int (first correct-letter))
-                                           (int (first printed-letter)))) ;distance from correct character
-                                   1000))
-                               )))))]
-          (when @global-print-behavioral-diversity
-            (swap! population-behaviors conj @behavior))
-          errors)))))
+  (map grade-test-cases
+       (test-and-train-data-from-domains data-domains)))
+
+; Define train and test cases
+(def grade-train-and-test-cases
+  (get-grade-train-and-test grade-data-domains))
+
+(defn grade-initial-report
+  [argmap]
+  (println "Train and test cases:")
+  (doseq [[i case] (map vector (range) (first grade-train-and-test-cases))]
+    (println (format "Train Case: %3d | Input/Output: %s" i (str case))))
+  (doseq [[i case] (map vector (range) (second grade-train-and-test-cases))]
+    (println (format "Test Case: %3d | Input/Output: %s" i (str case))))
+  (println ";;******************************"))
 
 (defn grade-report
   "Custom generational report."
   [best population generation error-function report-simplifications]
-  (let [best-program (not-lazy (:program best))
-        best-test-errors (error-function best-program :test)
+  (let [best-test-errors (:test-errors (error-function best :test))
         best-total-test-error (apply +' best-test-errors)]
     (println ";;******************************")
     (printf ";; -*- Grade problem report - generation %s\n" generation)(flush)
@@ -187,7 +197,7 @@
         (println (format "Test Case  %3d | Error: %s" i (str error)))))
     (println ";;------------------------------")
     (println "Outputs of best individual on training cases:")
-    (error-function best-program :train true)
+    (error-function best :train true)
     (println ";;******************************")
     )) ;; To do validation, could have this function return an altered best individual
        ;; with total-error > 0 if it had error of zero on train but not on validation
@@ -196,7 +206,9 @@
 
 ; Define the argmap
 (def argmap
-  {:error-function (grade-error-function grade-data-domains)
+  {:error-function (make-grade-error-function-from-cases (first grade-train-and-test-cases)
+                                                         (second grade-train-and-test-cases))
+   :training-cases (first grade-train-and-test-cases)
    :atom-generators grade-atom-generators
    :max-points 1600
    :max-genome-size-in-initial-program 200
@@ -214,7 +226,7 @@
    :alignment-deviation 10
    :uniform-mutation-rate 0.01
    :problem-specific-report grade-report
-   :print-behavioral-diversity true
+   :problem-specific-initial-report grade-initial-report
    :report-simplifications 0
    :final-report-simplifications 5000
    :max-error 5000

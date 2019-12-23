@@ -2,7 +2,6 @@ Clojush [![Travis branch](https://img.shields.io/travis/lspector/Clojush/master.
 =======
 
 
-
 Lee Spector (lspector@hampshire.edu), started 20100227
 [See version history](https://github.com/lspector/Clojush/commits/master).
 Older version history is in `old-version-history.txt`.
@@ -41,7 +40,7 @@ For example, to change the default population size from 1000 to 50, call:
 
     lein run clojush.problems.demos.simple-regression :population-size 50
 
-Additional parameters may also be specified. All valid parameters with their descriptions can be found in `src/clojush/pushgp/pushgp.clj`.
+Additional parameters may also be specified. All valid parameters with their descriptions can be found in [args.clj](https://github.com/lspector/Clojush/blob/master/src/clojush/args.clj).
 
 The above calls will load everything and run PushGP on a simple symbolic
 regression problem (symbolic regression of y=x^3-2x^2-x). Although the
@@ -52,7 +51,7 @@ Another option is to evaluate in the leinigen REPL (Read Eval Print Loop):
 
     sh> lein repl
     ...
-    clojush.core=> (use 'clojush.examples.simple-regression)
+    clojush.core=> (use 'clojush.problems.demos.simple-regression)
     ...
     clojush.core=> (pushgp argmap)
 

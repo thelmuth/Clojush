@@ -16,9 +16,14 @@ results/
 logs/
 lib/
 /bin
-*.csv
-*.json
 .lein-failures
 doc/
 cov/*
 out
+.idea
+clojush.iml
+.gorilla-port
+/clojush/
+.ipynb_checkpoints/
+.lein-project-checksum
+scratch.clj

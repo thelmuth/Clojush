@@ -18,8 +18,9 @@
   ^{:stack-types [:code]}
   (fn [state]
     (if (not (empty? (rest (:code state))))
-      (let [new-item (concat (ensure-list (stack-ref :code 0 state))
-                             (ensure-list (stack-ref :code 1 state)))]
+      (let [new-item (not-lazy
+                       (concat (ensure-list (stack-ref :code 0 state))
+                               (ensure-list (stack-ref :code 1 state))))]
         (if (<= (count-points new-item) @global-max-points)
           (push-item new-item
                      :code
@@ -65,7 +66,8 @@
     (if (not (empty? (rest (:code state))))
       (let [new-item (cons (stack-ref :code 1 state)
                            (ensure-list (stack-ref :code 0 state)))]
-        (if (<= (count-points new-item) @global-max-points)
+        (if (and (<= (count-points new-item) @global-max-points)
+                 (<= (height-of-nested-list new-item) @global-max-nested-depth))
           (push-item new-item
                      :code
                      (pop-item :code (pop-item :code state)))
@@ -317,7 +319,8 @@
     (if (not (empty? (rest (:code state))))
       (let [new-item (list (first (rest (:code state)))
                            (first (:code state)))]
-        (if (<= (count-points new-item) @global-max-points)
+        (if (and (<= (count-points new-item) @global-max-points)
+                 (<= (height-of-nested-list new-item) @global-max-nested-depth))
           (push-item new-item
                      :code
                      (pop-item :code (pop-item :code state)))
@@ -330,7 +333,8 @@
   (fn [state]
     (if (not (empty? (:code state)))
       (let [new-item (list (first (:code state)))]
-        (if (<= (count-points new-item) @global-max-points)
+        (if (and (<= (count-points new-item) @global-max-points)
+                 (<= (height-of-nested-list new-item) @global-max-nested-depth))
           (push-item new-item
                      :code
                      (pop-item :code state))
@@ -418,7 +422,8 @@
       (let [new-item (insert-code-at-point (first (:code state))
                                            (first (:integer state))
                                            (second (:code state)))]
-        (if (<= (count-points new-item) @global-max-points)
+        (if (and (<= (count-points new-item) @global-max-points)
+                 (<= (height-of-nested-list new-item) @global-max-nested-depth))
           (push-item new-item
                      :code
                      (pop-item :code (pop-item :code (pop-item :integer state))))
@@ -433,7 +438,8 @@
       (let [new-item (subst (stack-ref :code 2 state)
                             (stack-ref :code 1 state)
                             (stack-ref :code 0 state))]
-        (if (<= (count-points new-item) @global-max-points)
+        (if (and (<= (count-points new-item) @global-max-points)
+                 (<= (height-of-nested-list new-item) @global-max-nested-depth))
           (push-item new-item
                      :code
                      (pop-item :code (pop-item :code (pop-item :code state))))
@@ -503,7 +509,8 @@
             x (first stk)
             y (first (rest stk))
             z (first (rest (rest stk)))]
-        (if (<= (count-points (list y z)) @global-max-points)
+        (if (and (<= (count-points (list y z)) @global-max-points)
+                 (<= (height-of-nested-list (list y z)) @global-max-nested-depth))
           (push-item x
                      :exec
                      (push-item z
@@ -523,7 +530,8 @@
   (fn [state]
     (if (not (empty? (:exec state)))
       (let [new-item (list 'exec_y (first (:exec state)))]
-        (if (<= (count-points new-item) @global-max-points)
+        (if (and (<= (count-points new-item) @global-max-points)
+                 (<= (height-of-nested-list new-item) @global-max-nested-depth))
           (push-item (first (:exec state))
                      :exec
                      (push-item new-item
@@ -532,36 +540,3 @@
           state))
       state)))
 
-(define-registered
-  environment_new
-  ^{:stack-types [:environment]
-    :parentheses 1}
-  ;; Creates new environment using the top item on the exec stack
-  (fn [state]
-    (if (empty? (:exec state))
-      state
-      (let [new-exec (top-item :exec state)
-            parent-env (pop-item :exec state)]
-        (push-item new-exec
-                   :exec
-                   (assoc (assoc (push-item parent-env :environment state)
-                                 :return '())
-                          :exec '()))))))
-
-(define-registered
-  environment_begin
-  ^{:stack-types [:environment]}
-  ;; Creates new environment using the entire exec stack
-  (fn [state]
-    (assoc (push-item (assoc state :exec '())
-                      :environment state)
-           :return '())))
-
-(define-registered
-  environment_end
-  ^{:stack-types [:environment]}
-  ;; Ends current environment
-  (fn [state]
-    (if (empty? (:environment state))
-      state
-      (end-environment state))))

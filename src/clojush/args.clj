@@ -125,6 +125,12 @@
           ;; every this many genreations after a case was last added.
           ;; Good value might be something that adds 10-20 cases throughout run.
 
+         :counterexample-max-cases-before-removing-easiest 10e100
+          ;; The maximum number of training cases to use when using counterexample-
+          ;; driven GP. If the limit is reached, when adding a case, the case
+          ;; passed by the largest portion of the population will be removed,
+          ;; breaking ties at random.
+         
          :counterexample-driven-fitness-threshold-for-new-case 1.0
           ;; Should be a number in range [0.0, 1.0]. When using counterexample-driven
           ;; GP, determines the proportion of cases that must be passed by an individual

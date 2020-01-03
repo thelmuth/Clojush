@@ -135,19 +135,47 @@
   "Adds new-cases to existing sub-training-cases. Also updates
   atom signifying number of generations since last addition.
   Returns nil."
-  [new-cases]
-  (reset! generations-since-last-case-addition 0)
-  (swap! push-argmap (fn [current-argmap] ; if cases, concat them to old cases
-                       (assoc current-argmap
-                              :sub-training-cases
-                              (concat (distinct new-cases)
-                                      (:sub-training-cases current-argmap)))))
-  nil)
+  [population new-cases {:keys [counterexample-max-cases-before-removing-easiest
+                                error-threshold] :as current-argmap}]
+  (let [distinct-new-cases (distinct new-cases)
+        old-cases (:sub-training-cases current-argmap)
+        need-case-removals (> (+ (count distinct-new-cases)
+                                 (count old-cases))
+                              counterexample-max-cases-before-removing-easiest)
+        case-pass-counts-map (if need-case-removals
+                               (zipmap
+                                old-cases
+                                (map (fn [case-index]
+                                       (count
+                                        (filter #(<= (nth (:errors %) case-index)
+                                                     error-threshold)
+                                                population)))
+                                     (range (count old-cases))))
+                               {})
+        old-cases-with-removals (if need-case-removals
+                                  (loop [old-cases-map case-pass-counts-map]
+                                    (if (<= (+ (count distinct-new-cases)
+                                               (count old-cases-map))
+                                            counterexample-max-cases-before-removing-easiest)
+                                      (keys old-cases-map)
+                                      (recur (dissoc old-cases-map
+                                                     (first
+                                                      (apply max-key
+                                                             val
+                                                             old-cases-map))))))
+                                  old-cases)]
+    (reset! generations-since-last-case-addition 0)
+    (swap! push-argmap (fn [current-argmap] ; if cases, concat them to old cases
+                         (assoc current-argmap
+                                :sub-training-cases
+                                (concat distinct-new-cases
+                                        old-cases-with-removals))))
+    nil))
 
 (defn generational-case-addition
   "Adds one case that best program doesn't pass to sub-training-cases.
   Returns nil."
-  [best {:keys [counterexample-driven-case-generator training-cases
+  [best population {:keys [counterexample-driven-case-generator training-cases
                 counterexample-driven-case-checker] :as argmap}]
   (let [all-cases (case counterexample-driven-case-generator
                     :hard-coded training-cases
@@ -168,7 +196,7 @@
       nil
       ; Add the case to training cases
       :else
-      (add-cases-to-sub-training-cases (list counterexample-case)))))
+      (add-cases-to-sub-training-cases population (list counterexample-case) argmap))))
 
 (defn check-counterexample-driven-results
   "Returns true if a program has been found that passes all generated training
@@ -192,7 +220,7 @@
     ; This handles best individuals that don't pass all current tests
     (do
       (when (<= 1 counterexample-driven-add-case-every-X-generations @generations-since-last-case-addition)
-        (generational-case-addition (first sorted-pop) argmap))
+        (generational-case-addition (first sorted-pop) sorted-pop argmap))
       false)
     ; This handles best individuals that pass all current cases
     (let [best-or-new-cases (check-if-all-correct-and-return-new-cases-if-not sorted-pop argmap)]
@@ -200,5 +228,5 @@
         best-or-new-cases ; if an individual, it is a success, so return it
         ; Otherwise, add in the new cases, and return false.
         (do
-          (add-cases-to-sub-training-cases best-or-new-cases)
+          (add-cases-to-sub-training-cases sorted-pop best-or-new-cases argmap)
           false)))))

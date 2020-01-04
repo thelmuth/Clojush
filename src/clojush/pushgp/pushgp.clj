@@ -10,7 +10,7 @@
         [clojush.pushgp breed report genetic-operators]
         [clojush.pushgp.selection
          selection epsilon-lexicase elitegroup-lexicase implicit-fitness-sharing novelty eliteness
-         fitness-proportionate downsampled-lexicase]
+         fitness-proportionate downsampled-lexicase co-solvability]
         [clojush.experimental.decimation]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -74,15 +74,46 @@
      :rand-gens (vec (doall (for [k (range population-size)]
                               (random/make-mersennetwister-rng (nth random-seeds k)))))}))
 
-
 (defn compute-errors
   [pop-agents rand-gens novelty-archive
-   {:keys [use-single-thread error-function] :as argmap}]
+   {:keys [use-single-thread error-function total-error-method] :as argmap}]
   (dorun (map #((if use-single-thread swap! send)
                 %1 evaluate-individual error-function %2 argmap)
               pop-agents
               rand-gens))
   (when-not use-single-thread (apply await pop-agents)) ;; SYNCHRONIZE
+  
+  ; compute normalization by min-max-scaling when necessary
+  (when (= (:normalization argmap) :min-max-scaling)
+    (let [errors-by-case (apply map list
+                                (map #(:errors (deref %)) pop-agents))
+          error-mins (doall
+                      (map (fn [errors-on-case]
+                             (apply min errors-on-case))
+                           errors-by-case))
+          error-maxs (doall
+                      (map (fn [errors-on-case]
+                             (apply max errors-on-case))
+                           errors-by-case))]
+      (dorun (map #((if use-single-thread swap! send)
+                    %
+                    normalize-by-min-max-scaling
+                    error-mins
+                    error-maxs)
+                  pop-agents))
+      (when-not use-single-thread (apply await pop-agents))
+
+      (when (= total-error-method :co-solvability)
+        (dorun (map #((if use-single-thread swap! send)
+                      %
+                      calculate-co-solvability-rewards-late)
+                    pop-agents))
+        (when-not use-single-thread (apply await pop-agents))))
+
+    (doseq [ind (map deref pop-agents)]
+      (assert (not (empty? (:errors ind)))
+              (str "This individual's errors are empty: " ind))))
+  
   ;; Compute values needed for meta-errors
   ;;
   ;; calculate novelty when novelty-search or novelty meta errors are used
@@ -243,6 +274,9 @@
   ;; calculate implicit fitness sharing fitness for population
   (when (= (:total-error-method @push-argmap) :ifs)
     (calculate-implicit-fitness-sharing pop-agents @push-argmap))
+  ;; calculate co-solvability fitness for population
+  (when (= (:total-error-method @push-argmap) :co-solvability)
+    (calculate-co-solvability pop-agents @push-argmap))
   ;; calculate epsilons for epsilon lexicase selection
   (when (and (= (:parent-selection @push-argmap) :epsilon-lexicase)
              (= (:epsilon-lexicase-version @push-argmap) :semi-dynamic)

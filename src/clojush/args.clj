@@ -42,11 +42,11 @@
          :max-generations 1001
           ;; The maximum number of generations to run GP.
 
-         :max-program-executions 10e100
+         :max-program-executions 1e100
           ;; The maximum number of program executions (running on a single case
           ;; counts once) to run GP.
 
-         :max-point-evaluations 10e100
+         :max-point-evaluations 1e100
           ;; The limit for the number of point (instruction) evaluations to
           ;; execute during the run.
 
@@ -399,7 +399,9 @@
          :normalization :none
           ;; The method used to normalize the errors to the range [0,1], with 0 being best. Options
           ;; include :none (no normalization), :divide-by-max-error (divides by value of argument
-          ;; :max-error), :e-over-e-plus-1 (e/(e+1) = 1 - 1/(e+1))
+          ;; :max-error), :e-over-e-plus-1 (e/(e+1) = 1 - 1/(e+1)),
+          ;; :min-max-scaling ((e - min(e)) / (max(e) - min(e)))
+          ;; see https://sebastianraschka.com/Articles/2014_about_feature_scaling.html#about-min-max-scaling
 
          :max-error 1000
           ;; If :normalization is set to :divide-by-max-error, will use this number for

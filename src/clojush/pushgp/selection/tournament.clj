@@ -7,7 +7,7 @@
   (let [tournament-set (repeatedly tournament-size #(lrand-nth pop))
         err-fn (case total-error-method
                  :sum :total-error
-                 (:hah :rmse :ifs :eliteness) :weighted-error
+                 (:hah :rmse :ifs :co-solvability :eliteness) :weighted-error
                  (throw (Exception. (str "Unrecognized argument for total-error-method: "
                                          total-error-method))))]
     (apply min-key err-fn tournament-set)))

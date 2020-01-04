@@ -50,9 +50,34 @@
                                             1.0
                                             (/ err max-error)))
              :e-over-e-plus-1 (double (/ err (inc err)))
+             :min-max-scaling err ; Need population min and max, calculate later
              (throw (Exception. (str "Unrecognized argument for normalization: "
                                      normalization)))))
          errors)))
+
+(defn normalize-by-min-max-scaling
+  "Performs min-max scaling normalization after the population has been
+  evaluated. ind is returned with its :errors list reset to the list
+  of normalized errors. For error e, minimum of all errors min(e), etc.:
+     normalized_e = ((e - min(e)) / (max(e) - min(e)))
+  see https://sebastianraschka.com/Articles/2014_about_feature_scaling.html#about-min-max-scaling"
+  [ind error-mins error-maxs]
+  (assert (not (empty? (:errors ind))))
+  (assert (not (empty? error-mins)))
+  (assert (not (empty? error-maxs)))
+  (assoc ind
+         :errors
+         (map (fn [error error-min error-max]
+                                        ; If error-min = error-max, entire population has same error
+                                        ; on this case, so it doesn't matter what the normalized
+                                        ; error is. Return 0 in this case.
+                (if (= error-min error-max)
+                  0
+                  (/ (- error error-min)
+                     (- error-max error-min))))
+              (:errors ind)
+              error-mins
+              error-maxs)))
 
 (defn evaluate-individual
   "Returns the given individual with errors, total-errors, and weighted-errors,
@@ -91,15 +116,23 @@
             ne (if (and reuse-errors (not (nil? (:normalized-error i))))
                  (:normalized-error i)
                  (compute-total-error e))
+            co-solve (when (= total-error-method :co-solvability)
+                       (for [x (range (count e))
+                             y (range (count e))
+                             :when (< x y)]
+                         (/ (+ (- 1.0 (nth e x)) (- 1.0 (nth e y)))
+                            2)))
             we (case total-error-method
                  :sum nil
                  :ifs nil ; calculated later
+                 :co-solvability nil ; calculated later
                  :eliteness nil ; calculated later
                  :hah (compute-hah-error e)
                  :rmse (compute-root-mean-square-error e)
                  nil)
             new-ind (assoc evaluated-i ; Assign errors and history to i
                            :errors e
+                           :co-solvability-rewards co-solve
                            :total-error te
                            :weighted-error we
                            :normalized-error ne

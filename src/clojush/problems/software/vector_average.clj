@@ -13,7 +13,8 @@
         [clojush pushstate interpreter random util globals]
         clojush.instructions.tag
         [clojure.math numeric-tower combinatorics]
-        ))
+        )
+  (:require [clojush.instructions.software-problems :as sp]))
 
 ; Atom generators
 (def vector-average-atom-generators
@@ -193,7 +194,7 @@
    :training-cases (first vector-average-train-and-test-cases)
    :sub-training-cases '()
    :atom-generators vector-average-atom-generators
-   :boosted-atom-generators boosted-atom-generators
+   :boosted-atom-generators (sp/get-instructions :vector-average)
    :max-points 1600
    :max-genome-size-in-initial-program 200
    :evalpush-limit 800

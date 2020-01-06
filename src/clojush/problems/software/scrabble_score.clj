@@ -14,7 +14,8 @@
         [clojush pushstate interpreter random util globals]
         clojush.instructions.tag
         clojure.math.numeric-tower)
-    (:require [clojure.string :as string]))
+    (:require [clojure.string :as string]
+              [clojush.instructions.software-problems :as sp]))
 
 (def scrabble-letter-values
   (let [scrabble-map {\a 1
@@ -214,7 +215,7 @@
    :training-cases (first scrabble-score-train-and-test-cases)
    :sub-training-cases '()
    :atom-generators scrabble-score-atom-generators
-   :boosted-atom-generators boosted-atom-generators
+   :boosted-atom-generators (sp/get-instructions :scrabble-score)
    :max-points 4000
    :max-genome-size-in-initial-program 500
    :evalpush-limit 2000

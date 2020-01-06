@@ -17,7 +17,8 @@
         [clojush pushstate interpreter random util globals]
         clojush.instructions.tag
         clojure.math.numeric-tower)
-    (:require [clojure.string :as string]))
+    (:require [clojure.string :as string]
+              [clojush.instructions.software-problems :as sp]))
 
 ;; Define test cases
 (defn syllables-input
@@ -219,7 +220,7 @@
    :training-cases (first syllables-train-and-test-cases)
    :sub-training-cases '()
    :atom-generators syllables-atom-generators
-   :boosted-atom-generators boosted-atom-generators
+   :boosted-atom-generators (sp/get-instructions :syllables)
    :max-points 3200
    :max-genome-size-in-initial-program 400
    :evalpush-limit 1600

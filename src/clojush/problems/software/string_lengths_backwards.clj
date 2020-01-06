@@ -14,7 +14,8 @@
         [clojush pushstate interpreter random util globals]
         clojush.instructions.tag
         [clojure.math numeric-tower combinatorics]
-        ))
+        )
+  (:require [clojush.instructions.software-problems :as sp]))
 
 ; Atom generators
 (def string-lengths-atom-generators
@@ -188,7 +189,7 @@
    :training-cases (first string-lengths-backwards-train-and-test-cases)
    :sub-training-cases '()
    :atom-generators string-lengths-atom-generators
-   :boosted-atom-generators boosted-atom-generators
+   :boosted-atom-generators (sp/get-instructions :string-lengths-backwards)
    :max-points 1200
    :max-genome-size-in-initial-program 150
    :evalpush-limit 600

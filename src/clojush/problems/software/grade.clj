@@ -19,7 +19,8 @@
         [clojush pushstate interpreter random util globals]
         clojush.instructions.tag
         clojure.math.numeric-tower
-        ))
+        )
+    (:require [clojush.instructions.software-problems :as sp])z)
 
 ; Atom generators
 (def grade-atom-generators
@@ -262,7 +263,7 @@
                                                          (second grade-train-and-test-cases))
    :training-cases (first grade-train-and-test-cases)
    :atom-generators grade-atom-generators
-   :boosted-atom-generators boosted-atom-generators
+   :boosted-atom-generators (sp/get-instructions :grade)
    :max-points 1600
    :max-genome-size-in-initial-program 200
    :evalpush-limit 800

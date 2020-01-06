@@ -13,7 +13,8 @@
         [clojush pushstate interpreter random util globals]
         clojush.instructions.tag
         [clojure.math numeric-tower])
-  (:require [clojure.string :as string]))
+  (:require [clojure.string :as string]
+            [clojush.instructions.software-problems :as sp]))
 
 ; Atom generators
 (def even-squares-atom-generators
@@ -159,6 +160,7 @@
                                                                 (second even-squares-train-and-test-cases))
    :training-cases (first even-squares-train-and-test-cases)
    :atom-generators even-squares-atom-generators
+   :boosted-atom-generators (sp/get-instructions :even-squares)
    :max-points 1600
    :max-genome-size-in-initial-program 200
    :evalpush-limit 2000

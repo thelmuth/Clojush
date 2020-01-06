@@ -16,7 +16,8 @@
         [clojush pushstate interpreter random util globals]
         clojush.instructions.tag
         clojure.math.numeric-tower)
-    (:require [clojure.string :as string]))
+  (:require [clojure.string :as string]
+            [clojush.instructions.software-problems :as sp]))
 
 ; Atom generators
 (def x-word-lines-atom-generators
@@ -261,7 +262,7 @@
    :training-cases (first x-word-lines-train-and-test-cases)
    :sub-training-cases '()
    :atom-generators x-word-lines-atom-generators
-   :boosted-atom-generators boosted-atom-generators
+   :boosted-atom-generators (sp/get-instructions :x-word-lines)
    :max-points 3200
    :max-genome-size-in-initial-program 400
    :evalpush-limit 1600

@@ -13,7 +13,8 @@
         [clojush pushstate interpreter random util globals]
         clojush.instructions.tag
         [clojure.math numeric-tower combinatorics]
-        ))
+        )
+  (:require [clojush.instructions.software-problems :as sp]))
 
 ; Atom generators
 (def mirror-image-atom-generators
@@ -193,7 +194,7 @@
    :training-cases (first mirror-image-train-and-test-cases)
    :sub-training-cases '()
    :atom-generators mirror-image-atom-generators
-   :boosted-atom-generators boosted-atom-generators
+   :boosted-atom-generators (sp/get-instructions :mirror-image)
    :max-points 1200
    :max-genome-size-in-initial-program 150
    :evalpush-limit 600

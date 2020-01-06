@@ -13,7 +13,8 @@
         [clojush pushstate interpreter random util globals]
         clojush.instructions.tag
         [clojure.math numeric-tower combinatorics]
-        ))
+        )
+    (:require [clojush.instructions.software-problems :as sp]))
 
 ; Atom generators
 (def count-odds-atom-generators
@@ -199,7 +200,7 @@
                                                               (second count-odds-train-and-test-cases))
    :training-cases (first count-odds-train-and-test-cases)
    :atom-generators count-odds-atom-generators
-   :boosted-atom-generators boosted-atom-generators
+   :boosted-atom-generators (sp/get-instructions :count-odds)
    :max-points 2000
    :max-genome-size-in-initial-program 250
    :evalpush-limit 1500

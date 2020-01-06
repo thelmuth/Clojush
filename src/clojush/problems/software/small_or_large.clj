@@ -13,7 +13,8 @@
         [clojush pushstate interpreter random util globals]
         clojush.instructions.tag
         [clojure.math numeric-tower]
-        ))
+        )
+  (:require [clojush.instructions.software-problems :as sp]))
 
 ; Atom generators
 (def small-or-large-atom-generators
@@ -159,7 +160,7 @@
    :training-cases (first small-or-large-train-and-test-cases)
    :sub-training-cases '()
    :atom-generators small-or-large-atom-generators
-   :boosted-atom-generators boosted-atom-generators
+   :boosted-atom-generators (sp/get-instructions :small-or-large)
    :max-points 800
    :max-genome-size-in-initial-program 100
    :evalpush-limit 300

@@ -15,7 +15,8 @@
         [clojush pushstate interpreter random util globals]
         clojush.instructions.tag
         clojure.math.numeric-tower
-        ))
+        )
+  (:require [clojush.instructions.software-problems :as sp]))
 
 ; Atom generators
 (def median-atom-generators
@@ -154,7 +155,7 @@
                                                           (second median-train-and-test-cases))
    :training-cases (first median-train-and-test-cases)
    :atom-generators median-atom-generators
-   :boosted-atom-generators boosted-atom-generators
+   :boosted-atom-generators (sp/get-instructions :median)
    :max-points 800
    :max-genome-size-in-initial-program 100
    :evalpush-limit 200

@@ -19,7 +19,8 @@
         [clojush pushstate interpreter random util globals]
         clojush.instructions.tag
         clojure.math.numeric-tower
-        ))
+        )
+  (:require [clojush.instructions.software-problems :as sp]))
 
 ; Atom generators
 (def checksum-atom-generators
@@ -39,7 +40,7 @@
             )
           (registered-for-stacks [:integer :boolean :string :char :exec :print])))
 
-(def boosted-atom-generators
+#_(def boosted-atom-generators
   '("Check sum is "
     \space
     64
@@ -185,7 +186,7 @@
                                                             (second checksum-train-and-test-cases))
    :training-cases (first checksum-train-and-test-cases)
    :atom-generators checksum-atom-generators
-   :boosted-atom-generators boosted-atom-generators
+   :boosted-atom-generators (sp/get-instructions :checksum)
    :max-points 3200
    :max-genome-size-in-initial-program 400
    :evalpush-limit 1500

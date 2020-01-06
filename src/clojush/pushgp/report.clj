@@ -41,7 +41,9 @@
     (println (name param) "="
              (cond
                (= param :random-seed) (random/seed-to-string val)
-               (= param :training-cases) (pr-str val)
+               (some #{param} #{:training-cases
+                                :atom-generators
+                                :boosted-atom-generators}) (pr-str val)
                :else val))))
 
 (defn print-genome

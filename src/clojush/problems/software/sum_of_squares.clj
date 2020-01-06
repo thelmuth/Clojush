@@ -13,7 +13,8 @@
         [clojush pushstate interpreter random util globals]
         clojush.instructions.tag
         [clojure.math numeric-tower]
-        ))
+        )
+  (:require [clojush.instructions.software-problems :as sp]))
 
 ; Atom generators
 (def sum-of-squares-atom-generators
@@ -159,7 +160,7 @@
                                                                   (second sum-of-squares-train-and-test-cases))
    :training-cases (first sum-of-squares-train-and-test-cases)
    :atom-generators sum-of-squares-atom-generators
-   :boosted-atom-generators boosted-atom-generators
+   :boosted-atom-generators (sp/get-instructions :sum-of-squares)
    :max-points 1600
    :max-genome-size-in-initial-program 200
    :evalpush-limit 4000

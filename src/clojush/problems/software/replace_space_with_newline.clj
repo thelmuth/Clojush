@@ -15,7 +15,8 @@
         [clojush pushstate interpreter random util globals]
         clojush.instructions.tag
         clojure.math.numeric-tower)
-    (:require [clojure.string :as string]))
+  (:require [clojure.string :as string]
+            [clojush.instructions.software-problems :as sp]))
 
 ;; Define test cases
 (defn replace-space-with-newline-input
@@ -200,7 +201,7 @@
    :training-cases (first replace-space-with-newline-train-and-test-cases)
    :sub-training-cases '()
    :atom-generators replace-space-with-newline-atom-generators
-   :boosted-atom-generators boosted-atom-generators
+   :boosted-atom-generators (sp/get-instructions :replace-space-with-newline)
    :max-points 3200
    :max-genome-size-in-initial-program 400
    :evalpush-limit 1600

@@ -33,8 +33,22 @@
 
 (defn get-instructions
   "Helper function to get instructions from the problem-instruction-map.
-  This will make it easier to alter this to implement transfer learning."
+  This will make it easier to alter this to implement transfer learning.
+
+  EDIT: Now transfer learning is implemented here, by including all instructions
+  not from the given problem. To equivicate, each problem contributes 2000
+  instructions, which is more than any problem has in the map above."
   [problem]
   (assert (some #{problem} (keys problem-instruction-map))
           (str "Problem " problem " isn't in problem-instruction-map."))
-  (get problem-instruction-map problem))
+  (let [map-without-problem (dissoc problem-instruction-map problem)
+        ins-sets (vals map-without-problem)
+        ins-sets-same-length (map (fn [ins-set]
+                                    (take 2000 (cycle ins-set)))
+                                  ins-sets)
+        transfer-learned-instructions (vec (apply concat ins-sets-same-length))]
+    ;; (println (count ins-sets-same-length))
+    ;; (println (map count ins-sets-same-length))
+    ;; (println (count transfer-learned-instructions))
+    transfer-learned-instructions))
+

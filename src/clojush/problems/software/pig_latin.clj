@@ -50,6 +50,64 @@
           (registered-for-stacks [:string :char :integer :boolean :exec :print])))
 
 
+(def boosted-atom-generators
+  '(in1
+
+    "ay"
+    \space
+    \a \e \i \o \u
+    "aeiou"
+
+    exec_noop
+    exec_string_iterate
+    exec_do*count
+    exec_do*range
+    exec_do*times
+    exec_dup
+    exec_dup_times
+    exec_while
+    exec_if
+    exec_when
+
+    string_split
+    string_empty
+    string_dup
+    string_first
+    string_containschar
+    string_rest
+    
+    boolean_not
+    boolean_and
+    boolean_or
+
+    print_string
+    print_char
+    ))
+
+#_(def tom-program
+ '(
+    in1 string_split
+    string_empty boolean_not
+    exec_while
+    (
+      string_dup
+      string_first "aeiou" string_containschar ;true if first letter of word is a vowel
+      exec_if
+      ( ;vowel case
+        print_string
+        )
+      ( ;consonant case
+        string_dup
+        string_rest print_string
+        string_first print_char
+        )
+      "ay" print_string
+      string_empty boolean_not exec_when (\space print_char)
+      string_empty boolean_not
+      )
+    ))
+
+
 ;; A list of data domains for the problem. Each domain is a vector containing
 ;; a "set" of inputs and two integers representing how many cases from the set
 ;; should be used as training and testing cases respectively. Each "set" of
@@ -168,6 +226,7 @@
                                                              (second pig-latin-train-and-test-cases))
    :training-cases (first pig-latin-train-and-test-cases)
    :atom-generators pig-latin-atom-generators
+   :boosted-atom-generators boosted-atom-generators
    :max-points 4000
    :max-genome-size-in-initial-program 500
    :evalpush-limit 2000

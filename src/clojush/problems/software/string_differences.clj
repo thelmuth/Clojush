@@ -68,6 +68,94 @@
       [input1 input2]
       [input2 input1])))
 
+
+(def boosted-atom-generators
+  '(in1
+    in2
+
+    \space
+    \newline
+    true
+    false
+    0
+
+    exec_noop
+    exec_string_iterate
+    exec_do*count
+    exec_do*range
+    exec_do*times
+    exec_dup
+    exec_dup_times
+    exec_while
+    exec_if
+    exec_when
+
+    string_length
+    string_parse_to_chars
+    string_dup
+    string_nth
+    string_containschar
+    string_emptystring
+    string_fromchar
+
+    integer_dup
+    integer_min
+    integer_lte
+
+    boolean_dup
+    boolean_or
+    boolean_not
+    boolean_and
+    boolean_empty
+    boolean_stackdepth
+
+    char_eq
+    char_dup
+    char_empty
+    char_allfromstring
+    char_iswhitespace
+
+    print_newline
+    print_char
+    print_integer
+    print_string
+    ))
+
+
+#_(def tom-program
+  '(
+     in1 string_length in2 string_length integer_min ;get length of shorter string
+     integer_dup 0 integer_lte exec_when exec_flush ;when shorter string has length <= 0, don't do anything
+     exec_do*count
+     (
+       integer_dup integer_dup
+       in1 string_nth in2 string_nth
+       char_eq boolean_not
+       exec_when
+       (
+         boolean_empty boolean_not exec_when
+         print_newline
+         true ; put on boolean stack just to know when have been here before
+         integer_dup integer_dup integer_dup
+         print_integer
+         \space print_char
+         in1 string_nth print_char
+         \space print_char
+         in2 string_nth print_char
+         )
+       )
+     ))
+
+#_(def evolved-program
+    '(in1 in2 string_parse_to_chars in1 exec_string_iterate
+          (boolean_or char_dup string_dup string_containschar exec_if
+                      (char_iswhitespace boolean_not string_emptystring)
+                      (string_fromchar print_char boolean_stackdepth
+                                       print_integer exec_dup
+                                       (\newline char_empty char_allfromstring
+                                        \space print_char print_char)))))
+
+
 ;; A list of data domains for the problem. Each domain is a vector containing
 ;; a "set" of inputs and two integers representing how many cases from the set
 ;; should be used as training and testing cases respectively. Each "set" of
@@ -213,6 +301,7 @@
                                                                       (second string-differences-train-and-test-cases))
    :training-cases (first string-differences-train-and-test-cases)
    :atom-generators string-differences-atom-generators
+   :boosted-atom-generators boosted-atom-generators
    :max-points 4000
    :max-genome-size-in-initial-program 500
    :evalpush-limit 2000

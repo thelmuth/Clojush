@@ -28,6 +28,85 @@
           (registered-for-stacks [:integer :boolean :exec :print])))
 
 
+(def boosted-atom-generators
+  '(in1
+
+    2
+    4
+
+    exec_noop
+    exec_string_iterate
+    exec_do*count
+    exec_do*range
+    exec_do*times
+    exec_dup
+    exec_dup_times
+    exec_while
+    exec_if
+    exec_when
+    exec_stackdepth
+    exec_empty
+    exec_swap
+    exec_pop
+    exec_s
+
+    boolean_empty
+    boolean_or
+    boolean_and
+    boolean_not
+    boolean_stackdepth
+    boolean_dup_items
+
+    integer_lt
+    integer_gt
+    integer_lte
+    integer_gte
+    integer_dup
+    integer_mult
+    integer_inc
+    integer_dec
+    integer_empty
+    integer_dup_items
+    integer_dup_times
+    
+    print_integer
+    print_newline
+    ))
+
+#_(def tom-program
+ '(
+    4 in1 integer_lt
+    exec_when
+    (
+      4 print_integer
+      4 integer_dup integer_dup integer_mult integer_dup in1 integer_lt
+      exec_while
+      (
+        print_newline print_integer 
+        integer_inc integer_inc
+        integer_dup integer_dup integer_mult integer_dup in1 integer_lt
+        )
+      )
+    ))
+
+#_(integer_empty exec_stackdepth exec_empty in1 exec_do*count
+    (integer_dec exec_do*count
+       (exec_do*count exec_dup_times
+           (print_integer boolean_empty boolean_empty boolean_stackdepth
+               boolean_stackdepth integer_mult integer_dup in1 integer_gte
+               exec_swap print_newline
+               (exec_while
+                (integer_dup_items exec_pop))))))
+
+#_(in1 integer_dec integer_empty exec_do*count
+       (exec_when
+        (integer_dup_times boolean_dup_items integer_dup exec_s
+              (integer_mult print_integer integer_inc integer_inc integer_dup
+                   integer_mult in1 integer_dec integer_lte in1
+                   boolean_dup_times)
+              (exec_eq integer_lt)
+              (exec_while (boolean_flush print_newline)))))
+
 ;; A list of data domains for the problem. Each domain is a vector containing
 ;; a "set" of inputs and two integers representing how many cases from the set
 ;; should be used as training and testing cases respectively. Each "set" of
@@ -159,6 +238,7 @@
                                                                 (second even-squares-train-and-test-cases))
    :training-cases (first even-squares-train-and-test-cases)
    :atom-generators even-squares-atom-generators
+   :boosted-atom-generators boosted-atom-generators
    :max-points 1600
    :max-genome-size-in-initial-program 200
    :evalpush-limit 2000

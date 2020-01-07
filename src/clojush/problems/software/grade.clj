@@ -20,7 +20,7 @@
         clojush.instructions.tag
         clojure.math.numeric-tower
         )
-    (:require [clojush.instructions.software-problems :as sp])z)
+  (:require [clojush.instructions.software-problems :as sp]))
 
 ; Atom generators
 (def grade-atom-generators

@@ -31,10 +31,48 @@
    :number-io '[in2 in1 float_frominteger float_add print_float in2 in1 float_frominteger float_add print_float in2 float_frominteger in1 float_add print_float in2 in1 float_frominteger float_add print_float in2 float_frominteger in1 float_add print_float float_stackdepth in2 integer_sub float_frominteger in1 float_swap float_sub print_float float_stackdepth in2 integer_sub in1 float_frominteger float_sub print_float in2 float_frominteger in1 float_add print_float in1 in2 float_frominteger float_add print_float in1 in2 float_frominteger float_add print_float in1 in2 float_frominteger float_add print_float in1 in2 float_frominteger float_add print_float in2 in1 float_frominteger float_add print_float in2 in1 float_frominteger float_add print_float in2 float_frominteger in1 float_add print_float in2 in1 float_frominteger float_add print_float in2 float_frominteger in1 float_dup float_dup float_div float_div float_add print_float in2 float_frominteger in1 float_add print_float in2 float_frominteger in1 float_add print_float in2 float_frominteger in1 float_add print_float in2 float_frominteger in1 float_add print_float in2 float_frominteger in1 float_add print_float in2 in1 float_frominteger float_add print_float in2 float_frominteger in1 float_add print_float in2 float_frominteger in1 float_add print_float in1 in2 float_frominteger float_add print_float in1 in2 float_frominteger float_add print_float in2 float_frominteger in1 float_add print_float in2 float_frominteger in1 float_add print_float in1 in2 float_frominteger float_add print_float in2 float_frominteger in1 float_add print_float in2 float_frominteger in1 float_add print_float in1 in2 float_frominteger float_add print_float in1 in2 float_frominteger float_add print_float in1 in2 float_frominteger float_add print_float in2 in1 float_frominteger float_add print_float in2 in1 float_frominteger float_add print_float in2 float_frominteger in1 float_add print_float in1 in2 float_frominteger float_add print_float in1 in2 float_frominteger float_add print_float in2 float_frominteger in1 float_add print_float in2 float_frominteger in1 float_add print_float in2 float_frominteger in1 float_add print_float in2 float_frominteger in1 float_add print_float in1 in2 float_frominteger float_add print_float in2 in1 float_frominteger float_add print_float in1 in2 float_frominteger float_add print_float in2 float_frominteger in1 float_add print_float in2 in1 float_frominteger float_add print_float in1 in2 float_frominteger float_add print_float in2 float_frominteger in1 float_add print_float in2 in1 float_frominteger float_add print_float in2 float_frominteger in1 float_add print_float in1 in2 float_frominteger float_add print_float in1 in2 float_frominteger float_add print_float in2 float_frominteger in1 float_add print_float in2 float_frominteger in1 float_add print_float in2 float_frominteger in1 float_add print_float in2 float_frominteger in1 float_add print_float in2 in1 float_frominteger float_add print_float in2 float_frominteger in1 float_add print_float in1 in2 float_frominteger float_add print_float in1 in2 float_frominteger float_add print_float in2 float_frominteger in1 float_add print_float in2 float_frominteger in1 float_add print_float in2 in1 float_frominteger float_add print_float in2 float_frominteger in1 float_add print_float in2 float_frominteger in1 float_add print_float in1 in2 float_frominteger float_add print_float in1 in2 float_frominteger float_add print_float in2 float_frominteger in1 float_add print_float in2 float_frominteger in1 float_add print_float in2 float_frominteger in1 float_add print_float in1 in2 float_frominteger float_add print_float in1 in2 float_frominteger float_add print_float in2 in1 float_frominteger float_add print_float in2 float_frominteger in1 float_add print_float in1 in2 float_frominteger float_add print_float in2 in1 float_frominteger float_add print_float in2 float_frominteger in1 float_add print_float in1 in2 float_frominteger float_add print_float in1 in2 float_frominteger float_add print_float in2 float_frominteger in1 float_add print_float in1 in2 float_frominteger float_add print_float in2 float_frominteger in1 float_add print_float in2 float_frominteger in1 float_add print_float in1 in2 float_frominteger float_add print_float in1 in2 float_frominteger float_add print_float in1 in2 float_frominteger float_add print_float in1 in2 float_frominteger float_add print_float in2 float_frominteger in1 float_add print_float in2 float_frominteger in1 float_add print_float in2 float_frominteger in1 float_add print_float in2 in1 float_frominteger float_add print_float in1 in2 float_frominteger float_add print_float in2 float_frominteger in1 float_add print_float in1 in2 float_frominteger float_add print_float in2 float_frominteger in1 float_add print_float in1 in2 float_frominteger float_add print_float ]
    })
 
+(defn get-inN-instructions
+  "Returns the list of inN instructions for each problem"
+  [problem]
+  (case problem
+    (:small-or-large :sum-of-squares :digits :vector-average :syllables :checksum :double-letters :replace-space-with-newline :scrabble-score :last-index-of-zero :even-squares :count-odds :string-lengths-backwards :negative-to-zero) '(in1)
+    (:string-differences :x-word-lines :vectors-summed :number-io :mirror-image :super-anagrams) '(in1 in2)
+    (:compare-string-lengths :median :for-loop-index) '(in1 in2 in3)
+    :smallest '(in1 in2 in3 in4)
+    :grade '(in1 in2 in3 in4 in5)
+    "Error: Not a problem"))
+
+(def problem-specific-constants
+  {:checksum '("Check sum is " \space 64)
+   :compare-string-lengths '() ;done
+   :count-odds '(0 1 2)
+   :digits '(\newline)
+   :double-letters '(\!)
+   :even-squares '() ;done
+   :for-loop-index '() ;done
+   :grade '("Student has a " " grade." "A" "B" "C" "D" "F")
+   :last-index-of-zero '(0)
+   :median '() ;done
+   :mirror-image '() ;done
+   :negative-to-zero '(0 [])
+   :number-io '() ;done
+   :replace-space-with-newline '(\space \newline)
+   :scrabble-score '([0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 3 3 2 1 4 2 4 1 8 5 1 3 1 1 3 10 1 1 1 1 4 4 8 4 10 0 0 0 0 0 0 1 3 3 2 1 4 2 4 1 8 5 1 3 1 1 3 10 1 1 1 1 4 4 8 4 10 0 0 0 0])
+   :small-or-large '("small" "large")
+   :smallest '() ;done
+   :string-differences '(\space \newline)
+   :string-lengths-backwards '() ;done
+   :sum-of-squares '(0 1)
+   :super-anagrams '() ;done
+   :syllables '("The number of syllables is " \a \e \i \o \u \y "aeiouy")
+   :vector-average '() ;done
+   :vectors-summed '([])
+   :x-word-lines '(\space \newline)
+   })
+
 (defn get-instructions
   "Helper function to get instructions from the problem-instruction-map.
   This will make it easier to alter this to implement transfer learning.
-
   EDIT: Now transfer learning is implemented here, by including all instructions
   not from the given problem. To equivicate, each problem contributes 2000
   instructions, which is more than any problem has in the map above."
@@ -46,9 +84,154 @@
         ins-sets-same-length (map (fn [ins-set]
                                     (take 2000 (cycle ins-set)))
                                   ins-sets)
-        transfer-learned-instructions (vec (apply concat ins-sets-same-length))]
-    ;; (println (count ins-sets-same-length))
+        transfer-learned-instructions (apply concat ins-sets-same-length)
+        tli-remove-inN (filter #(not (some #{%} #{'in1 'in2 'in3 'in4 'in5}))
+                               transfer-learned-instructions)
+        num-inN (- (count transfer-learned-instructions)
+                   (count tli-remove-inN))        
+        with-inN-instructions (concat tli-remove-inN
+                                      (take num-inN
+                                            (cycle (get-inN-instructions problem))))
+        num-problem-constants 5000
+        final-instructions (concat with-inN-instructions
+                                   ; Note: this will be empty if problem-instruction-map for the problem is empty
+                                   (take num-problem-constants
+                                         (cycle (get problem-specific-constants
+                                                     problem))))]
+        ;; (println (count ins-sets-same-length))
     ;; (println (map count ins-sets-same-length))
     ;; (println (count transfer-learned-instructions))
-    transfer-learned-instructions))
+    (vec final-instructions)))
 
+
+
+;;;;;;;;;;;;;;;;;;
+; Scratch work
+
+; There are 9230 inN instructions out of 50000 instructions, or about 18.5%
+#_(count (filter #(some #{%} #{'in1 'in2 'in3 'in4 'in5})
+               (get-instructions :bogus)))
+
+; Get which inN instructions are in each problem
+#_(let [result (map (fn [[problem ins-set]]
+                    (vector problem
+                            (distinct
+                             (filter (fn [ins]
+                                       (some #{ins} #{'in1 'in2 'in3 'in4 'in5 'in6 'in7}))
+                                     ins-set))))
+                  problem-instruction-map)]
+  (println (into {} (map (fn [[inNs probs]]
+                           (vector inNs
+                                   (map first probs)))
+                         (group-by (comp sort second) result)))))
+
+; These are the problems by their inN instructions
+; {(in1 in2) (:string-differences :x-word-lines :vectors-summed :number-io :mirror-image :super-anagrams), (in1) (:small-or-large :sum-of-squares :digits :vector-average :syllables :checksum :double-letters :replace-space-with-newline :scrabble-score :last-index-of-zero :even-squares :count-odds :string-lengths-backwards :negative-to-zero), (in1 in2 in3) (:compare-string-lengths :median :for-loop-index), (in1 in2 in3 in4 in5) (:grade), (in1 in2 in3 in4) (:smallest)}
+
+
+; Find problem-specific constants
+#_(let [result (map (fn [[problem ins-set]]
+                    (vector problem
+                            (filter (fn [ins]
+                                      (not= clojure.lang.Symbol
+                                            (type ins)))
+                                    ins-set)))
+                  problem-instruction-map)]
+  (doseq [[problem r] result]
+    (println "########")
+    (println problem)
+    (prn r)))
+
+; Find number of constants out of 50000
+; 12957 constants out of 50000 instructions, or 26%
+#_(count (remove #(= (type %) clojure.lang.Symbol)
+               (get-instructions :bogus)))
+
+
+;; ########
+;; :string-differences
+;; (\newline \space)
+;; ########
+;; :x-word-lines
+;; (\space \newline \newline \space \newline \newline \space \space \newline \newline \space \space \newline \newline \space \space \newline \space \newline \newline \space \space \newline \space \newline \space \space \space \newline \space \newline \space \space \space \newline \newline \space \space \newline \space \space \newline \newline \space \space \newline \newline \space \newline \space \space \newline \space \space \newline \space \newline \space \newline \newline \space \newline \space \space \newline \space \newline \space \newline \space \newline \space \newline \space \space \newline \space \newline \newline \space \space \space \newline \newline \space \space \newline \space \space \newline \space \newline \space \space \newline \newline \space \space \newline \space \newline \newline \space \newline \space \space \space \newline \newline \space \newline \space \space \newline \space \space \space \space \newline \newline \space \space \newline \space \newline \newline \space \newline \space \space
+;;  \newline \space \newline \newline \space \newline \space \newline \space \newline \space \newline \space \space \newline \newline \space \newline \space \space \newline \newline \space \newline \space \space \newline \newline \space \space \newline \newline \space \space \newline \newline \space \space \newline \space \space \newline \newline \space \space \newline \newline \newline \space \space \newline \newline \space \newline \space \newline \space)
+;; ########
+;; :small-or-large
+;; (5996 "small" "large" -2018 "large" "small" -8669 "small" "large" 960 "small" 5142 "large" -1991 "large" "small" "small" "large" "large" -3970 "large" "small" 1162 1981 "small" "large" -4029 "large" "small" "small" 200 "large" 9899 "small" "large" 5985 "small" "large" -2010 "large" "small" "small" "large" -1974 "small" "large" "large" "small" 3489 "small" -1564 "small" "small" "large" -2020 "large" "small" "small" -198 "large" "small" "large" "small" -3991 "large" "small" "large" "small")
+;; ########
+;; :vectors-summed
+;; ([] [] [] [] [] [] -926 -851 961 478 [])
+;; ########
+;; :compare-string-lengths
+;; (false false false false true true false)
+;; ########
+;; :number-io
+;; ()
+;; ########
+;; :sum-of-squares
+;; (1 1 0 5 0 0 0 0 1 1)
+;; ########
+;; :digits
+;; (\newline \newline \newline \newline \newline 3 5 10 \newline 2 \newline \newline)
+;; ########
+;; :vector-average
+;; ()
+;; ########
+;; :mirror-image
+;; ()
+;; ########
+;; :syllables
+;; ("aeiouy" "The number of syllables is " "aeiouy" "The number of syllables is " "The number of syllables is " "The number of syllables is " "aeiouy" "The number of syllables is " "aeiouy" "aeiouy" "The number of syllables is " \o "aeiouy" "The number of syllables is " "aeiouy" \a \a "aeiouy" "The number of syllables is " "x*edu-aq60_i" "The number of syllables is " "aeiouy" "The number of syllables is " "aeiouy" \e \e "The number of syllables is " \a "aeiouy" \y "The number of syllables is " "aeiouy" \y "The number of syllables is " "aeiouy" ".f^oo6|yo0*yw`" "aeiouy" "aeiouy" "The number of syllables is " \u \y "aeiouy" "The number of syllables is " \i \y \o \i \e "The number of syllables is " \y \i \u \a \o "The number of syllables is " "aeiouy" \u "The number of syllables is " "aeiouy" \e \e \e "aeiouy" "$,ue3xeh3j|8e^6gf8" "The number of syllables is " "The number of syllables is " "s!\"=ou.?u! z42`1]7o" \y \y "aeiouy" "aeiouy" "The number of syllables is " "aeiouy" \i "aeiouy" "The number of syllables is "
+;;  "aeiouy" \a "The number of syllables is " "aeiouy" "The number of syllables is " \u "The number of syllables is " \a "aeiouy" \e \y \i \o \e \a \i \u \y \e \y "The number of syllables is " \o "The number of syllables is " "aeiouy" "The number of syllables is " "aeiouy" "The number of syllables is " \o \a \e "The number of syllables is " \y \o \e \u \i "The number of syllables is " "aeiouy" \o "aeiouy" "The number of syllables is " \q "aeiouy" "aeiouy" "The number of syllables is " "aeiouy" \e "The number of syllables is " "aeiouy" "The number of syllables is " "aeiouy" "The number of syllables is " "The number of syllables is " \a "aeiouy" "aeiouy" "aeiouy" "The number of syllables is " "aeiouy" \a "The number of syllables is " \a \y \u \e \a \e "aeiouy" \a "The number of syllables is " "The number of syllables is " "aeiouy" \i \u \e \o \e \a \e \y \y "The number of syllables is " "The number of syllables is " "aeiouy" "The number of syllables is " "The number of syllables is " \a "aeiouy" "aeiouy" "The numb
+;; er of syllables is " "The number of syllables is " "aeiouy" \y "The number of syllables is " "The number of syllables is " "aeiouy" "The number of syllables is " "aeiouy" "The number of syllables is " \o "aeiouy" \o "The number of syllables is " \o " #ce~hk&o$\\mie 2eg" "aeiouy" \) "The number of syllables is " "aeiouy" "The number of syllables is " "aeiouy" "The number of syllables is " "aeiouy" "aeiouy" "The number of syllables is " "aeiouy" \c "aeiouy" "The number of syllables is " "The number of syllables is " "aeiouy" "aeiouy" "The number of syllables is " "aeiouy" "The number of syllables is " "The number of syllables is " "The number of syllables is " "aeiouy" \y "The number of syllables is " "aeiouy" "The number of syllables is " \e "The number of syllables is " "aeiouy" "The number of syllables is " "aeiouy" \u \u "The number of syllables is " "aeiouy" "The number of syllables is " \y "aeiouy" \y "The number of syllables is " "aeiouy" "aeiouy" "The number of syllables is " "aeiouy" "aeiouy" "The numb
+;; er of syllables is " "aeiouy" \o "The number of syllables is ")
+;; ########
+;; :grade
+;; ("B" "A" "C" "F" "D" " grade." "Student has a " "B" "A" "C" "D" "F" " grade." "Student has a ")
+;; ########
+;; :checksum
+;; ("Check sum is " \space 64 "Check sum is " \` 64 64 64 "Check sum is " 64 \space "Check sum is " 64 64 \* 64 \space "Check sum is " "Check sum is " \space 64 \@ \space "Check sum is " "Check sum is " \space 64 64 "Check sum is " 64 \space "Check sum is " "Check sum is " "Check sum is " 64 64 "Check sum is " \space 64 64 "Check sum is " \space 64 64 "Check sum is " 64 -96 "Check sum is " \space 64 "Check sum is " \space 64 64 64 "Check sum is " "Check sum is " 64 64 -76 \space 64 "Check sum is ")
+;; ########
+;; :median
+;; (76 -55 58 92)
+;; ########
+;; :smallest
+;; (40 -23 77)
+;; ########
+;; :double-letters
+;; (\! \! \! \! \! \! \! \! \! \! \! \! \! \! \! \! \! \! \! \! \! \! \! \! \! \! \! \! \! \! \! \! \! \! \! \! \! \! \! \! \! \! \! \! \! \! \! \! \! \! \! \! \! \! \! \! \! \! \! \! \! \! \! \! \! \! \! \! \! \! \! \! \! \! \! \! \! \! \! \! \! \!)
+;; ########
+;; :replace-space-with-newline
+;; (\space \space \newline \space \newline \space \space \newline \space \newline \space \newline \space \newline \space \newline \space \newline \space \newline \space \space \newline \space \space \newline \space \space \newline \space \newline \space \space \space \newline \space \newline \space \space \newline \space \newline \newline \space \space \newline \newline \newline \space \space \newline \space \newline \space \space \newline \space \space \newline \} \space \newline \newline \space \space \space \space \newline \space \newline \space \newline \space \newline \space \space \newline \space \space \newline \space \newline \space \newline \space \space \space \newline \space \newline \space \newline \space \space \d \newline \space \newline \space \space \space \newline \space \newline \space \newline \space \space \space \newline \space \newline \newline \space \newline \space \newline \space \newline \space \space \newline "YebHh2O 2)K  ]*_  " \newline \space \space \newline \space \space \newline \
+;; space \newline \space \space \space \newline \space \space \newline \space \newline "X  +~+)" \space \newline \space \space \newline \space \newline \space \space \newline " + ;i{R0\\+p " \newline \L \space \newline \space \newline \space \newline \newline \space \newline \space \space \newline \space \newline \space \space \newline \space \newline \space \newline \space \newline \space \space \newline \space \newline \space \newline \space \space \newline \space \space \newline \space \newline \newline \space \space \newline \space \space \newline \space \space \newline \space \newline \space \newline \space \newline \space \space \newline \space \newline \newline "  DbMka'vA  eO fm" \space \newline \space \space \space \newline \space \newline " X " \newline \space \newline \space \space \newline \space \newline \space \newline \space \newline \newline \space \space \space \newline \space \space \newline \space \newline \space \newline \space \newline \space \newline \space \newline \space \newline \space)
+;; ########
+;; :scrabble-score
+;; ([0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 3 3 2 1 4 2 4 1 8 5 1 3 1 1 3 10 1 1 1 1 4 4 8 4 10 0 0 0 0 0 0 1 3 3 2 1 4 2 4 1 8 5 1 3 1 1 3 10 1 1 1 1 4 4 8 4 10 0 0 0 0] [0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 3 3 2 1 4 2 4 1 8 5 1 3 1 1 3 10 1 1 1 1 4 4 8 4 10 0 0 0 0 0 0 1 3 3 2 1 4 2 4 1 8 5 1 3 1 1 3 10 1 1 1 1 4 4 8 4 10 0 0 0 0] [0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 3 3 2 1 4 2 4 1 8 5 1 3 1 1 3 10 1 1 1 1 4 4 8 4 10 0 0 0 0 0 0 1 3 3 2 1 4 2 4 1 8 5 1 3 1 1 3 10 1 1 1 1 4 4 8 4 10 0 0 0 0] [0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 3 3 2 1 4 2 4 1 8 5 1 3 1 1 3 10 1 1 1 1 4 4 8 4 10 0 0 0 0 0 0 1 3 3 2 1 4 2 4 1 8 5 1 3 1 1 3 10 1 1 1 1 4 4
+;;  8 4 10 0 0 0 0] [0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 3 3 2 1 4 2 4 1 8 5 1 3 1 1 3 10 1 1 1 1 4 4 8 4 10 0 0 0 0 0 0 1 3 3 2 1 4 2 4 1 8 5 1 3 1 1 3 10 1 1 1 1 4 4 8 4 10 0 0 0 0] [0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 3 3 2 1 4 2 4 1 8 5 1 3 1 1 3 10 1 1 1 1 4 4 8 4 10 0 0 0 0 0 0 1 3 3 2 1 4 2 4 1 8 5 1 3 1 1 3 10 1 1 1 1 4 4 8 4 10 0 0 0 0] [0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 3 3 2 1 4 2 4 1 8 5 1 3 1 1 3 10 1 1 1 1 4 4 8 4 10 0 0 0 0 0 0 1 3 3 2 1 4 2 4 1 8 5 1 3 1 1 3 10 1 1 1 1 4 4 8 4 10 0 0 0 0] [0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 3 3 2 1 4 2 4 1 8 5 1 3 1 1 3 10 1 1 1 1 4 4 8 4 10 0 0 0 0 0 0 1 3 3 2 1 4 2 4 1 8 5 1 3 1 1 
+;; 3 10 1 1 1 1 4 4 8 4 10 0 0 0 0] [0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 3 3 2 1 4 2 4 1 8 5 1 3 1 1 3 10 1 1 1 1 4 4 8 4 10 0 0 0 0 0 0 1 3 3 2 1 4 2 4 1 8 5 1 3 1 1 3 10 1 1 1 1 4 4 8 4 10 0 0 0 0] [0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 3 3 2 1 4 2 4 1 8 5 1 3 1 1 3 10 1 1 1 1 4 4 8 4 10 0 0 0 0 0 0 1 3 3 2 1 4 2 4 1 8 5 1 3 1 1 3 10 1 1 1 1 4 4 8 4 10 0 0 0 0] [0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 3 3 2 1 4 2 4 1 8 5 1 3 1 1 3 10 1 1 1 1 4 4 8 4 10 0 0 0 0 0 0 1 3 3 2 1 4 2 4 1 8 5 1 3 1 1 3 10 1 1 1 1 4 4 8 4 10 0 0 0 0] [0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 3 3 2 1 4 2 4 1 8 5 1 3 1 1 3 10 1 1 1 1 4 4 8 4 10 0 0 0 0 0 0 1 3 3 2 1 4 2 
+;; 4 1 8 5 1 3 1 1 3 10 1 1 1 1 4 4 8 4 10 0 0 0 0] [0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 3 3 2 1 4 2 4 1 8 5 1 3 1 1 3 10 1 1 1 1 4 4 8 4 10 0 0 0 0 0 0 1 3 3 2 1 4 2 4 1 8 5 1 3 1 1 3 10 1 1 1 1 4 4 8 4 10 0 0 0 0] [0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 3 3 2 1 4 2 4 1 8 5 1 3 1 1 3 10 1 1 1 1 4 4 8 4 10 0 0 0 0 0 0 1 3 3 2 1 4 2 4 1 8 5 1 3 1 1 3 10 1 1 1 1 4 4 8 4 10 0 0 0 0] [0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 3 3 2 1 4 2 4 1 8 5 1 3 1 1 3 10 1 1 1 1 4 4 8 4 10 0 0 0 0 0 0 1 3 3 2 1 4 2 4 1 8 5 1 3 1 1 3 10 1 1 1 1 4 4 8 4 10 0 0 0 0] [0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 3 3 2 1 4 2 4 1 8 5 1 3 1 1 3 10 1 1 1 1 4 4 8 4 10 0 0 0 0 0 
+;; 0 1 3 3 2 1 4 2 4 1 8 5 1 3 1 1 3 10 1 1 1 1 4 4 8 4 10 0 0 0 0] [0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 3 3 2 1 4 2 4 1 8 5 1 3 1 1 3 10 1 1 1 1 4 4 8 4 10 0 0 0 0 0 0 1 3 3 2 1 4 2 4 1 8 5 1 3 1 1 3 10 1 1 1 1 4 4 8 4 10 0 0 0 0] [0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 3 3 2 1 4 2 4 1 8 5 1 3 1 1 3 10 1 1 1 1 4 4 8 4 10 0 0 0 0 0 0 1 3 3 2 1 4 2 4 1 8 5 1 3 1 1 3 10 1 1 1 1 4 4 8 4 10 0 0 0 0] [0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 3 3 2 1 4 2 4 1 8 5 1 3 1 1 3 10 1 1 1 1 4 4 8 4 10 0 0 0 0 0 0 1 3 3 2 1 4 2 4 1 8 5 1 3 1 1 3 10 1 1 1 1 4 4 8 4 10 0 0 0 0] [0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 3 3 2 1 4 2 4 1 8 5 1 3 1 1 3 10 1 1 1 1 4 4 8
+;;  4 10 0 0 0 0 0 0 1 3 3 2 1 4 2 4 1 8 5 1 3 1 1 3 10 1 1 1 1 4 4 8 4 10 0 0 0 0] [0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 3 3 2 1 4 2 4 1 8 5 1 3 1 1 3 10 1 1 1 1 4 4 8 4 10 0 0 0 0 0 0 1 3 3 2 1 4 2 4 1 8 5 1 3 1 1 3 10 1 1 1 1 4 4 8 4 10 0 0 0 0] [0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 3 3 2 1 4 2 4 1 8 5 1 3 1 1 3 10 1 1 1 1 4 4 8 4 10 0 0 0 0 0 0 1 3 3 2 1 4 2 4 1 8 5 1 3 1 1 3 10 1 1 1 1 4 4 8 4 10 0 0 0 0] [0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 3 3 2 1 4 2 4 1 8 5 1 3 1 1 3 10 1 1 1 1 4 4 8 4 10 0 0 0 0 0 0 1 3 3 2 1 4 2 4 1 8 5 1 3 1 1 3 10 1 1 1 1 4 4 8 4 10 0 0 0 0] [0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 3 3 2 1 4 2 4 1 8 5 1 3 1 1 3 
+;; 10 1 1 1 1 4 4 8 4 10 0 0 0 0 0 0 1 3 3 2 1 4 2 4 1 8 5 1 3 1 1 3 10 1 1 1 1 4 4 8 4 10 0 0 0 0] [0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 3 3 2 1 4 2 4 1 8 5 1 3 1 1 3 10 1 1 1 1 4 4 8 4 10 0 0 0 0 0 0 1 3 3 2 1 4 2 4 1 8 5 1 3 1 1 3 10 1 1 1 1 4 4 8 4 10 0 0 0 0] [0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 3 3 2 1 4 2 4 1 8 5 1 3 1 1 3 10 1 1 1 1 4 4 8 4 10 0 0 0 0 0 0 1 3 3 2 1 4 2 4 1 8 5 1 3 1 1 3 10 1 1 1 1 4 4 8 4 10 0 0 0 0] [0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 3 3 2 1 4 2 4 1 8 5 1 3 1 1 3 10 1 1 1 1 4 4 8 4 10 0 0 0 0 0 0 1 3 3 2 1 4 2 4 1 8 5 1 3 1 1 3 10 1 1 1 1 4 4 8 4 10 0 0 0 0] [0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 3 3 2 1 4 2 4 
+;; 1 8 5 1 3 1 1 3 10 1 1 1 1 4 4 8 4 10 0 0 0 0 0 0 1 3 3 2 1 4 2 4 1 8 5 1 3 1 1 3 10 1 1 1 1 4 4 8 4 10 0 0 0 0] [0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 3 3 2 1 4 2 4 1 8 5 1 3 1 1 3 10 1 1 1 1 4 4 8 4 10 0 0 0 0 0 0 1 3 3 2 1 4 2 4 1 8 5 1 3 1 1 3 10 1 1 1 1 4 4 8 4 10 0 0 0 0] [0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 3 3 2 1 4 2 4 1 8 5 1 3 1 1 3 10 1 1 1 1 4 4 8 4 10 0 0 0 0 0 0 1 3 3 2 1 4 2 4 1 8 5 1 3 1 1 3 10 1 1 1 1 4 4 8 4 10 0 0 0 0] [0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 3 3 2 1 4 2 4 1 8 5 1 3 1 1 3 10 1 1 1 1 4 4 8 4 10 0 0 0 0 0 0 1 3 3 2 1 4 2 4 1 8 5 1 3 1 1 3 10 1 1 1 1 4 4 8 4 10 0 0 0 0])
+;; ########
+;; :last-index-of-zero
+;; (42 49 43 26 19)
+;; ########
+;; :even-squares
+;; ()
+;; ########
+;; :super-anagrams
+;; (-477 \tab \& \J \M \- \Z)
+;; ########
+;; :count-odds
+;; (2 0 0 2 0 2 0 2 2)
+;; ########
+;; :string-lengths-backwards
+;; (-31 47 21 -92 95 71 -12 10 63 100 -26)
+;; ########
+;; :for-loop-index
+;; ()
+;; ########
+;; :negative-to-zero
+;; (0 0 0 0 0 0 0 [] 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 [] 0 0 0 0 [] 0 0 0 0 0 0 0 [] 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 [] 0 0 0 0 0 0 0 0 0 0 [] 0 0 0 0 0 0 0 0 0 0 0 0 [] [] 0 0 0 0 0 0 0 0 0 0 0 0 0 [])

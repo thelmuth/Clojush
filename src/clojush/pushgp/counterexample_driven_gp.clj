@@ -154,10 +154,19 @@
                                {})
         old-cases-with-removals (if need-case-removals
                                   (loop [old-cases-map case-pass-counts-map]
-                                    (if (<= (+ (count distinct-new-cases)
-                                               (count old-cases-map))
-                                            counterexample-max-cases-before-removing-easiest)
+                                    (cond
+                                      ; We have few enough cases
+                                      (<= (+ (count distinct-new-cases)
+                                             (count old-cases-map))
+                                          counterexample-max-cases-before-removing-easiest)
                                       (keys old-cases-map)
+
+                                      ; Removed all old-cases. In this case, just return empty list
+                                      (empty? old-cases-map)
+                                      '()
+
+                                      ; Recur, dissocing the key with most passes
+                                      :else
                                       (recur (dissoc old-cases-map
                                                      (first
                                                       (apply max-key
@@ -168,8 +177,9 @@
     (swap! push-argmap (fn [current-argmap] ; if cases, concat them to old cases
                          (assoc current-argmap
                                 :sub-training-cases
-                                (concat distinct-new-cases
-                                        old-cases-with-removals))))
+                                (take counterexample-max-cases-before-removing-easiest ; want at most this many cases
+                                      (concat distinct-new-cases
+                                              old-cases-with-removals)))))
     nil))
 
 (defn generational-case-addition

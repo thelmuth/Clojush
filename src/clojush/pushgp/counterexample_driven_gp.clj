@@ -191,6 +191,10 @@
       ; This shouldn't happen, but could
       (= counterexample-case :passes-all-cases)
       nil
+      ; This could happen if the sub-training cases gets large. If so, just ignore
+      ; and add another case next generation.
+      (= counterexample-case :passes-all-cases-besides-those-in-sub-training-cases)
+      nil
       ; This could happen. If so, just ignore it and add another next generation
       (some #{counterexample-case} (:sub-training-cases @push-argmap))
       nil

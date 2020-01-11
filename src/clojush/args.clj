@@ -120,6 +120,10 @@
          :counterexample-driven-number-of-initial-training-cases 10
           ;; The number of cases to start with when using counterexample-driven GP
 
+         :counterexample-driven-number-cases-to-add 1
+          ;; The number of cases to add when a program passes all cases or when
+          ;; reaching a generation to add cases.
+
          :counterexample-driven-add-case-every-X-generations 0
           ;; If a positive integer, will add a case to the sub-training-cases
           ;; every this many genreations after a case was last added.

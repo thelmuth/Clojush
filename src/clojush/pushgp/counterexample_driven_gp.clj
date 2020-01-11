@@ -11,7 +11,8 @@
   if so and false otherwise. If not, also updates :sub-training-cases by
   adding a wrong case.
   This version is automatic, using the known right answers."
-  [all-cases best-results-on-all-cases {:keys [output-stacks]}]
+  [all-cases best-results-on-all-cases {:keys [output-stacks
+                                               counterexample-driven-number-cases-to-add]}]
   (let [wrong-cases (remove #(= % :right-answer-on-case)
                             (map (fn [case best-result]
                                    (if (if (= output-stacks :float)
@@ -29,11 +30,12 @@
                                                             wrong-cases)]
         (if (empty? wrong-cases-besides-those-already-added)
           :passes-all-cases-besides-those-in-sub-training-cases
-          (let [counterexample-case-to-add (lrand-nth wrong-cases-besides-those-already-added)]
+          (let [counterexample-cases-to-add (take counterexample-driven-number-cases-to-add
+                                                 (lshuffle wrong-cases-besides-those-already-added))]
             ; add case to sub-training-cases
-            (println "Adding case to sub-training-cases:" (pr-str counterexample-case-to-add))
+            (println "Adding case(s) to sub-training-cases:" (pr-str counterexample-cases-to-add))
             ;(print "Press enter to continue...") (flush) (read-line)
-            counterexample-case-to-add)))))) ; return counterexample since program does not pass all generated cases
+            counterexample-cases-to-add)))))) ; return counterexample since program does not pass all generated cases
 
 (defn counterexample-check-results-human
   "Checks if the best program passed all generated cases, returning true
@@ -94,24 +96,24 @@
            pop (rest sorted-pop)
            new-cases '()]
       (let [best-results-on-all-cases (run-best-on-all-cases best all-cases argmap)
-            counterexample-case (case counterexample-driven-case-checker
+            counterexample-cases (case counterexample-driven-case-checker
                                   :automatic (counterexample-check-results-automatic
                                               all-cases best-results-on-all-cases argmap)
                                   :human (counterexample-check-results-human
                                           all-cases best-results-on-all-cases))
-            new-cases-with-new-case (if (= counterexample-case :passes-all-cases-besides-those-in-sub-training-cases)
+            new-cases-with-new-case (if (= counterexample-cases :passes-all-cases-besides-those-in-sub-training-cases)
                                       new-cases
-                                      (conj new-cases counterexample-case))]
-        (when (some #{counterexample-case} (:sub-training-cases @push-argmap))
+                                      (concat counterexample-cases new-cases))]
+        (when (some (set counterexample-cases) (:sub-training-cases @push-argmap))
           (println "Houston, we have a problem. This case is already in the training cases, and has been passed by this program.")
           (prn "existing cases: " (:sub-training-cases @push-argmap))
-          (prn "new case: " counterexample-case)
+          (prn "new case(s): " counterexample-cases)
           (prn "best individual: " best)
-          (prn "run it on new case:" (first (run-best-on-all-cases best (list counterexample-case) argmap)))
+          (prn "run it on new case:" (first (run-best-on-all-cases best counterexample-cases argmap)))
           (throw (Exception. "Added a new case already in training cases. See above.")))
         (cond
           ; Found a solution, return it
-          (= counterexample-case :passes-all-cases)
+          (= counterexample-cases :passes-all-cases)
           best
           ; Didn't find a solution; if rest of population is empty, return new-cases
           (empty? pop)
@@ -192,25 +194,25 @@
                     :else (throw (str "Unrecognized option for :counterexample-driven-case-generator: "
                                       counterexample-driven-case-generator)))
         best-results-on-all-cases (run-best-on-all-cases best all-cases argmap)
-        counterexample-case (case counterexample-driven-case-checker
+        counterexample-cases (case counterexample-driven-case-checker
                               :automatic (counterexample-check-results-automatic
                                           all-cases best-results-on-all-cases argmap)
                               :human (counterexample-check-results-human
                                       all-cases best-results-on-all-cases))]
     (cond
       ; This shouldn't happen, but could
-      (= counterexample-case :passes-all-cases)
+      (= counterexample-cases :passes-all-cases)
       nil
       ; This could happen if the sub-training cases gets large. If so, just ignore
       ; and add another case next generation.
-      (= counterexample-case :passes-all-cases-besides-those-in-sub-training-cases)
+      (= counterexample-cases :passes-all-cases-besides-those-in-sub-training-cases)
       nil
       ; This could happen. If so, just ignore it and add another next generation
-      (some #{counterexample-case} (:sub-training-cases @push-argmap))
+      (some (set counterexample-cases) (:sub-training-cases @push-argmap))
       nil
       ; Add the case to training cases
       :else
-      (add-cases-to-sub-training-cases population (list counterexample-case) argmap))))
+      (add-cases-to-sub-training-cases population counterexample-cases argmap))))
 
 (defn check-counterexample-driven-results
   "Returns true if a program has been found that passes all generated training

@@ -101,10 +101,11 @@
                                               all-cases best-results-on-all-cases argmap)
                                   :human (counterexample-check-results-human
                                           all-cases best-results-on-all-cases))
-            new-cases-with-new-case (if (= counterexample-cases :passes-all-cases-besides-those-in-sub-training-cases)
+            new-cases-with-new-case (if (keyword? counterexample-cases)
                                       new-cases
                                       (concat counterexample-cases new-cases))]
-        (when (some (set counterexample-cases) (:sub-training-cases @push-argmap))
+        (when (and (seq? counterexample-cases)
+                   (some (set counterexample-cases) (:sub-training-cases @push-argmap)))
           (println "Houston, we have a problem. This case is already in the training cases, and has been passed by this program.")
           (prn "existing cases: " (:sub-training-cases @push-argmap))
           (prn "new case(s): " counterexample-cases)
@@ -208,7 +209,8 @@
       (= counterexample-cases :passes-all-cases-besides-those-in-sub-training-cases)
       nil
       ; This could happen. If so, just ignore it and add another next generation
-      (some (set counterexample-cases) (:sub-training-cases @push-argmap))
+      (and (seq? counterexample-cases)
+           (some (set counterexample-cases) (:sub-training-cases @push-argmap)))
       nil
       ; Add the case to training cases
       :else

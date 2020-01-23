@@ -21,23 +21,36 @@
         clojure.math.numeric-tower
         ))
 
+(def problem :checksum)
+
 ; Atom generators
 (def checksum-atom-generators
-  (concat (list
-            "Check sum is "
-            \space
-            64
+  (let [first-ins
+        (concat (list
+                 "Check sum is "
+                 \space
+                 64
             ;;; end constants
-            (fn [] (- (lrand-int 257) 128)) ;Integer ERC [-128,128]
-            (fn [] (lrand-nth (concat [\newline \tab] (map char (range 32 127))))) ;Visible character ERC
+                 (fn [] (- (lrand-int 257) 128)) ;Integer ERC [-128,128]
+                 (fn [] (lrand-nth (concat [\newline \tab] (map char (range 32 127))))) ;Visible character ERC
             ;;; end ERCs
-            (tag-instruction-erc [:exec :integer :boolean :string :char] 1000)
-            (tagged-instruction-erc 1000)
+                 (tag-instruction-erc [:exec :integer :boolean :string :char] 1000)
+                 (tagged-instruction-erc 1000)
             ;;; end tag ERCs
-            'in1
+                 'in1
             ;;; end input instructions
-            )
-          (registered-for-stacks [:integer :boolean :string :char :exec :print])))
+                 )
+                (registered-for-stacks [:integer :boolean :string :char :exec :print]))
+        add-inN (concat first-ins
+                        (flatten (repeat (dec (int (* (/ 0.185 0.815)
+                                                      (count first-ins))))
+                                         (list 'in1))))
+        add-constants (concat add-inN
+                              (take (int (* (/ 5000 53000)
+                                            (count add-inN)))
+                                    (flatten (repeat (get problem-specific-constants
+                                                          problem)))))]
+    add-constants))
 
 
 ;; Define test cases

@@ -438,3 +438,52 @@
             top-val (nth sorted halfway)]
            (mean [bottom-val top-val])))))
 
+
+;;;;;;;;;;;;;
+;; For transfer learning control runs.
+
+
+(def problem-specific-constants
+  {:checksum '("Check sum is " \space 64)
+   :compare-string-lengths '() ;done
+   :count-odds '(0 1 2)
+   :digits '(\newline)
+   :double-letters '(\!)
+   :even-squares '() ;done
+   :for-loop-index '() ;done
+   :grade '("Student has a " " grade." "A" "B" "C" "D" "F")
+   :last-index-of-zero '(0)
+   :median '() ;done
+   :mirror-image '() ;done
+   :negative-to-zero '(0 [])
+   :number-io '() ;done
+   :replace-space-with-newline '(\space \newline)
+   :scrabble-score '([0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 3 3 2 1 4 2 4 1 8 5 1 3 1 1 3 10 1 1 1 1 4 4 8 4 10 0 0 0 0 0 0 1 3 3 2 1 4 2 4 1 8 5 1 3 1 1 3 10 1 1 1 1 4 4 8 4 10 0 0 0 0])
+   :small-or-large '("small" "large")
+   :smallest '() ;done
+   :string-differences '(\space \newline)
+   :string-lengths-backwards '() ;done
+   :sum-of-squares '(0 1)
+   :super-anagrams '() ;done
+   :syllables '("The number of syllables is " \a \e \i \o \u \y "aeiouy")
+   :vector-average '() ;done
+   :vectors-summed '([])
+   :x-word-lines '(\space \newline)
+   })
+
+(defn boost-inputs-and-constants
+  ""
+  [first-ins problem]
+  (let [add-inN (concat first-ins
+                        (flatten (repeat (dec (int (* (/ 0.185 0.815)
+                                                      (count first-ins))))
+                                         (list 'in1))))
+        add-constants (concat add-inN
+                              (if (empty? (get problem-specific-constants
+                                               problem))
+                                '()
+                                (take (int (* (/ 5000 53000)
+                                              (count add-inN)))
+                                      (flatten (repeat (get problem-specific-constants
+                                                            problem))))))]
+    add-constants))

@@ -158,7 +158,7 @@
   {:error-function (make-vectors-summed-error-function-from-cases (first vectors-summed-train-and-test-cases)
                                                                   (second vectors-summed-train-and-test-cases))
    :training-cases (first vectors-summed-train-and-test-cases)
-   :atom-generators vectors-summed-atom-generators
+   :atom-generators (boost-inputs-and-constants vectors-summed-atom-generators :vectors-summed)
    :max-points 2000
    :max-genome-size-in-initial-program 250
    :evalpush-limit 1500

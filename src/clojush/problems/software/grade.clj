@@ -209,7 +209,7 @@
   {:error-function (make-grade-error-function-from-cases (first grade-train-and-test-cases)
                                                          (second grade-train-and-test-cases))
    :training-cases (first grade-train-and-test-cases)
-   :atom-generators grade-atom-generators
+   :atom-generators (boost-inputs-and-constants grade-atom-generators :grade)
    :max-points 1600
    :max-genome-size-in-initial-program 200
    :evalpush-limit 800

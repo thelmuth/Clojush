@@ -168,7 +168,7 @@
                                                              (second syllables-train-and-test-cases))
    :training-cases (first syllables-train-and-test-cases)
    :sub-training-cases '()
-   :atom-generators syllables-atom-generators
+   :atom-generators (boost-inputs-and-constants syllables-atom-generators :syllables)
    :max-points 3200
    :max-genome-size-in-initial-program 400
    :evalpush-limit 1600

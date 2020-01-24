@@ -152,7 +152,7 @@
   {:error-function (make-count-odds-error-function-from-cases (first count-odds-train-and-test-cases)
                                                               (second count-odds-train-and-test-cases))
    :training-cases (first count-odds-train-and-test-cases)
-   :atom-generators count-odds-atom-generators
+   :atom-generators (boost-inputs-and-constants count-odds-atom-generators :count-odds)
    :max-points 2000
    :max-genome-size-in-initial-program 250
    :evalpush-limit 1500

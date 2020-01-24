@@ -21,36 +21,23 @@
         clojure.math.numeric-tower
         ))
 
-(def problem :checksum)
-
 ; Atom generators
 (def checksum-atom-generators
-  (let [first-ins
-        (concat (list
-                 "Check sum is "
-                 \space
-                 64
+  (concat (list
+           "Check sum is "
+           \space
+           64
             ;;; end constants
-                 (fn [] (- (lrand-int 257) 128)) ;Integer ERC [-128,128]
-                 (fn [] (lrand-nth (concat [\newline \tab] (map char (range 32 127))))) ;Visible character ERC
+           (fn [] (- (lrand-int 257) 128)) ;Integer ERC [-128,128]
+           (fn [] (lrand-nth (concat [\newline \tab] (map char (range 32 127))))) ;Visible character ERC
             ;;; end ERCs
-                 (tag-instruction-erc [:exec :integer :boolean :string :char] 1000)
-                 (tagged-instruction-erc 1000)
+           (tag-instruction-erc [:exec :integer :boolean :string :char] 1000)
+           (tagged-instruction-erc 1000)
             ;;; end tag ERCs
-                 'in1
+           'in1
             ;;; end input instructions
-                 )
-                (registered-for-stacks [:integer :boolean :string :char :exec :print]))
-        add-inN (concat first-ins
-                        (flatten (repeat (dec (int (* (/ 0.185 0.815)
-                                                      (count first-ins))))
-                                         (list 'in1))))
-        add-constants (concat add-inN
-                              (take (int (* (/ 5000 53000)
-                                            (count add-inN)))
-                                    (flatten (repeat (get problem-specific-constants
-                                                          problem)))))]
-    add-constants))
+           )
+          (registered-for-stacks [:integer :boolean :string :char :exec :print])))
 
 
 ;; Define test cases
@@ -178,7 +165,7 @@
   {:error-function (make-checksum-error-function-from-cases (first checksum-train-and-test-cases)
                                                             (second checksum-train-and-test-cases))
    :training-cases (first checksum-train-and-test-cases)
-   :atom-generators checksum-atom-generators
+   :atom-generators (boost-inputs-and-constants checksum-atom-generators :checksum)
    :max-points 3200
    :max-genome-size-in-initial-program 400
    :evalpush-limit 1500

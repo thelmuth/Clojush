@@ -212,7 +212,7 @@
   {:error-function (make-string-differences-error-function-from-cases (first string-differences-train-and-test-cases)
                                                                       (second string-differences-train-and-test-cases))
    :training-cases (first string-differences-train-and-test-cases)
-   :atom-generators string-differences-atom-generators
+   :atom-generators (boost-inputs-and-constants string-differences-atom-generators :string-differences)
    :max-points 4000
    :max-genome-size-in-initial-program 500
    :evalpush-limit 2000

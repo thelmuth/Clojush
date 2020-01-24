@@ -153,7 +153,7 @@
                                                                   (second vector-average-train-and-test-cases))
    :training-cases (first vector-average-train-and-test-cases)
    :sub-training-cases '()
-   :atom-generators vector-average-atom-generators
+   :atom-generators (boost-inputs-and-constants vector-average-atom-generators :vector-average)
    :max-points 1600
    :max-genome-size-in-initial-program 200
    :evalpush-limit 800

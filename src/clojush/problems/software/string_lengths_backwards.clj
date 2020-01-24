@@ -152,7 +152,7 @@
                                                                             (second string-lengths-backwards-train-and-test-cases))
    :training-cases (first string-lengths-backwards-train-and-test-cases)
    :sub-training-cases '()
-   :atom-generators string-lengths-atom-generators
+   :atom-generators (boost-inputs-and-constants string-lengths-atom-generators :string-lengths-backwards)
    :max-points 1200
    :max-genome-size-in-initial-program 150
    :evalpush-limit 600

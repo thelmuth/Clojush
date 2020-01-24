@@ -213,7 +213,7 @@
                                                                 (second x-word-lines-train-and-test-cases))
    :training-cases (first x-word-lines-train-and-test-cases)
    :sub-training-cases '()
-   :atom-generators x-word-lines-atom-generators
+   :atom-generators (boost-inputs-and-constants x-word-lines-atom-generators :x-word-lines)
    :max-points 3200
    :max-genome-size-in-initial-program 400
    :evalpush-limit 1600

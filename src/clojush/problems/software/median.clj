@@ -138,7 +138,7 @@
   {:error-function (make-median-error-function-from-cases (first median-train-and-test-cases)
                                                           (second median-train-and-test-cases))
    :training-cases (first median-train-and-test-cases)
-   :atom-generators median-atom-generators
+   :atom-generators (boost-inputs-and-constants median-atom-generators :median)
    :max-points 800
    :max-genome-size-in-initial-program 100
    :evalpush-limit 200

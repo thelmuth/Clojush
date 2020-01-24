@@ -138,7 +138,7 @@
   {:error-function (make-number-io-error-function-from-cases (first number-io-train-and-test-cases)
                                                              (second number-io-train-and-test-cases))
    :training-cases (first number-io-train-and-test-cases)
-   :atom-generators num-io-atom-generators
+   :atom-generators (boost-inputs-and-constants num-io-atom-generators :number-io)
    :max-points 800
    :max-genome-size-in-initial-program 100
    :evalpush-limit 200

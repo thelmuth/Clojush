@@ -158,7 +158,7 @@
                                                             (second negative-to-zero-train-and-test-cases))
    :training-cases (first negative-to-zero-train-and-test-cases)
    :sub-training-cases '()
-   :atom-generators negative-to-zero-atom-generators
+   :atom-generators (boost-inputs-and-constants negative-to-zero-atom-generators :negative-to-zero)
    :max-points 2000
    :max-genome-size-in-initial-program 250
    :evalpush-limit 1500

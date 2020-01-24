@@ -143,7 +143,7 @@
   {:error-function (make-digits-error-function-from-cases (first digits-train-and-test-cases)
                                                           (second digits-train-and-test-cases))
    :training-cases (first digits-train-and-test-cases)
-   :atom-generators digits-atom-generators
+   :atom-generators (boost-inputs-and-constants digits-atom-generators :digits)
    :max-points 1200
    :max-genome-size-in-initial-program 150
    :evalpush-limit 600

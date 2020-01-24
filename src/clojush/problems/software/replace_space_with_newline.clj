@@ -187,7 +187,7 @@
   {:error-function replace-space-with-newline-error-function
    :training-cases (first replace-space-with-newline-train-and-test-cases)
    :sub-training-cases '()
-   :atom-generators replace-space-with-newline-atom-generators
+   :atom-generators (boost-inputs-and-constants replace-space-with-newline-atom-generators :replace-space-with-newline)
    :max-points 3200
    :max-genome-size-in-initial-program 400
    :evalpush-limit 1600

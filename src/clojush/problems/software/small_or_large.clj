@@ -137,7 +137,7 @@
                                                                   (second small-or-large-train-and-test-cases))
    :training-cases (first small-or-large-train-and-test-cases)
    :sub-training-cases '()
-   :atom-generators small-or-large-atom-generators
+   :atom-generators (boost-inputs-and-constants small-or-large-atom-generators :small-or-large)
    :max-points 800
    :max-genome-size-in-initial-program 100
    :evalpush-limit 300

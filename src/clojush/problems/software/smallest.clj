@@ -145,7 +145,7 @@
                                                             (second smallest-train-and-test-cases))
    :training-cases (first smallest-train-and-test-cases)
    :sub-training-cases '()
-   :atom-generators smallest-atom-generators
+   :atom-generators (boost-inputs-and-constants smallest-atom-generators :smallest)
    :max-points 800
    :max-genome-size-in-initial-program 100
    :evalpush-limit 200

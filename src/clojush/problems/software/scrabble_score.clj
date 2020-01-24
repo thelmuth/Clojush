@@ -190,7 +190,7 @@
                                                                   (second scrabble-score-train-and-test-cases))
    :training-cases (first scrabble-score-train-and-test-cases)
    :sub-training-cases '()
-   :atom-generators scrabble-score-atom-generators
+   :atom-generators (boost-inputs-and-constants scrabble-score-atom-generators :scrabble-score)
    :max-points 4000
    :max-genome-size-in-initial-program 500
    :evalpush-limit 2000

@@ -158,7 +158,7 @@
                                                                   (second double-letters-train-and-test-cases))
    :training-cases (first double-letters-train-and-test-cases)
    :sub-training-cases '()
-   :atom-generators double-letters-atom-generators
+   :atom-generators (boost-inputs-and-constants double-letters-atom-generators :double-letters)
    :max-points 3200
    :max-genome-size-in-initial-program 400
    :evalpush-limit 1600

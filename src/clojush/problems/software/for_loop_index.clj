@@ -151,7 +151,7 @@
                                                                   (second for-loop-index-train-and-test-cases))
    :training-cases (first for-loop-index-train-and-test-cases)
    :sub-training-cases '()
-   :atom-generators loop-atom-generators
+   :atom-generators (boost-inputs-and-constants loop-atom-generators :for-loop-index)
    :max-points 1200
    :max-genome-size-in-initial-program 150
    :evalpush-limit 600

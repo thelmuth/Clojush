@@ -148,7 +148,7 @@
                                                                           (second compare-string-lengths-train-and-test-cases))
    :training-cases (first compare-string-lengths-train-and-test-cases)
    :sub-training-cases '()
-   :atom-generators csl-atom-generators
+   :atom-generators (boost-inputs-and-constants csl-atom-generators :compare-string-lengths)
    :max-points 1600
    :max-genome-size-in-initial-program 200
    :evalpush-limit 600

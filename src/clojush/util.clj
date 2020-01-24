@@ -471,19 +471,32 @@
    :x-word-lines '(\space \newline)
    })
 
+(defn get-inN-instructions
+  "Returns the list of inN instructions for each problem"
+  [problem]
+  (case problem
+    (:small-or-large :sum-of-squares :digits :vector-average :syllables :checksum :double-letters :replace-space-with-newline :scrabble-score :last-index-of-zero :even-squares :count-odds :string-lengths-backwards :negative-to-zero) '(in1)
+    (:string-differences :x-word-lines :vectors-summed :number-io :mirror-image :super-anagrams) '(in1 in2)
+    (:compare-string-lengths :median :for-loop-index) '(in1 in2 in3)
+    :smallest '(in1 in2 in3 in4)
+    :grade '(in1 in2 in3 in4 in5)
+    (throw (Exception. (str "Error: Not a problem: " problem)))))
+
 (defn boost-inputs-and-constants
-  ""
+  "Boosts the instruction set to include:
+   - 16.8% input instructions
+   -  9.4% problem-specific constants"
   [first-ins problem]
   (let [add-inN (concat first-ins
                         (flatten (repeat (dec (int (* (/ 0.185 0.815)
                                                       (count first-ins))))
-                                         (list 'in1))))
+                                         (get-inN-instructions problem))))
         add-constants (concat add-inN
                               (if (empty? (get problem-specific-constants
                                                problem))
                                 '()
                                 (take (int (* (/ 5000 53000)
                                               (count add-inN)))
-                                      (flatten (repeat (get problem-specific-constants
-                                                            problem))))))]
+                                      (cycle (get problem-specific-constants
+                                                  problem)))))]
     add-constants))

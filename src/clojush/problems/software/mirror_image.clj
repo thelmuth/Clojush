@@ -185,7 +185,7 @@
   {:error-function mirror-image-error-function
    :training-cases (first mirror-image-train-and-test-cases)
    :sub-training-cases '()
-   :atom-generators mirror-image-atom-generators
+   :atom-generators (boost-inputs-and-constants mirror-image-atom-generators :mirror-image)
    :max-points 1200
    :max-genome-size-in-initial-program 150
    :evalpush-limit 600

@@ -369,7 +369,7 @@
 
 (define-registered 
   exec_k_when_autoconstructing
-  ^{:stack-types [:exec]
+  ^{:stack-types [:exec :genome]
     :parentheses 2}
   (fn [state]
     (if (and (:autoconstructing state)
@@ -381,7 +381,7 @@
 
 (define-registered 
   exec_s_when_autoconstructing
-  ^{:stack-types [:exec]
+  ^{:stack-types [:exec :genome]
     :parentheses 3}
   (fn [state]
     (if (and (:autoconstructing state)
@@ -390,7 +390,8 @@
             x (first stk)
             y (first (rest stk))
             z (first (rest (rest stk)))]
-        (if (<= (count-points (list y z)) @global-max-points)
+        (if (and (<= (count-points (list y z)) @global-max-points)
+                 (<= (height-of-nested-list (list y z)) @global-max-nested-depth))
           (push-item x
                      :exec
                      (push-item z
@@ -405,13 +406,14 @@
 
 (define-registered 
   exec_y_when_autoconstructing
-  ^{:stack-types [:exec]
+  ^{:stack-types [:exec :genome]
     :parentheses 1}
   (fn [state]
     (if (and (:autoconstructing state)
              (not (empty? (:exec state))))
       (let [new-item (list 'exec_y (first (:exec state)))]
-        (if (<= (count-points new-item) @global-max-points)
+        (if (and (<= (count-points new-item) @global-max-points)
+                 (<= (height-of-nested-list new-item) @global-max-nested-depth))
           (push-item (first (:exec state))
                      :exec
                      (push-item new-item

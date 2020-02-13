@@ -81,6 +81,9 @@
       :else n)
     :else
     (cond
+      (Double/isNaN n) 0.0
+      (= n Double/POSITIVE_INFINITY) (* 1.0 max-number-magnitude)
+      (= n Double/NEGATIVE_INFINITY) (* 1.0 (- max-number-magnitude))
       (> n max-number-magnitude) (* 1.0 max-number-magnitude)
       (< n (- max-number-magnitude)) (* 1.0 (- max-number-magnitude))
       (and (< n min-number-magnitude) (> n (- min-number-magnitude))) 0.0
@@ -134,6 +137,23 @@
           (recur (list-concat (first remaining) 
                               (rest remaining)) 
                  (inc total)))))
+
+(defn height-of-nested-list
+  "Returns the height of the nested list called tree.
+  Borrowed idea from here: https://stackoverflow.com/a/36865180/2023312
+  Works by looking at the path from each node in the tree to the root, and
+  finding the longest one.
+  Note: does not treat an empty list as having any height."
+  [tree]
+  (loop [zipper (seq-zip tree)
+         height 0]
+    (if (zip/end? zipper)
+      height
+      (recur (zip/next zipper)
+             (-> zipper
+                 zip/path
+                 count
+                 (max height))))))
 
 (defn code-at-point 
   "Returns a subtree of tree indexed by point-index in a depth first traversal."
@@ -248,6 +268,12 @@
   (cons lst (if (seq? lst)
               (apply list-concat (doall (map all-items lst)))
               ())))
+
+(defn remove-one
+  "Returns sequence s without the first instance of item."
+  [item s]
+  (let [[without-item with-item] (split-with #(not (= item %)) s)]
+    (concat without-item (rest with-item))))
 
 (defn list-to-open-close-sequence
   [lst]

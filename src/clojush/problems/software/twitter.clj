@@ -17,7 +17,7 @@
             "Too many characters"
             "You didn't type anything"
             "Your tweet has "
-            "characters"
+            " characters"
             ;;; end constants
             (tag-instruction-erc [:integer :boolean :exec] 1000)
             (tagged-instruction-erc 1000)
@@ -25,7 +25,7 @@
             'in1
             ;;; end input instructions
             )
-          (registered-for-stacks [:integer :boolean :exec :string :print])))
+          (registered-for-stacks [:integer :boolean :exec :string :char])))
 
 ;; Define test cases
 (defn twitter-input

@@ -4,7 +4,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; instructions for inputs and outputs, including printing
 
-(defn printer 
+(defn printer
   "Returns a function that takes a state and prints the top item of the
    appropriate stack of the state."
   [type]
@@ -58,25 +58,35 @@
     (let [n (Integer/parseInt (second (first (re-seq #"in(\d+)" (name instr)))))]
       (if (or (> n (count (:input state)))
               (< n 1))
-        (throw (Exception. (str "Undefined instruction: " (pr-str instr) 
+        (throw (Exception. (str "Undefined instruction: " (pr-str instr)
                                 "\nNOTE: Likely not same number of items on input stack as input instructions.")))
         (let [item (stack-ref :input (dec n) state)
               literal-type (recognize-literal item)]
           (cond
-            (and (vector? item) (= [] item)) 
-            (push-item 
-              [] 
-              :vector_integer (push-item 
-                                [] 
-                                :vector_float (push-item 
-                                                [] 
-                                                :vector_string (push-item 
-                                                                 [] 
+            (and (vector? item) (vector? (first item)) (= [[]] item))
+            (push-item
+              [[]]
+              :vector_vector_integer (push-item
+                                       [[]]
+                                       :vector_vector_float (push-item
+                                                              [[]]
+                                                              :vector_vector_string (push-item
+                                                                                      [[]]
+                                                                                      :vector_vector_boolean state))))
+            ;
+            (and (vector? item) (= [] item))
+            (push-item
+              []
+              :vector_integer (push-item
+                                []
+                                :vector_float (push-item
+                                                []
+                                                :vector_string (push-item
+                                                                 []
                                                                  :vector_boolean state))))
             ;
-            (seq? item) 
+            (seq? item)
             (push-item item :exec state)
             ;
-            :else 
+            :else
             (push-item item literal-type state)))))))
-

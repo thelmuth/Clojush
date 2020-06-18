@@ -635,7 +635,7 @@
 (define-registered vector_vector_string_getrow (with-meta (rowgetter :vector_vector_string :vector_string) {:stack-types [:vector_vector_string :vector_string :integer]}))
 
 (defn colgetter
-  "Returns a function that takes a state and takes the subvec of the top item
+  "Returns a function that takes a state and takes the column of the top item
    on the type stack."
   [type lit-type]
   (fn [state]

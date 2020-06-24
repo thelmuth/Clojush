@@ -30,7 +30,7 @@
   (loop [in "" terms-left terms]
     (cond
       (= terms-left 0) (apply str in)
-      (= in "") (recur (concat in (concat (apply str (repeatedly 2 #(rand-nth '("t" "f")))) (rand-nth '("&" "|")))) (- terms-left 2))
+      (= terms-left 1) (recur (concat in (rand-nth '("t" "f"))) (dec terms-left))
       :else (recur (concat in (concat (rand-nth '("t" "f")) (rand-nth '("&" "|")))) (dec terms-left)))))
 
 ;; A list of data domains for the problem. Each domain is a vector containing
@@ -46,7 +46,7 @@
           "tf&"
           "tf|"
           ) 6 0]
-   [(fn [] (solve-boolean-input (+ (lrand-int 250) 2))) 94 1000]
+   [(fn [] (solve-boolean-input (+ (lrand-int 25) 1))) 94 1000]
    ])
 
 ;;Can make Solve Boolean test data like this:
@@ -163,6 +163,6 @@
    :problem-specific-initial-report solve-boolean-initial-report
    :report-simplifications 0
    :final-report-simplifications 5000
-   :error-threshold 0.001
+   :error-threshold 0
    :max-error 1000000.0
    })

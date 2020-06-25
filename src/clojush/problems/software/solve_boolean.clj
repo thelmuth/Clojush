@@ -41,10 +41,10 @@
 (def solve-boolean-data-domains
   [[(list "t"
           "f"
-          "ff&"
-          "tt&"
-          "tf&"
-          "tf|"
+          "f&f"
+          "t&t"
+          "f&t"
+          "t|f"
           ) 6 0]
    [(fn [] (solve-boolean-input (+ (lrand-int 25) 1))) 94 1000]
    ])
@@ -52,19 +52,25 @@
 ;;Can make Solve Boolean test data like this:
 ; (map sort (test-and-train-data-from-domains solve-boolean-data-domains))
 
+(defn bool-solve
+  "Helper function to solve test cases"
+  [bool]
+  (cond
+    (= bool "t|t") "t"
+    (= bool "t|f") "t"
+    (= bool "f|t") "t"
+    (= bool "t&t") "t"
+    :else "f"))
+
 (defn solve-boolean-test-cases
   "Takes a sequence of inputs and gives IO test cases of the form
    [input output]."
   [inputs]
   (map (fn [in]
         (vector in
-          (loop [exp-list '() terms in and-or 0]
-              (if (= (empty? terms) true) (eval (read-string (apply str (concat (clojure.string/join " " exp-list) (repeat and-or ")")))))
-                (cond
-                  (= (first terms) \t) (recur (conj exp-list "true") (rest terms) and-or)
-                  (= (first terms) \f) (recur (conj exp-list "false") (rest terms) and-or)
-                  (= (first terms) \|) (recur (conj exp-list "(or") (rest terms) (inc and-or))
-                  :else (recur (conj exp-list "(and") (rest terms) (inc and-or)))))))
+          (loop [terms in]
+            (if (= (count terms) 1) (if (= terms "t") true false)
+              (recur (apply str (concat (bool-solve (subs terms 0 3)) (drop 3 terms))))))))
        inputs))
 
 (defn make-solve-boolean-error-function-from-cases

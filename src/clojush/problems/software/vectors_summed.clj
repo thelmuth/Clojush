@@ -15,6 +15,22 @@
         [clojure.math numeric-tower combinatorics]
         ))
 
+
+; testing output instructions
+; For now, I'm treating :output as a stack, and
+; just taking the top item on :output as the answer
+; this might be the wrong way to do it! Definitely wrong for problems with multiple outputs
+(define-registered
+  output_vector_integer
+  ^{:stack-types [:vector_integer]}
+  (fn [state]
+    (if (empty? (:vector_integer state))
+      state
+      (let [top-bool (top-item :vector_integer state)]
+        (->> (pop-item :vector_integer state)
+             (push-item top-bool :output))))))
+
+
 ; Atom generators
 (def vectors-summed-atom-generators
   (concat (list
@@ -93,7 +109,7 @@
                                                    (->> (make-push-state)
                                                      (push-item input2 :input)
                                                      (push-item input1 :input)))
-                             result (top-item :vector_integer final-state)]
+                             result (top-item :output final-state)]
                          (when print-outputs
                            (println (format "| Correct output: %s\n| Program output: %s\n" (pr-str correct-output) (pr-str result))))
                          ; Record the behavior

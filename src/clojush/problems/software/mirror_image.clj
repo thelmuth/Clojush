@@ -15,6 +15,21 @@
         [clojure.math numeric-tower combinatorics]
         ))
 
+; testing output instructions
+; For now, I'm treating :output as a stack, and
+; just taking the top item on :output as the answer
+; this might be the wrong way to do it! Definitely wrong for problems with multiple outputs
+(define-registered
+  output_boolean
+  ^{:stack-types [:boolean]}
+  (fn [state]
+    (if (empty? (:boolean state))
+      state
+      (let [top-bool (top-item :boolean state)]
+        (->> (pop-item :boolean state)
+             (push-item top-bool :output))))))
+
+
 ; Atom generators
 (def mirror-image-atom-generators
   (concat (list
@@ -114,7 +129,7 @@
                                  (->> (make-push-state)
                                       (push-item input2 :input)
                                       (push-item input1 :input)))]
-       (top-item :boolean final-state)))))
+       (top-item :output final-state)))))
 
 (defn mirror-image-errors-from-behaviors
   "Takes a list of behaviors across the list of cases and finds the error

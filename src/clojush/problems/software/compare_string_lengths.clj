@@ -15,6 +15,22 @@
         [clojure.math numeric-tower combinatorics]
         ))
 
+
+; testing output instructions
+; For now, I'm treating :output as a stack, and
+; just taking the top item on :output as the answer
+; this might be the wrong way to do it! Definitely wrong for problems with multiple outputs
+(define-registered
+  output_boolean
+  ^{:stack-types [:boolean]}
+  (fn [state]
+    (if (empty? (:boolean state))
+      state
+      (let [top-bool (top-item :boolean state)]
+        (->> (pop-item :boolean state)
+             (push-item top-bool :output))))))
+
+
 ; Atom generators
 (def csl-atom-generators
   (concat (list
@@ -86,7 +102,7 @@
                                                      (push-item input3 :input)
                                                      (push-item input2 :input)
                                                      (push-item input1 :input)))
-                             result (top-item :boolean final-state)]
+                             result (top-item :output final-state)]
                          (when print-outputs
                            (println (format "Correct output: %5b | Program output: %s" correct-output (str result))))
                          ; Record the behavior

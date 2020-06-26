@@ -65,13 +65,13 @@
           (cond
             (and (vector? item) (vector? (first item)) (= [[]] item))
             (push-item
-              [[]]
+              []
               :vector_vector_integer (push-item
-                                       [[]]
+                                       []
                                        :vector_vector_float (push-item
-                                                              [[]]
+                                                              []
                                                               :vector_vector_string (push-item
-                                                                                      [[]]
+                                                                                      []
                                                                                       :vector_vector_boolean state))))
             ;
             (and (vector? item) (= [] item))

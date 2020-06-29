@@ -11,23 +11,29 @@
         clojure.math.numeric-tower)
     (:require [clojure.string :as string]))
 
-; Helper function 1 for input
+; Creates a word that is guarenteed to be in the puzzle
 (defn puzzle-word-creation
   [row col direction puzzle]
-  (cond
-    (= direction 0) (string/join (rand-nth puzzle))
-    :else (string/join (map #(nth % (rand-int col)) puzzle))))
+  (if (= direction 0) ; Word will be horizontal
+      (let [start-subs (rand-int (quot row 2))
+            end-subs (+ start-subs 1 (rand-int (quot row 2)))]
+            (subs (rand-nth puzzle) start-subs end-subs))
+      (let [start-subs (rand-int (quot col 2)) ; Word will be vertical
+            end-subs (+ start-subs 1 (rand-int (quot col 2)))
+            columns (apply mapv str puzzle)]
+            (subs (rand-nth columns) start-subs end-subs))))
 
-; Helper function 2 for input
+; Makes the word to be found. 25% will just create a random string, 75% will make sure word is in puzzle
 (defn make-word
   [row col puzzle use-puzzle]
-  (if (= use-puzzle 1)
-      (puzzle-word-creation row col (rand-int 2) puzzle)
-      (apply str (repeatedly row #(char (+ 97 (rand-int 26)))))))
+  (if (> use-puzzle 0)
+      (puzzle-word-creation row col 1 puzzle)
+      (apply str (repeatedly (inc (rand-int row)) #(char (+ 97 (rand-int 26)))))))
 
+; Makes 1 row of a puzzle
 (defn make-row
   [len]
-  (vec (map str (repeatedly len #(char (+ 97 (rand-int 26)))))))
+  (apply str (repeatedly len #(char (+ 97 (rand-int 26))))))
 
 ; Atom generators
 (def word-search-atom-generators
@@ -41,7 +47,7 @@
             'in2
             ;;; end input instructions
             )
-          (registered-for-stacks [:string :char :integer :boolean :exec :vector_string :vector_vector_string :vector_integer])))
+          (registered-for-stacks [:string :char :integer :boolean :exec :vector_string :vector_integer])))
 
 ;; A list of data domains for the problem. Each domain is a vector containing
 ;; a "set" of inputs and two integers representing how many cases from the set
@@ -49,28 +55,34 @@
 ;; inputs is either a list or a function that, when called, will create a
 ;; random element of the set.
 (def word-search-data-domains
-  [[(list ["a" [["a"]]]
-          ["b" [["a"]]]
-          ["test" [["t" "e"]
-                   ["s" "t"]]]
-          ["test" [["t" "e" "s" "t"]]]
-          ["nothere" [["a" "m" "v"]
-                      ["k" "e" "l"]
-                      ["a" "v" "i"]]]
-          ["hello" [["s" "h" "e" "l" "l" "o" "p"]
-                    ["e" "u" "a" "k" "v" "l" "d"]
-                    ["q" "a" "p" "d" "k" "f" "l"]
-                    ["g" "j" "e" "l" "a" "b" "z"]]]
-          ["hello" [["a" "s" "d" "h" "p" "e" "o"]
-                    ["v" "m" "n" "e" "l" "s" "k"]
-                    ["q" "u" "e" "l" "i" "e" "o"]
-                    ["v" "n" "c" "l" "q" "s" "u"]
-                    ["d" "o" "u" "o" "z" "j" "b"]]]) 7 0] ;; "Special" inputs covering some base cases
-   [(fn [] (let [row (inc (lrand-int 20))
-                 col (inc (lrand-int 20))
+  [[(list ["a" ["a"]]
+          ["b" ["a"]]
+          ["test" ["te"
+                   "st"]]
+          ["test" ["test"]]
+          ["nothere" ["amv"
+                      "kel"
+                      "avi"]]
+          ["hello" ["shellop"
+                    "euakvld"
+                    "qapdkfl"
+                    "gjelabz"]]
+          ["hello" ["napgzlo"
+                    "asdhpeo"
+                    "vmnelsk"
+                    "quelieo"
+                    "vnclqsu"
+                    "douozjb"]]
+          ["mid" ["adlvqpl"
+                  "xdamoin"
+                  "zqyizhm"
+                  "hbpdbka"
+                  "cqwzgon"]]) 8 0] ;; "Special" inputs covering some base cases
+   [(fn [] (let [row (inc (rand-int 30))
+                 col (inc (rand-int 30))
                  puzzle (vec (repeatedly row #(make-row col)))
-                 word (make-word row col puzzle (lrand-int 2))]
-                 (vector word puzzle))) 193 2000]
+                 word (make-word col row puzzle (rand-int 4))]
+                 (vector word puzzle))) 192 2000]
    ])
 
 ;;Can make Word Search test data like this:
@@ -83,22 +95,39 @@
   [inputs]
   (map (fn [[word puzzle]]
          (vector [word puzzle]
-           (loop [current "" letter 0 row 0 col 0 direction "" start-row 0 same-letter false index [-1 -1]]
-             (cond
-               (= (apply str current) word) index   ; word has been found
-               (and (= same-letter false)
-                    (= (str (nth word letter)) (str (nth (nth puzzle row " ") col " ")))) (recur (concat current (nth (nth puzzle row " ") col " ")) (inc letter) row col direction start-row true (if (= letter 0) [row col] index))
-               (and (= row (dec (count puzzle)))
-                    (= col (dec (count (first puzzle))))) [-1 -1]   ; word was not found
-               (and (= (str (nth word letter)) (str (nth (nth puzzle row " ") (inc col) " "))) ; letter to the right
-                    (or (= direction "") (= direction "right"))
-                    (not= letter 0)) (recur current letter row (inc col) "right" start-row false index)
-               (and (= (str (nth word letter)) (str (nth (nth puzzle (inc row) " ") col " "))) ; letter down
-                    (or (= direction "") (= direction "down"))
-                    (not= letter 0)) (recur current letter (inc row) col "down" start-row false index)
-               (= col (dec (count (first puzzle)))) (recur "" 0 (inc start-row) 0 "" (inc start-row) false [-1 -1]) ; no letter, advance row, reset col, reset index
-               :else (recur "" 0 start-row (inc col) "" start-row false [-1 -1]))))) ; no letter, advance col, reset index
+           (let [columns (apply mapv str puzzle)]
+             (loop [current-row (first puzzle) current-col (first columns) row-num 0 col-num 0]
+               (cond
+                   (or (> (inc row-num) (count puzzle))
+                       (> (inc col-num) (count columns))) ; Not in the puzzle
+                     (vector -1 -1)
+                   (clojure.string/includes? current-row word) ; In current-row
+                     (vector row-num (clojure.string/index-of current-row word))
+                   (clojure.string/includes? current-col word) ; In current-col
+                     (vector (clojure.string/index-of current-col word) col-num)
+                   :else (recur (nth puzzle (inc row-num) "") (nth columns (inc col-num) "") (inc row-num) (inc col-num)))))))
        inputs))
+
+(define-registered
+ output_integer1
+ ^{:stack-types [:integer]}
+ (fn [state]
+   (if (empty? (:integer state))
+     state
+     (let [top-int (top-item :integer state)]
+       (->> (pop-item :integer state)
+            (stack-assoc top-int :output 0))))))
+
+
+(define-registered
+ output_integer2
+ ^{:stack-types [:integer]}
+ (fn [state]
+   (if (empty? (:integer state))
+     state
+     (let [top-int (top-item :integer state)]
+       (->> (pop-item :integer state)
+            (stack-assoc top-int :output 1))))))
 
 (defn make-word-search-error-function-from-cases
   [train-cases test-cases]
@@ -109,30 +138,34 @@
      (the-actual-word-search-error-function individual data-cases false))
     ([individual data-cases print-outputs]
       (let [behavior (atom '())
-            errors (doall
-                     (for [[[input1 input2] correct-output] (case data-cases
-                                                                          :train train-cases
-                                                                          :test test-cases
-                                                                          [])]
-                       (let [final-state (run-push (:program individual)
-                                                   (->> (make-push-state)
-                                                     (push-item input2 :input)
-                                                     (push-item input1 :input)))
-                             result (top-item :vector_integer final-state)]
-                         (when print-outputs
-                           (println (format "\n| Correct output: %s\n| Program output: %s" (str correct-output) (str result))))
-                         ; Record the behavior
-                         (swap! behavior conj result)
-                         ; Error is Levenshtein distance for printed string
-                         ; Error is integer error at each position in the vectors, with additional penalties for incorrect size vector
-                         (if (vector? result)
-                           (+' (apply +' (map (fn [cor res]
-                                                (abs (- cor res)))
-                                              correct-output
-                                              result))
-                               (*' 10000 (abs (- (count correct-output) (count result))))) ; penalty of 10000 times difference in sizes of vectors
-                           1000000000) ; penalty for no return value
-                           )))]
+            errors
+              (flatten
+                (doall
+                 (for [[[input1 input2] [correct-output1 correct-output2]] (case data-cases
+                                                                            :train train-cases
+                                                                            :test test-cases
+                                                                            [])]
+                   (let [final-state (run-push (:program individual)
+                                               (->> (make-push-state)
+                                                 (push-item :no-output :output)
+                                                 (push-item :no-output :output)
+                                                 (push-item input1 :input)
+                                                 (push-item input2 :input)))
+                         result1 (top-item :output final-state)
+                         result2 (stack-ref :output 1 final-state)]
+                     (when print-outputs
+                       (println (format "\n| Correct output: %s %s\n| Program output: %s %s" (str correct-output1) (str correct-output2) (str result1) (str result2))))
+                     ; Record the behavior
+                     (swap! behavior conj result1 result2)
+                     ; Error is integer differnce for row and column
+                     (vector
+                       (if (number? result1)
+                           (abs (- result1 correct-output1)) ;distance from correct integer
+                           100000) ;penalty for no return value
+                       (if (number? result2)
+                           (abs (- result2 correct-output2)) ;distance from correct integer
+                           100000) ;penalty for no return value
+                       )))))]
         (if (= data-cases :train)
           (assoc individual :behaviors @behavior :errors errors)
           (assoc individual :test-errors errors))))))
@@ -202,5 +235,6 @@
    :problem-specific-initial-report word-search-initial-report
    :report-simplifications 0
    :final-report-simplifications 5000
-   :max-error 5000
+   :error-threshold 0
+   :max-error 100000
    })

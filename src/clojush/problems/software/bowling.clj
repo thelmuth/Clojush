@@ -13,18 +13,52 @@
 ; Atom generators
 (def bowling-atom-generators
   (concat (list
-            10
             ;;; end constants
-            (fn [] (range 1 11))
             ;;; end ERCs
-            (tag-instruction-erc [:integer :exec :boolean :vector_integer] 1000)
+            (tag-instruction-erc [:integer :exec :boolean :string :char] 1000)
             (tagged-instruction-erc 1000)
             ;;; end tag ERCs
             'in1
             ;;; end input instructions
             )
-          (registered-for-stacks [:integer :exec :boolean :vector_integer])))
+          (registered-for-stacks [:integer :exec :string :char :boolean])))
 
+
+;; If the top item ion the string stack is a single character that is a bowling character,
+;; return the equivalent integer. Otherwise, noop.
+(define-registered
+  string_bowling_atoi
+  (fn [state]
+    (if (empty? (:string state))
+      state
+      (let [top-string (stack-ref :string 0 state)]
+        (if (not (== (count top-string)
+                     1))
+          state
+          (if (not (some #{(first top-string)} "123456789-X/"))
+            state
+            (let [int-to-push (cond
+                                (= "X" top-string) 10
+                                (= "/" top-string) 10
+                                (= "-" top-string) 0
+                                true (Integer/parseInt top-string))]
+              (pop-item :string
+                        (push-item int-to-push :integer state)))))))))
+
+(defn convert-game
+  "Takes a bowling input as a vector and converts it to a proper string"
+  [vect-game]
+  (loop [full-game (map str vect-game) ret-str "" frame-count 0]
+    (cond
+      (= full-game '()) ret-str ; The vector has been converted to a string
+      (= frame-count 2) (recur full-game ret-str 0) ; Reset the count
+      (= (first full-game) "10") (recur (rest full-game) (str ret-str "X") 0) ; Special case strike
+      (and (> (count full-game) 1)
+           (= (+ (Integer/parseInt (first full-game)) (Integer/parseInt (second full-game))) 10)
+           (= frame-count 0))
+              (recur (drop 2 full-game) (str ret-str (first full-game) "/") 0) ; Special case spare
+      (= (first full-game) "0") (recur (rest full-game) (str ret-str "-") (inc frame-count)) ; Special case miss
+      :else (recur (rest full-game) (str ret-str (first full-game)) (inc frame-count)))))
 
 ;; Define test cases
 (defn bowling-input
@@ -32,7 +66,7 @@
   []
   (loop [frames 0 game []]
     (cond
-      (>= frames 10) game   ; The game is generated, so return that
+      (>= frames 10) (convert-game game)   ; The game is generated, so return that
       (= frames 9) (let [score (lrand-int 11)   ; The last frame is very special
                          score2 (lrand-int (- 11 score))
                          score3 (lrand-int 11)
@@ -53,30 +87,64 @@
 ;; inputs is either a list or a function that, when called, will create a
 ;; random element of the set.
 (def bowling-data-domains
-  [[(list [0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0] ; All gutter balls
-          [10 10 10 10 10 10 10 10 10 10 10 10] ; All strikes
-          [5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5] ; All spares
-          [7 1 1 5 10 10 10 5 4 8 2 2 7 9 0 10 5 3] ; Ending with a strike
-          [5 3 2 8 4 3 6 2 10 1 7 9 0 4 1 4 4 7 3 5]  ; Ending with a spare
-          [2 4 8 1 5 3 6 1 3 5 6 2 1 2 8 1 3 5 8 1]   ; No strikes, no spares
-          [0 0 0 0 0 0 10 0 0 0 0 0 0 0 0 0 0 0 0]  ; One strike, nothing else
-          [0 0 0 0 0 0 0 0 0 0 3 7 0 0 0 0 0 0 0 0]) 8 0] ; One spare, nothing else
-   [(fn [] (bowling-input)) 92 1000]
+  [[(list "--------------------" ; All gutter balls
+          "XXXXXXXXXXXX" ; All strikes
+          "5/5/5/5/5/5/5/5/5/5/5" ; All spares
+          "7115XXX548/279-X53" ; Ending with a strike
+          "532/4362X179-41447/5"  ; Ending with a spare
+          "24815361356212813581"   ; No strikes, no spares
+          "------X------------"  ; One strike, nothing else
+          "----------3/--------" ; One spare, nothing else
+          "--------------1-----"
+          "11111111111111111111"
+          "111111X111111111111"
+          "-4-/-2-/-7-6-/-3-/-4"
+          "-/-/-/-/-/-/-/-/-/-/-"
+          "X52X52X52X52X52"
+          "XXXXX----------"
+          "XXXXX81XXX-1"
+          "XXXX9/XXX2/XXX"
+          "XXXXXXXXXXX9" ; Other helpful edge cases
+          ) 18 0]
+   [(fn [] (bowling-input)) 182 2000]
   ])
 
 ;;Can make bowling test data like this:
 ;(test-and-train-data-from-domains bowling-data-domains)
 
+; Converts a character into its proper score
+(defn char-to-score
+ [ch]
+ (cond
+   (= ch \X) 10
+   (= ch \/) 10
+   (= ch \-) 0
+   true (Integer/parseInt (str ch))))
 
-; Helper function for the below helper function
-; Cite: Some code from https://gist.github.com/keelerm84/9037640
-(defn make-frames [rolls]
- (let [must-take (if (or (= 10 (reduce + (take 2 rolls))) (= 10 (first rolls))) 3 2)
-       must-drop (if (= 10 (first rolls)) 1 2)]
-   (lazy-seq
-    (cons
-     (take must-take rolls)
-     (make-frames (drop must-drop rolls))))))
+; Takes a bowling string and converts it to the score
+(defn string-to-score
+ [string frames]
+ (if (zero? frames)
+   0
+   (let [frame-type (cond
+                      (= (first string) \X) :strike
+                      (= (second string) \/) :spare
+                      true :neither)
+         frame-total (case frame-type
+                       :neither (+ (char-to-score (first string))
+                                   (char-to-score (second string)))
+                       :spare (+ 10 (char-to-score (get string 2)))
+                       :strike (if (= (get string 2) \/)
+                                 20
+                                 (+ 10
+                                    (char-to-score (second string))
+                                    (char-to-score (get string 2)))))
+         chars (if (= frame-type :strike)
+                 1
+                 2)]
+     (+ frame-total
+        (string-to-score (apply str (drop chars string))
+                         (dec frames))))))
 
 ; Helper function for error function
 (defn bowling-test-cases
@@ -85,7 +153,7 @@
   [inputs]
   (map (fn [in]
          (vector in
-           (reduce + (map #(reduce + %) (take 10 (make-frames in))))))
+           (string-to-score in 10)))
        inputs))
 
 (defn make-bowling-error-function-from-cases

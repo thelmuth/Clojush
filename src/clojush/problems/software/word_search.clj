@@ -11,6 +11,27 @@
         clojure.math.numeric-tower)
     (:require [clojure.string :as string]))
 
+; Output instructions
+(define-registered
+ output_integer1
+ ^{:stack-types [:integer]}
+ (fn [state]
+   (if (empty? (:integer state))
+     state
+     (let [top-int (top-item :integer state)]
+       (->> (pop-item :integer state)
+            (stack-assoc top-int :output 0))))))
+
+(define-registered
+ output_integer2
+ ^{:stack-types [:integer]}
+ (fn [state]
+   (if (empty? (:integer state))
+     state
+     (let [top-int (top-item :integer state)]
+       (->> (pop-item :integer state)
+            (stack-assoc top-int :output 1))))))
+
 ; Creates a word that is guarenteed to be in the puzzle
 (defn puzzle-word-creation
   [row col direction puzzle]
@@ -107,27 +128,6 @@
                      (vector (clojure.string/index-of current-col word) col-num)
                    :else (recur (nth puzzle (inc row-num) "") (nth columns (inc col-num) "") (inc row-num) (inc col-num)))))))
        inputs))
-
-(define-registered
- output_integer1
- ^{:stack-types [:integer]}
- (fn [state]
-   (if (empty? (:integer state))
-     state
-     (let [top-int (top-item :integer state)]
-       (->> (pop-item :integer state)
-            (stack-assoc top-int :output 0))))))
-
-
-(define-registered
- output_integer2
- ^{:stack-types [:integer]}
- (fn [state]
-   (if (empty? (:integer state))
-     state
-     (let [top-int (top-item :integer state)]
-       (->> (pop-item :integer state)
-            (stack-assoc top-int :output 1))))))
 
 (defn make-word-search-error-function-from-cases
   [train-cases test-cases]

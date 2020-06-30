@@ -10,57 +10,6 @@
         [clojure.math numeric-tower]
         ))
 
-; Atom generators
-(def make-change-atom-generators
-  (concat (list
-            1
-            5
-            10
-            25
-            ;;; end constants
-            ;;; end ERCs
-            (tag-instruction-erc [:integer :boolean :exec] 1000)
-            (tagged-instruction-erc 1000)
-            ;;; end tag ERCs
-            'in1
-            ;;; end input instructions
-            )
-          (registered-for-stacks [:integer :boolean :exec])))
-
-;; A list of data domains for the problem. Each domain is a vector containing
-;; a "set" of inputs and two integers representing how many cases from the set
-;; should be used as training and testing cases respectively. Each "set" of
-;; inputs is either a list or a function that, when called, will create a
-;; random element of the set.
-(def make-change-data-domains
-  [[(list 1
-          5
-          10
-          25 ; Basic inputs
-          41
-          109 ; Interesting inputs
-          1000000 ; Max input
-          ) 7 0]
-   [(fn [] (inc (rand-int 1000000))) 193 2000]])
-
-;;Can make Make Change test data like this:
-; (map sort (test-and-train-data-from-domains make-change-data-domains))
-
-(defn make-change-test-cases
-  "Takes a sequence of inputs and gives IO test cases of the form
-   [input [output1 output2 output3 output4]]."
-  [inputs]
-  (map (fn [in]
-    (vector in
-      (loop [money-left in pennies 0 nickles 0 dimes 0 quarters 0]
-        (cond
-          (= money-left 0) (vector pennies nickles dimes quarters)
-          (>= money-left 25) (recur (- money-left 25) pennies nickles dimes (inc quarters))
-          (>= money-left 10) (recur (- money-left 10) pennies nickles (inc dimes) quarters)
-          (>= money-left 5) (recur (- money-left 5) pennies (inc nickles) dimes quarters)
-          :else (recur (- money-left 1) (inc pennies) nickles dimes quarters)))))
-    inputs))
-
 (define-registered
  output_integer1
  ^{:stack-types [:integer]}
@@ -100,6 +49,57 @@
      (let [top-int (top-item :integer state)]
        (->> (pop-item :integer state)
             (stack-assoc top-int :output 3))))))
+
+; Atom generators
+(def make-change-atom-generators
+  (concat (list
+            1
+            5
+            10
+            25
+            ;;; end constants
+            ;;; end ERCs
+            (tag-instruction-erc [:integer :boolean :exec] 1000)
+            (tagged-instruction-erc 1000)
+            ;;; end tag ERCs
+            'in1
+            ;;; end input instructions
+            )
+          (registered-for-stacks [:integer :boolean :exec])))
+
+;; A list of data domains for the problem. Each domain is a vector containing
+;; a "set" of inputs and two integers representing how many cases from the set
+;; should be used as training and testing cases respectively. Each "set" of
+;; inputs is either a list or a function that, when called, will create a
+;; random element of the set.
+(def make-change-data-domains
+  [[(list 1
+          5
+          10
+          25 ; Basic inputs
+          41
+          109 ; Interesting inputs
+          10000 ; Max input
+          ) 7 0]
+   [(fn [] (inc (rand-int 10000))) 193 2000]])
+
+;;Can make Make Change test data like this:
+; (map sort (test-and-train-data-from-domains make-change-data-domains))
+
+(defn make-change-test-cases
+  "Takes a sequence of inputs and gives IO test cases of the form
+   [input [output1 output2 output3 output4]]."
+  [inputs]
+  (map (fn [in]
+    (vector in
+      (loop [money-left in pennies 0 nickles 0 dimes 0 quarters 0]
+        (cond
+          (= money-left 0) (vector pennies nickles dimes quarters)
+          (>= money-left 25) (recur (- money-left 25) pennies nickles dimes (inc quarters))
+          (>= money-left 10) (recur (- money-left 10) pennies nickles (inc dimes) quarters)
+          (>= money-left 5) (recur (- money-left 5) pennies (inc nickles) dimes quarters)
+          :else (recur (- money-left 1) (inc pennies) nickles dimes quarters)))))
+    inputs))
 
 (defn make-make-change-error-function-from-cases
   [train-cases test-cases]

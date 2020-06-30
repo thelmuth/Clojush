@@ -15,6 +15,10 @@
   (concat (list
             true
             false
+            "t"
+            "f"
+            "&"
+            "|"
             ;;; end constants
             ;;; end ERCs
             (tag-instruction-erc [:integer :boolean :exec] 1000)

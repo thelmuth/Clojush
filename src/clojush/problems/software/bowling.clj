@@ -10,10 +10,43 @@
         [clojure.math numeric-tower]
         ))
 
+;; If the top item ion the string stack is a single character that is a bowling character,
+;; return the equivalent integer. Otherwise, noop.
+(define-registered
+  string_bowling_atoi
+  ^{:stack-types [:char :integer]}
+  (fn [state]
+    (if (empty? (:char state))
+      state
+      (let [top-char (stack-ref :char 0 state)]
+        (if (not (some #{(first (str top-char))} "123456789-X/"))
+          state
+          (let [int-to-push (cond
+                              (= \X top-char) 10
+                              (= \/ top-char) 10
+                              (= \- top-char) 0
+                              true (Integer/parseInt (str top-char)))]
+            (pop-item :char
+                      (push-item int-to-push :integer state))))))))
+
 ; Atom generators
 (def bowling-atom-generators
   (concat (list
+            \-
+            \X
+            \/
+            \1
+            \2
+            \3
+            \4
+            \5
+            \6
+            \7
+            \8
+            \9
+            10
             ;;; end constants
+            (fn [] (- (lrand-int 20) 10)) ; Integer ERC [-10, 10]
             ;;; end ERCs
             (tag-instruction-erc [:integer :exec :boolean :string :char] 1000)
             (tagged-instruction-erc 1000)
@@ -24,26 +57,6 @@
           (registered-for-stacks [:integer :exec :string :char :boolean])))
 
 
-;; If the top item ion the string stack is a single character that is a bowling character,
-;; return the equivalent integer. Otherwise, noop.
-(define-registered
-  string_bowling_atoi
-  (fn [state]
-    (if (empty? (:string state))
-      state
-      (let [top-string (stack-ref :string 0 state)]
-        (if (not (== (count top-string)
-                     1))
-          state
-          (if (not (some #{(first top-string)} "123456789-X/"))
-            state
-            (let [int-to-push (cond
-                                (= "X" top-string) 10
-                                (= "/" top-string) 10
-                                (= "-" top-string) 0
-                                true (Integer/parseInt top-string))]
-              (pop-item :string
-                        (push-item int-to-push :integer state)))))))))
 
 (defn convert-game
   "Takes a bowling input as a vector and converts it to a proper string"
@@ -104,9 +117,12 @@
           "XXXXX----------"
           "XXXXX81XXX-1"
           "XXXX9/XXX2/XXX"
-          "XXXXXXXXXXX9" ; Other helpful edge cases
-          ) 18 0]
-   [(fn [] (bowling-input)) 182 2000]
+          "XXXXXXXXXXX9"
+          "--X34--------------"
+          "------3/61----------"
+          "----------XX7-----" ; Other helpful edge cases
+          ) 21 0]
+   [(fn [] (bowling-input)) 179 2000]
   ])
 
 ;;Can make bowling test data like this:

@@ -84,6 +84,7 @@
 
 ;; Create test cases
 (defn dm-test-cases
+  "Generates digital multiplier training cases."
   [num-bits-n]
   (for [num1 (range (expt 2 num-bits-n))
         num2 (range (expt 2 num-bits-n))]

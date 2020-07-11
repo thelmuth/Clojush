@@ -18,7 +18,7 @@
 ;;
 
 
-(ns clojush.problems.software.general-digital-multiplier-3bit
+(ns clojush.problems.software.general-vector-based-digital-multiplier-3bit
   (:use clojush.pushgp.pushgp
         [clojush pushstate interpreter random util globals]
         clojush.instructions.tag
@@ -44,66 +44,6 @@
                           0))
                       (reverse bits))))
 
-(define-registered
-  output_boolean1
-  ^{:stack-types [:boolean]}
-  (fn [state]
-    (if (empty? (:boolean state))
-      state
-      (let [top-bool (top-item :boolean state)]
-        (->> (pop-item :boolean state)
-             (stack-assoc top-bool :output 0))))))
-
-(define-registered
-  output_boolean2
-  ^{:stack-types [:boolean]}
-  (fn [state]
-    (if (empty? (:boolean state))
-      state
-      (let [top-bool (top-item :boolean state)]
-        (->> (pop-item :boolean state)
-             (stack-assoc top-bool :output 1))))))
-
-(define-registered
-  output_boolean3
-  ^{:stack-types [:boolean]}
-  (fn [state]
-    (if (empty? (:boolean state))
-      state
-      (let [top-bool (top-item :boolean state)]
-        (->> (pop-item :boolean state)
-             (stack-assoc top-bool :output 2))))))
-
-(define-registered
-  output_boolean4
-  ^{:stack-types [:boolean]}
-  (fn [state]
-    (if (empty? (:boolean state))
-      state
-      (let [top-bool (top-item :boolean state)]
-        (->> (pop-item :boolean state)
-             (stack-assoc top-bool :output 3))))))
-
-(define-registered
-  output_boolean5
-  ^{:stack-types [:boolean]}
-  (fn [state]
-    (if (empty? (:boolean state))
-      state
-      (let [top-bool (top-item :boolean state)]
-        (->> (pop-item :boolean state)
-             (stack-assoc top-bool :output 4))))))
-
-(define-registered
-  output_boolean6
-  ^{:stack-types [:boolean]}
-  (fn [state]
-    (if (empty? (:boolean state))
-      state
-      (let [top-bool (top-item :boolean state)]
-        (->> (pop-item :boolean state)
-             (stack-assoc top-bool :output 5))))))
-
 ; Atom generators
 (def atom-generators
   (concat (list
@@ -112,18 +52,13 @@
            ;;; end constants
            (fn [] (- (lrand-int 201) 100)) ;Integer ERC [-100,100]
            ;;; end ERCs
-           (tag-instruction-erc [:exec :integer :boolean] 1000)
+           (tag-instruction-erc [:exec :integer :boolean :vector_voolean :vector_integer] 1000)
            (tagged-instruction-erc 1000)
            ;;; end tag ERCs
            'in1
-           'in2
-           'in3
-           'in4
-           'in5
-           'in6
            ;;; end input instructions
            )
-          (registered-for-stacks [:exec :integer :boolean])))
+          (registered-for-stacks [:exec :integer :boolean :vector_boolean :vector_integer])))
 
 (defn dm-train-cases
   "Generates digital multiplier training cases."
@@ -165,29 +100,29 @@
 (def train-and-test-cases
   (get-train-and-test data-domains))
 
+(defn pad-result-to-n-bits
+  "Pads vector to have n bits. Uses :no-output as padding."
+  [result n]
+  (if (>= (count result) n)
+    result
+    (let [reversed (reverse result)
+          padding-length (- n (count result))]
+      (reverse (concat reversed (repeat padding-length :no-output))))))
+
 (defn evaluate-program-for-behaviors
   "Evaluates the program on the given list of cases.
    Returns the behaviors, a list of the outputs of the program on the inputs."
   [program cases]
   (flatten
    (doall
-    (for [[[input1 input2 input3 input4 input5 input6] outputs] cases]
+    (for [[inputs outputs] cases]
       (let [final-state (run-push program
                                   (->> (make-push-state)
-                                       (push-item input6 :input)
-                                       (push-item input5 :input)
-                                       (push-item input4 :input)
-                                       (push-item input3 :input)
-                                       (push-item input2 :input)
-                                       (push-item input1 :input)
-                                       (push-item :no-output :output)
-                                       (push-item :no-output :output)
-                                       (push-item :no-output :output)
-                                       (push-item :no-output :output)
-                                       (push-item :no-output :output)
-                                       (push-item :no-output :output)))
-            result (vec (:output final-state))]
-        result)))))
+                                       (push-item inputs :input)))
+            result (top-item :vector_boolean final-state)]
+        (if (= result :no-stack-item)
+          (repeat (* 2 num-bits-n) :no-output)
+          (pad-result-to-n-bits result (* 2 num-bits-n))))))))
 
 (defn errors-from-behaviors
   "Takes a list of behaviors across the list of cases and finds the error
@@ -221,6 +156,10 @@
          behaviors (evaluate-program-for-behaviors (:program individual)
                                                    cases)
          errors (errors-from-behaviors behaviors cases)]
+     (when (empty? errors)
+       (println "empty errors")
+       (println errors)
+       (println behaviors))
      (if (= data-cases :test)
        (assoc individual :test-errors errors)
        (assoc individual :behaviors behaviors :errors errors)))))

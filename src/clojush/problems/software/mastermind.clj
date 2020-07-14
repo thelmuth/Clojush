@@ -98,7 +98,8 @@
                                                      (push-item input1 :input)
                                                      (push-item input2 :input)))
                              result1 (stack-ref :integer 0 final-state)
-                             result2 (stack-ref :integer 0 final-state)]
+                             result2 (try (stack-ref :integer 1 final-state)
+                                          (catch Exception e :no-stack-item))]
                          (when print-outputs
                            (println (format "Correct output: %s %s | Program output: %s %s" (str correct-output1) (str correct-output2)
                                                                                             (str result1) (str result2))))

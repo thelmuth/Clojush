@@ -18,6 +18,9 @@
 ; Atom generators
 (def rot13-atom-generators
   (concat (list
+            97 ; (int \a)
+            122 ; (int \z)
+            13 ; Rotation number
             ;;; end constants
             (fn [] (lrand-nth (map char (range 97 122)))) ;Visible character ERC
             (fn [] (rot13-input (lrand-int 21))) ;String ERC
@@ -38,12 +41,38 @@
 (def rot13-data-domains
   [[(list ""
           "a"
+          "b"
+          "c"
+          "d"
+          "e"
+          "f"
+          "g"
+          "h"
+          "i"
+          "j"
+          "k"
+          "l"
+          "m"
+          "n"
+          "o"
+          "p"
+          "q"
+          "r"
+          "s"
+          "t"
+          "u"
+          "v"
+          "w"
+          "x"
+          "y"
           "z"
-          "thislongtestcontainsexactlyonehundredcharacterswhichisthelimitforthisprogramanditwillkeepgoingwaitno"
-          "thequickbrownfoxjumpsoverthelazydog"
-          "saaaaaaaaaaaaaaaaaaaaaaaaaaaaame"
-          "abcdefghijklmnopqrstuvwxyz") 7 0] ;; "Special" inputs covering most base cases.
-   [(fn [] (rot13-input (inc (lrand-int 100)))) 193 2000]
+          "abc"
+          "lmn"
+          "xyz"
+          "b"
+          "saaaaaaaaaaaaaaaaame"
+          "abcdefghijzyxwvutsrq") 33 0] ;; "Special" inputs covering most base cases.
+   [(fn [] (rot13-input (inc (lrand-int 20)))) 167 2000]
    ])
 
 ;;Can make rot13 test data like this:
@@ -60,15 +89,6 @@
                                                 (+ 13 (int %))
                                                 (+ 96 (mod (+ 13 (int %)) 122))) in)))))
        inputs))
-
-; Edited code found here: http://www.learningclojure.com/2010/11/levenshtein-distance-edit-distance.html
-(defn letter-error
- [in out]
-   (cond
-     (and (empty? in) (empty? out)) 0   ; same length strings
-     (or (empty? in) (empty? out)) (* (abs (- (count in) (count out))) 25)    ; different length strings
-     :else (+ (if (= (first in) (first out)) 0 (abs (- (int (first in)) (int (first out)))))
-              (#'letter-error (rest in) (rest out)))))
 
 (defn make-rot13-error-function-from-cases
   [train-cases test-cases]
@@ -93,13 +113,9 @@
                              (println (format "| Correct output: %s\n| Program output: %s\n" correct-output (str result))))
                            ; Record the behavior
                            (swap! behavior conj result)
-                           ; Error is
-                           ; 1. Levenshtein distance (takes care of wrong lengths)
-                           ; 2. The difference between each letter in the string
-                           (vector
-                             (levenshtein-distance correct-output (str result))
-                             (letter-error correct-output (str result))
-                       )))))]
+                           ; Error is Levenshtein distance
+                           (levenshtein-distance correct-output (str result))
+                       ))))]
         (if (= data-cases :train)
           (assoc individual :behaviors @behavior :errors errors)
           (assoc individual :test-errors errors))))))
@@ -153,7 +169,7 @@
    :atom-generators rot13-atom-generators
    :max-points 1600
    :max-genome-size-in-initial-program 200
-   :evalpush-limit 1500
+   :evalpush-limit 2000
    :population-size 1000
    :max-generations 300
    :parent-selection :lexicase

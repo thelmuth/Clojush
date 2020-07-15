@@ -79,7 +79,7 @@
           [["X" "O" "X"]
            ["X" "O" "X"]
            ["O" "X" "O"]]) 10 0]  ;; "Special" inputs covering the base cases
-   [(fn [] (vec (repeatedly 3 #(make-row)))) 90 1000]
+   [(fn [] (vec (repeatedly 3 #(make-row)))) 190 2000]
    ])
 
 ;;Can make Tic Tac Toe test data like this:

@@ -49,7 +49,7 @@
           [[[1 2 3 4]] [[1 2 3 4]]]
           [[[1] [2] [3] [4]] [[1] [2] [3] [4]]]
           [[[5 5 5] [5 5 5] [5 5 5]] [[6 6 6] [6 6 6] [6 6 6]]]) 5 0]
-   [(fn [] (add-matrix-input (inc (lrand-int 50)) (inc (lrand-int 50)))) 95 1000] ;; Random length, random ints
+   [(fn [] (add-matrix-input (inc (lrand-int 5)) (inc (lrand-int 5)))) 195 2000] ;; Random length, random ints
    ])
 
 ;;Can make Add Matrix test data like this:
@@ -97,10 +97,7 @@
                        ; Error is integer error at each position in the vectors, with additional penalties for incorrect size vector
                        (if (and (vector? result)
                                 (vector? (first result)))
-                         (+' (apply +' (map (fn [cor res]
-                                              (abs (- cor res)))
-                                            (flatten correct-output)
-                                            (flatten result)))
+                         (+' (reduce + (map abs (map - (flatten correct-output) (flatten result))))
                              (*' 10000 (abs (- (count correct-output) (count result)))) ; penalty of 10000 times difference in sizes of vectors
                              (*' 1000 (abs (- (count (first correct-output)) (count (first result))))))
                          1000000000) ; penalty for no return value

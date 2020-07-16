@@ -26,6 +26,7 @@
 (def camel-case-atom-generators
   (concat (list
             \-
+            \space
             ;;; end constants
             (fn [] (lrand-nth (map char (range 97 122)))) ;Visible character ERC
             (fn [] (camel-case-input (lrand-int 21))) ;String ERC
@@ -50,9 +51,9 @@
           "two-words"
           "two-words and-a-space"
           "all separate words"
-          "all-one-word-but-it-is-a-really-long-input"
-          "saaaaaaaaaaaaaaaaaaaaaaaaaame") 7 0] ;; "Special" inputs covering some base cases
-   [(fn [] (camel-case-input (inc (lrand-int 100)))) 193 2000]
+          "all-one-word-with-th-dash"
+          "saaaaaaaaaaaaaaaaaaaaaame") 7 0] ;; "Special" inputs covering some base cases
+   [(fn [] (camel-case-input (inc (lrand-int 25)))) 193 2000]
    ])
 
 ;;Can make Camel Case test data like this:

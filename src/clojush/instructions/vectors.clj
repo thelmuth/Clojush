@@ -729,7 +729,7 @@
    [type lit-type]
    (fn [state]
      (if (or (empty? (type state))
-             (empty? (first (type state)))
+             (some true? (map empty? (top-item type state)))
              (empty? (lit-type state)))
        state
        (let [item (top-item lit-type state)
@@ -750,10 +750,10 @@
                                  :integer
                                  (pop-item lit-type (pop-item type state)))))))))
 
-(define-registered vector_vector_integer_indexof (with-meta (indexofer2D :vector_vector_integer :integer) {:stack-types [:vector_vector_integer :integer]}))
-(define-registered vector_vector_float_indexof (with-meta (indexofer2D :vector_vector_float :float) {:stack-types [:vector_vector_float :float :integer]}))
-(define-registered vector_vector_boolean_indexof (with-meta (indexofer2D :vector_vector_boolean :boolean) {:stack-types [:vector_vector_boolean :boolean :integer]}))
-(define-registered vector_vector_string_indexof (with-meta (indexofer2D :vector_vector_string :string) {:stack-types [:vector_vector_string :string :integer]}))
+; (define-registered vector_vector_integer_indexof (with-meta (indexofer2D :vector_vector_integer :integer) {:stack-types [:vector_vector_integer :integer]}))
+; (define-registered vector_vector_float_indexof (with-meta (indexofer2D :vector_vector_float :float) {:stack-types [:vector_vector_float :float :integer]}))
+; (define-registered vector_vector_boolean_indexof (with-meta (indexofer2D :vector_vector_boolean :boolean) {:stack-types [:vector_vector_boolean :boolean :integer]}))
+; (define-registered vector_vector_string_indexof (with-meta (indexofer2D :vector_vector_string :string) {:stack-types [:vector_vector_string :string :integer]}))
 
 (defn seter2D
   "Returns a function that takes a state and replaces, in the top type 2D vector,

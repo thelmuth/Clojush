@@ -148,7 +148,7 @@
   [inputs]
   (map (fn [dungeon]
          (vector dungeon
-                 (old-dungeon-solver-broken dungeon)))
+                 (dungeon-solver dungeon)))
        inputs))
 
 (defn make-dungeon-error-function-from-cases

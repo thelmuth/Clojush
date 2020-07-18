@@ -28,8 +28,7 @@
     (if (empty? (:integer state))
       state
       (let [top-bool (top-item :integer state)]
-        (->> (pop-item :integer state)
-             (push-item top-bool :output))))))
+        (push-item top-bool :output state)))))
 
 
 (def scrabble-letter-values

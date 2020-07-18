@@ -27,8 +27,7 @@
     (if (empty? (:boolean state))
       state
       (let [top-bool (top-item :boolean state)]
-        (->> (pop-item :boolean state)
-             (push-item top-bool :output))))))
+        (push-item top-bool :output state)))))
 
 
 ; Atom generators

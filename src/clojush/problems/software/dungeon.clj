@@ -53,47 +53,102 @@
 ;;Can make dungeon test data like this:
 ;(test-and-train-data-from-domains dungeon-data-domains)
 
+(defn old-dungeon-solver-broken
+  "Takes a dungeon and returns the health needed.
+   Peter's old version that doesn't work on some cases"
+  [dungeon]
+  (loop [start-health 1 health-remain 1 current-row 0 current-col 0]
+    (cond
+      (<= (+ health-remain (nth (nth dungeon current-row) current-col)) 0) (recur (inc start-health) (inc start-health) 0 0) ; if the current spot kills you, then restart
+      (= (* (inc current-row) (inc current-col)) (* (count dungeon) (count (first dungeon)))) (if (<= (+ health-remain (nth (nth dungeon current-row) current-col)) 0) ; if the knight made it to the end, check if the final spot kills him
+                                                                                                (recur (inc start-health) (inc start-health) 0 0)
+                                                                                                start-health) ; if it does, restart, otherwise, return the health
+      (and (> (+ (+ health-remain (nth (nth dungeon current-row) current-col)) (nth (nth dungeon current-row [-1000]) (inc current-col) -1000)) 0)  ; if the knight could survive both directions
+           (> (+ (+ health-remain (nth (nth dungeon current-row) current-col)) (nth (nth dungeon (+ current-row 1) [-1000]) current-col -1000)) 0))
+      (if (> (+ (+ health-remain (nth (nth dungeon current-row) current-col)) (nth (nth dungeon current-row [-1000]) (inc current-col) -1000))
+             (+ (+ health-remain (nth (nth dungeon current-row) current-col)) (nth (nth dungeon (+ current-row 1) [-1000]) current-col -1000)))
+        (recur   ; If going right results in having more health, go right
+         start-health
+         (+ health-remain (nth (nth dungeon current-row) current-col))
+         current-row
+         (+ current-col 1))
+        (recur  ; otherwise, go down
+         start-health
+         (+ health-remain (nth (nth dungeon current-row) current-col))
+         (+ current-row 1)
+         current-col))
+      (> (+ (+ health-remain (nth (nth dungeon current-row) current-col)) (nth (nth dungeon current-row [-1000]) (inc current-col) -1000)) 0)
+      (recur
+       start-health
+       (+ health-remain (nth (nth dungeon current-row) current-col))
+       current-row
+       (+ current-col 1)) ; The knight can survive a step right, so it goes right
+      (> (+ (+ health-remain (nth (nth dungeon current-row) current-col)) (nth (nth dungeon (+ current-row 1) [-1000]) current-col -1000)) 0)
+      (recur
+       start-health
+       (+ health-remain (nth (nth dungeon current-row) current-col))
+       (+ current-row 1)
+       current-col) ; The knight goes down
+      :else (recur (inc start-health) (inc start-health) 0 0) ; if the knight would die either direction, reset at the top of the dungeon with 1 additional health
+      )))
+
+; Solves the dungeon; memoized!
+(def dungeon-solver-helper
+  (memoize
+   (fn [dungeon row col]
+     (let [rows (dec (count dungeon)) ; Last value for rows
+           cols (dec (count (first dungeon))) ; Last value for cols
+           x (nth (nth dungeon row) col)]
+       (if
+        (and (= row rows)  ; Base case: If at last cell, return 1 if positive and 1-x if negative
+             (= col cols)) (max 1 (- 1 x))
+        (let [better-neighbor (cond ; Recursive cases: Find which neighbor is better
+                                (= row rows) (dungeon-solver-helper dungeon row (inc col))
+                                (= col cols) (dungeon-solver-helper dungeon (inc row) col)
+                                :else (min (dungeon-solver-helper dungeon row (inc col))
+                                           (dungeon-solver-helper dungeon (inc row) col)))]
+          (max 1 (- better-neighbor x))))))))
+
+(defn dungeon-solver
+  "Takes a dungeon and returns the health needed."
+  [dungeon]
+  (dungeon-solver-helper dungeon 0 0))
+
+(def simple-dungeon [[-5 -15 0]
+                     [-10 -1000 0]
+                     [-100 -100 0]])
+;; Best at each cell:
+;; ((21 16 1) 
+;;  (211 1001 1) 
+;;  (201 101 1))
+
+(def simple-dungeon2 [[-5 -15 1000]
+                     [10 -1000 -500]
+                     [-100 -100 0]])
+;; Best at each cell:
+;; ((21 16 1)
+;;  (191 1101 501)
+;;  (201 101 1))
+
+#_(def random-dungeon (let [row 19 col 20]
+                      (vec (repeatedly row #(dungeon-input col)))))
+
+; Solves the dungeon
+#_(dungeon-solver simple-dungeon)
+
+; Gives the best value at each cell
+#_(for [x (range 3)]
+  (for [y (range 3)]
+    (dungeon-solver-helper simple-dungeon x y)))
+
 ; Helper function for error function
 (defn dungeon-test-cases
   "Takes a sequence of inputs and gives IO test cases of the form
    [input1 output]."
   [inputs]
   (map (fn [dungeon]
-          (vector dungeon
-            (loop [start-health 1 health-remain 1 current-row 0 current-col 0]
-              (cond
-                (<= (+ health-remain (nth (nth dungeon current-row) current-col)) 0) (recur (inc start-health) (inc start-health) 0 0) ; if the current spot kills you, then restart
-                (= (* (inc current-row) (inc current-col)) (* (count dungeon) (count (first dungeon)))) (if (<= (+ health-remain (nth (nth dungeon current-row) current-col)) 0) ; if the knight made it to the end, check if the final spot kills him
-                                                                                                      (recur (inc start-health) (inc start-health) 0 0)
-                                                                                                      start-health) ; if it does, restart, otherwise, return the health
-                (and (> (+ (+ health-remain (nth (nth dungeon current-row) current-col)) (nth (nth dungeon current-row [-1000]) (inc current-col) -1000)) 0)  ; if the knight could survive both directions
-                     (> (+ (+ health-remain (nth (nth dungeon current-row) current-col)) (nth (nth dungeon (+ current-row 1) [-1000]) current-col -1000)) 0))
-                        (if (> (+ (+ health-remain (nth (nth dungeon current-row) current-col)) (nth (nth dungeon current-row [-1000]) (inc current-col) -1000))
-                               (+ (+ health-remain (nth (nth dungeon current-row) current-col)) (nth (nth dungeon (+ current-row 1) [-1000]) current-col -1000)))
-                              (recur   ; If going right results in having more health, go right
-                                start-health
-                                (+ health-remain (nth (nth dungeon current-row) current-col))
-                                current-row
-                                (+ current-col 1))
-                              (recur  ; otherwise, go down
-                                start-health
-                                (+ health-remain (nth (nth dungeon current-row) current-col))
-                                (+ current-row 1)
-                                current-col))
-                (> (+ (+ health-remain (nth (nth dungeon current-row) current-col)) (nth (nth dungeon current-row [-1000]) (inc current-col) -1000)) 0)
-                    (recur
-                    start-health
-                    (+ health-remain (nth (nth dungeon current-row) current-col))
-                    current-row
-                    (+ current-col 1)) ; The knight can survive a step right, so it goes right
-                (> (+ (+ health-remain (nth (nth dungeon current-row) current-col)) (nth (nth dungeon (+ current-row 1) [-1000]) current-col -1000)) 0)
-                    (recur
-                    start-health
-                    (+ health-remain (nth (nth dungeon current-row) current-col))
-                    (+ current-row 1)
-                    current-col) ; The knight goes down
-                :else (recur (inc start-health) (inc start-health) 0 0) ; if the knight would die either direction, reset at the top of the dungeon with 1 additional health
-                ))))
+         (vector dungeon
+                 (old-dungeon-solver-broken dungeon)))
        inputs))
 
 (defn make-dungeon-error-function-from-cases

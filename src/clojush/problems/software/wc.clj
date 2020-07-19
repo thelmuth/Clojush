@@ -6,7 +6,6 @@
 ;; Outputs are integers that come from one
 ;; of the three output instructions.
 ;;
-
 ;; NOTE: A word is defined by any characters separated by any number
 ;; of spaces, tabs, and newlines. Any other character can be part of
 ;; a word.
@@ -18,41 +17,22 @@
         clojure.math.numeric-tower
         [clojure.string :only [split trim]]))
 
-; Define new instructions
-; (define-registered
-;   string_readchar
-;   (fn [state]
-;     (let [file (top-item :auxiliary state)
-;           first-char (first file)
-;           aux-result (push-item (apply str (rest file))
-;                                 :auxiliary
-;                                 (pop-item :auxiliary state))]
-;       (if (= file "")
-;         state
-;         (push-item (str first-char)
-;                    :string
-;                    aux-result)))))
+;; I could imagine the following two instructions being added in the future:
 
 ; (define-registered
-;   string_readline
+;   string_split_to_lines ;; splits only on newline char
+;   ^{:stack-types [:string]}
 ;   (fn [state]
-;     (let [file (top-item :auxiliary state)
-;           index (inc (.indexOf file "\n"))
-;           has-no-newline (= 0 index)
-;           aux-result (push-item (if has-no-newline
-;                                   ""
-;                                   (subs file index))
-;                                 :auxiliary
-;                                 (pop-item :auxiliary state))]
-;       (if (= file "")
-;         state
-;         (if has-no-newline
-;           (push-item file :string aux-result)
-;           (push-item (subs file 0 index)
-;                      :string
-;                      aux-result))))))
-
-; (define-registered 
+;     (if (empty? (:string state))
+;       state
+;       (loop [word-list (reverse (filter not-empty (split (trim (top-item :string state)) #"\n]")))
+;              loop-state (pop-item :string state)]
+;         (if (empty? word-list)
+;           loop-state
+;           (recur (rest word-list)
+;                  (push-item (first word-list) :string loop-state)))))))
+;
+; (define-registered
 ;   string_whitespace ;;returns true if top string is entirely composed of spaces, tabs, and newlines (even if empty)
 ;   (fn [state]
 ;     (if (not (empty? (:string state)))
@@ -61,19 +41,7 @@
 ;                  (pop-item :string state))
 ;       state)))
 
-; (define-registered
-;   file_EOF
-;   (fn [state]
-;     (let [file (top-item :auxiliary state)
-;           result (empty? file)]
-;       (push-item result :boolean state))))
-
-; (define-registered
-;   file_begin
-;   (fn [state]
-;     (push-item (stack-ref :auxiliary 1 state)
-;                :auxiliary
-;                (pop-item :auxiliary state))))
+;; Output instructions:
 
 (define-registered
   output_charcount
@@ -110,87 +78,18 @@
   (concat
    (list
     \space
+    " "
     \tab
+    "\t"
     \newline
+    "\n"
     (fn [] (- (lrand-int 201) 100))
-    (fn [] (lrand-nth ["\n" "\t" " "]))
     (fn [] (lrand-nth (concat ["\n" "\t"] (map (comp str char) (range 32 127)))))
     (tag-instruction-erc [:exec :string :integer] 1000)
     (tagged-instruction-erc 1000)
     ;;;; end ERCs
     'in1
     ;;;; end input instructions
-    ; 'string_readchar
-    ; 'string_readline
-    ; 'string_whitespace
-    ; 'file_EOF
-    ; 'file_begin
-    ; 'output_charcount
-    ; 'output_wordcount
-    ; 'output_linecount
-    ;;;; end problem-specific instructions
-    ; 'string_pop
-    ; 'string_take
-    ; 'string_eq
-    ; 'string_stackdepth
-    ; 'string_rot
-    ; 'string_parse_to_chars
-    ; ;'string_rand
-    ; 'string_contains
-    ; 'string_reverse
-    ; 'string_yank
-    ; 'string_swap
-    ; 'string_yankdup
-    ; 'string_flush
-    ; 'string_length
-    ; 'string_concat
-    ; ;'string_atoi
-    ; 'string_shove
-    ; 'string_dup
-    ; 'string_split
-    ; ;;; end string instructions
-    ; 'integer_add
-    ; 'integer_swap
-    ; 'integer_yank
-    ; 'integer_dup
-    ; 'integer_yankdup
-    ; 'integer_shove
-    ; 'integer_mult
-    ; 'integer_div
-    ; 'integer_max
-    ; 'integer_sub
-    ; 'integer_mod
-    ; 'integer_rot
-    ; 'integer_min
-    ; 'integer_inc
-    ; 'integer_dec
-    ; ;;; end integer instructions
-    ; 'exec_y
-    ; 'exec_pop
-    ; 'exec_eq
-    ; 'exec_stackdepth
-    ; 'exec_rot
-    ; 'exec_when
-    ; 'exec_do*times
-    ; 'exec_do*count
-    ; 'exec_s
-    ; 'exec_do*range
-    ; 'exec_if
-    ; 'exec_k
-    ; 'exec_yank
-    ; 'exec_yankdup
-    ; 'exec_swap
-    ; 'exec_dup
-    ; 'exec_shove
-    ; ;;; end exec instructions
-    ; 'boolean_swap
-    ; 'boolean_and
-    ; 'boolean_not
-    ; 'boolean_or
-    ; 'boolean_frominteger
-    ; 'boolean_stackdepth
-    ; 'boolean_dup
-    
     )
 (registered-for-stacks [:string :char :integer :boolean :exec])
 ))

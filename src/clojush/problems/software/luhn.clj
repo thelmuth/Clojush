@@ -12,15 +12,18 @@
 ; Atom generators
 (def luhn-atom-generators
   (concat (list
+            2
+            9
+            10
             ;;; end constants
             ;;; end ERCs
-            (tag-instruction-erc [:integer :float :boolean :exec] 1000)
+            (tag-instruction-erc [:integer :boolean :exec :vector_integer] 1000)
             (tagged-instruction-erc 1000)
             ;;; end tag ERCs
             'in1
             ;;; end input instructions
             )
-          (registered-for-stacks [:integer :boolean :exec])))
+          (registered-for-stacks [:integer :boolean :exec :vector_integer])))
 
 
 ;; A list of data domains for the problem. Each domain is a vector containing
@@ -29,28 +32,32 @@
 ;; inputs is either a list or a function that, when called, will create a
 ;; random element of the set.
 (def luhn-data-domains
-  [[(list 10 91 100000 901) 4 0]
-   [(fn [] (+ (rand-int 99990) 10)) 96 1000]
+  [[(list
+     [0 1 2 3 4 5 6 7 8 9 8 7 6 5 4 3]
+     [9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9]
+     [0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0]
+     [5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5]) 4 0]
+   [(fn [] (vec (repeatedly 16 #(rand-int 10)))) 196 2000]
    ])
 
 ;;Can make Luhn test data like this:
 ;(test-and-train-data-from-domains luhn-data-domains)
 
+; Helper function to multiply digit by 2 and subtract 9 (if necessary)
+(defn luhn-formula
+  [num]
+  (if (>= (* num 2) 10)
+    (- (* num 2) 9)
+    (* num 2)))
+
+; Some code from here: https://stackoverflow.com/questions/36105612/map-a-function-on-every-two-elements-of-a-list
 (defn luhn-test-cases
   "Takes a sequence of inputs and gives IO test cases of the form
    [input output]."
   [inputs]
   (map (fn [in]
          (vector in
-           (let [digits (map #(Character/digit % 10) (str in))
-                 split (if (even? (count digits)) (apply map list (partition 2 digits))
-                                                  (apply map list (partition 2 (rest digits))))]
-              (reduce +
-                   (flatten (conj (map #(if (> % 9) (- % 9) %)
-                                   (map #(* 2 %)
-                                     (nth split 0)))
-                                  (if (even? (count digits)) (nth split 1)
-                                                             (conj (nth split 1) (nth digits 0)))))))))
+           (reduce + (map #(% %2) (cycle [luhn-formula identity]) in))))
        inputs))
 
 (defn make-luhn-error-function-from-cases

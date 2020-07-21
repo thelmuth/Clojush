@@ -16,6 +16,8 @@
             "Fizz"
             "Buzz"
             "FizzBuzz"
+            3
+            5
             ;;; end constants
             ;;; end ERCs
             (tag-instruction-erc [:integer :exec :boolean :string :char] 1000)
@@ -33,15 +35,31 @@
 ;; random element of the set.
 (def fizz-buzz-data-domains
   [[(list 1
+          2
           3
+          4
           5
+          6
+          7
+          8
+          9
+          10
+          11
+          12
+          13
+          14
           15
+          16
+          17
+          18
+          19
+          20
           49995
           49998
           49999
           50000
-          ) 8 0]
-   [(fn [] (inc (lrand-int 50000))) 192 2000]
+          ) 24 0]
+   [(fn [] (inc (lrand-int 1000000))) 176 2000]
   ])
 
 ;;Can make Fizz Buzz test data like this:

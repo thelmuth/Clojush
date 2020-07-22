@@ -33,11 +33,14 @@
 ;; inputs is either a list or a function that, when called, will create a
 ;; random element of the set.
 (def snow-day-data-domains
-  [[(list [0 0 0 0]   ; min size
-          [1 1 1 1]   ; all same number
+  [[(list [0 0.0 0.0 0.0]   ; min size
+          [15 15.0 15.0 0.15]   ; same number
           [20 19.99 9.999 0.999]    ; max size
-          ) 3 0]
-   [(fn [] (vector (inc (rand-int 20)) (rand 20) (rand 10) (rand))) 197 2000] ; Random cases [13,197]
+          [8 11.3 0.5 0.3]
+          [5 1.3 1.5 0.05]
+          [10 0.0 2.0 0.0]
+          ) 6 0]
+   [(fn [] (vector (inc (rand-int 20)) (rand 20) (rand 10) (rand))) 194 2000] ; Random cases [13,197]
    ])
 
 ;;Can make Snow Day test data like this:
@@ -51,7 +54,7 @@
   (map #(vector %
     (loop [time (first %) total (second %)]
       (if (= time 0) total
-                     (recur (dec time) (+ (* total (- 1 (nth % 2))) (last %))))))
+                     (recur (dec time) (+ (* total (- 1 (last %))) (nth % 2))))))
        inputs))
 
 (defn make-snow-day-error-function-from-cases
@@ -142,7 +145,7 @@
    :atom-generators snow-day-atom-generators
    :max-points 1600
    :max-genome-size-in-initial-program 200
-   :evalpush-limit 12000
+   :evalpush-limit 2000
    :population-size 1000
    :max-generations 300
    :parent-selection :lexicase

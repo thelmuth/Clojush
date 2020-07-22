@@ -33,8 +33,7 @@
             'in1
             ;;; end input instructions
             )
-          (registered-for-stacks [:integer :boolean :string :char :exec :print])))
-
+          (registered-for-stacks [:integer :boolean :string :char :exec])))
 
 ;; A list of data domains for the problem. Each domain is a vector containing
 ;; a "set" of inputs and two integers representing how many cases from the set
@@ -42,14 +41,13 @@
 ;; inputs is either a list or a function that, when called, will create a
 ;; random element of the set.
 (def mumble-data-domains
-  [[(list ""  ; empty
-          "a" ; single char
+  [[(list "a" ; single char
           "rQaTR" ; mixed case
           "abcd"  ; all lower case
           "ASDF"  ; all uppercase
-          "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWX"  ; max length
-          ) 6 0] ;; "Special" inputs covering some base cases
-   [(fn [] (mumble-input (+ (lrand-int 19) 2))) 94 1000]
+          "abcdDCBApQ"  ; max length
+          ) 5 0] ;; "Special" inputs covering some base cases
+   [(fn [] (mumble-input (inc (lrand-int 10)))) 195 2000]
    ])
 
 ;;Can make Mumble test data like this:
@@ -63,8 +61,8 @@
   (map (fn [in]
           (vector in
             (loop [index 0 newStr ""]
-              (if (= index (count in)) (apply str (drop-last newStr))
-                  (recur (inc index) (str newStr (str/capitalize (apply str (repeat (inc index) (nth in index)))) "-"))))))
+              (if (= index (count (str in))) (apply str (drop-last newStr))
+                  (recur (inc index) (str newStr (str/capitalize (apply str (repeat (inc index) (nth (str in) index)))) "-"))))))
        inputs))
 
 (defn get-mumble-train-and-test
@@ -97,7 +95,7 @@
                                                      (push-item "" :output)))
                              result (stack-ref :output 0 final-state)]
                          (when print-outputs
-                           (println (format "\n| Correct output: %s\n| Program output: %s" (pr-str correct-output) (pr-str result))))
+                           (println (format "\n| Correct output: %s\n| Program output: %s" (str correct-output) (str result))))
                          ; Record the behavior
                          (swap! behavior conj result)
                          ; Error is Levenshtein distance for printed string

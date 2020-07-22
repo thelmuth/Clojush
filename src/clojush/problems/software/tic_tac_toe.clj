@@ -16,9 +16,9 @@
             "X won"
             "O won"
             "No winner"
-            "X"
-            "O"
-            "."
+            \X
+            \O
+            \.
             ;;; end constants
             ;;; end ERCs
             (tag-instruction-erc [:exec :integer :boolean :string :char :vector_string :vector_vector_string] 1000)

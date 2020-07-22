@@ -91,14 +91,13 @@
                                                     [])]
                        (let [final-state (run-push (:program individual)
                                                    (->> (make-push-state)
-                                                     (push-item input :input)
-                                                     (push-item "" :output)))
-                             result (stack-ref :output 0 final-state)]
+                                                     (push-item input :input)))
+                             result (stack-ref :string 0 final-state)]
                          (when print-outputs
                            (println (format "\n| Correct output: %s\n| Program output: %s" (str correct-output) (str result))))
                          ; Record the behavior
                          (swap! behavior conj result)
-                         ; Error is Levenshtein distance for printed string
+                         ; Error is Levenshtein distance for string
                          (levenshtein-distance correct-output result)
                          )))]
         (if (= data-cases :train)

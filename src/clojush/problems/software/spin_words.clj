@@ -9,20 +9,35 @@
         clojure.math.numeric-tower)
     (:require [clojure.string :as str]))
 
-;; Define test cases
+(defn word-generator
+  "Generates words at a nice distribution for Spin Words
+   80% of the time word will have length in range [1, 8].
+   20% of the time it will have length in range [1, 16]"
+  []
+  (let [chars-between #(map char (range (int %1) (inc (int %2))))
+        chars (chars-between \a \z)
+        word-len (inc (rand-int (if (< (rand) 0.8)
+                                  8
+                                  16)))]
+    (apply str (repeatedly word-len #(rand-nth chars)))))
+
 (defn spin-words-input
   "Makes a Spin Words input of length len."
-  ; Code found from https://stackoverflow.com/questions/27053726/how-to-generate-random-password-with-the-fixed-length-in-clojure
   [len]
-  (let [chars-between #(map char (range (int %1) (inc (int %2))))
-        chars (concat (chars-between \a \z)
-                      " ")
-        word (take len (repeatedly #(rand-nth chars)))]
-          (reduce str word)))
+  (let [words (apply str
+                     (take len           ; This looks weird because str isn't lazy, so you
+                           (apply str    ; need to take len twice here.
+                                  (take len
+                                        (interpose " " (repeatedly word-generator))))))]
+    (if (not= (last words) \space)
+      words
+      (apply str (butlast words)))))
 
 ; Atom generators
 (def spin-words-atom-generators
   (concat (list
+            5
+            \space
             ;;; end constants
             (fn [] (lrand-nth (map char (range 97 122)))) ;Visible character ERC
             (fn [] (spin-words-input (lrand-int 21))) ;String ERC
@@ -33,7 +48,7 @@
             'in1
             ;;; end input instructions
             )
-          (registered-for-stacks [:integer :boolean :string :char :exec :print])))
+          (registered-for-stacks [:integer :boolean :string :char :exec])))
 
 
 ;; A list of data domains for the problem. Each domain is a vector containing
@@ -46,9 +61,20 @@
           "a"
           "this is a test"
           "this is another test"
-          "onelooooooooooooooooooooooooooooooooooooooooongworrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrd"
-          "a lot of word less than five char beca use this is an impo rtan t test to see if it all work prop er") 6 0] ;; "Special" inputs covering some base cases
-   [(fn [] (spin-words-input (+ (lrand-int 100) 2))) 194 2000]
+          "hi"
+          "cat"
+          "walk"
+          "jazz"
+          "llama"
+          "heart"
+          "pantry"
+          "helpful"
+          "disrespectful"
+          "stop spinning my words"
+          "couple longer words"
+          "onelooooooooongworrrrrrrrrrrrrrrrrrrrrrd"
+          "word less than five char") 17 0] ;; "Special" inputs covering some base cases
+   [(fn [] (spin-words-input (inc (lrand-int 40)))) 183 2000]
    ])
 
 ;;Can make Spin Words test data like this:
@@ -90,15 +116,14 @@
                                                     [])]
                        (let [final-state (run-push (:program individual)
                                                    (->> (make-push-state)
-                                                     (push-item input :input)
-                                                     (push-item "" :output)))
-                             result (stack-ref :output 0 final-state)]
+                                                     (push-item input :input)))
+                             result (stack-ref :string 0 final-state)]
                          (when print-outputs
-                           (println (format "\n| Correct output: %s\n| Program output: %s" (pr-str correct-output) (pr-str result))))
+                           (println (format "\n| Correct output: %s\n| Program output: %s" (str correct-output) (str result))))
                          ; Record the behavior
                          (swap! behavior conj result)
-                         ; Error is Levenshtein distance for printed string
-                         (levenshtein-distance correct-output result)
+                         ; Error is Levenshtein distance for string
+                         (levenshtein-distance correct-output (str result))
                          )))]
         (if (= data-cases :train)
           (assoc individual :behaviors @behavior :errors errors)

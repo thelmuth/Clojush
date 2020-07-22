@@ -83,7 +83,7 @@
                                                      (push-item input1 :input)))
                              result (top-item :string final-state)]
                          (when print-outputs
-                           (println (format "| Correct output: %s\n| Program output: %s\n" (pr-str correct-output) (pr-str result))))
+                           (println (format "| Correct output: %s\n| Program output: %s\n" (str correct-output) (str result))))
                          ; Record the behavior
                          (swap! behavior conj result)
                          ; Error is Levenshtein distance of printed strings

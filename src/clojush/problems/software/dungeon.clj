@@ -46,7 +46,7 @@
            [100 100]]
           [[100 -50]
            [-50 -49]]) 6 0]
-   [(fn [] (let [row (inc (lrand-int 20)) col (inc (lrand-int 20))]
+   [(fn [] (let [row (inc (lrand-int 6)) col (inc (lrand-int 6))]
               (vec (repeatedly row #(dungeon-input col))))) 194 2000]
   ])
 

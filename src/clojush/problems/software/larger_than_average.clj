@@ -14,7 +14,22 @@
 (defn larger-than-average-input
   "Makes a Larger than Average input vector of length len."
   [len]
-  (vec (repeatedly len #(rand 1000))))
+  (vec (repeatedly len #(- (* (lrand) 2000.0) 1000.0))))
+
+(defn skewed-larger-than-average-input
+  "Makes an input vector for Larger than Average that is skewed."
+  [len]
+  (let [groupings (loop [groups '()
+                         num-left len]
+                    (if (<= num-left 0)
+                      groups
+                      (let [next-num (inc (rand-int num-left))]
+                        (recur (conj groups next-num)
+                               (- num-left next-num)))))]
+    (flatten (map (fn [size]
+                    (let [center (- (rand 2000.0) 1000.0)]
+                      (repeatedly size #(+ center -5 (rand 10))))) ; Add uniform noise [-5, 5] to center
+                  groupings))))
 
 ; Atom generators
 (def larger-than-average-atom-generators
@@ -37,17 +52,24 @@
 ;; random element of the set.
 (def larger-than-average-data-domains
   [[(list [0.0] [100.23405] [500.12942] [1000.00000] [1.42434]) 5 0] ;; Length-1 vectors
-   [(fn [] (larger-than-average-input 1)) 15 200] ;; Random Length-1 vectors
    [(list [1.47082 1.98723]
           [1.00001 999.24423]
           [432.19342 14.35351]
           [987.74234 910.31289]
           [0.12337 999.72791]) 5 0] ;; Length-2 vectors
-   [(fn [] (larger-than-average-input 2)) 15 200] ;; Random Length-2 vectors
-   [(fn [] (larger-than-average-input (+ 3 (lrand-int 3)))) 25 250] ;; Random Length-3, -4, and -5 vectors
-   [(fn [] (larger-than-average-input 50)) 10 100] ;; Random Length-50 vectors
-   [(fn [] (larger-than-average-input (inc (lrand-int 100)))) 125 1250] ;; Random length, random ints
+   [(fn [] (larger-than-average-input 3)) 15 50] ;; Random Length-3 vectors
+   [(fn [] (larger-than-average-input 4)) 15 50] ;; Random Length-4 vectors
+   [(fn [] (larger-than-average-input 5)) 15 50] ;; Random Length-5 vectors
+   [(list [3.0 100.0 100.0 100.0 100.0 100.0 100.0 100.0 100.0 100.0 100.0 100.0 100.0 100.0 100.0 100.0 100.0 100.0 100.0 100.0]
+          [-56.11 -56.11 -56.11 -56.11 -56.11 -56.11 -56.11 -56.11 -56.11 -56.11 -56.11 -56.11 -56.11 -56.11 -56.11 -56.11 -56.11 -56.11 -56.11 72.93]
+          [-100.12 -104.23 -102.49 -99.32 938.12 -98.43 -100.65 -100.24 -103.65 832.94 768.73 -105.34 -100.98 -103.68 982.42 -102.46 -99.48 987.13 -106.42 -93.19]
+          [1000.00000 999.99999 0.0 -999.99999 -10000.00000]
+          [1000.0 -385.3453 -491.42379 -362.901 -943.3482 -423.789]) 5 0] ; "Weird" cases
+   [(fn [] (larger-than-average-input 20)) 20 250] ;; Random Length-20 vectors
+   [(fn [] (skewed-larger-than-average-input (inc (lrand-int 20)))) 60 750]
+   [(fn [] (larger-than-average-input (inc (lrand-int 20)))) 60 850] ;; Random length, random ints
    ])
+   ; -45 train cases, -650 test cases
 
 ;;Can make Larger than Average test data like this:
 ;(test-and-train-data-from-domains larger-than-average-data-domains)

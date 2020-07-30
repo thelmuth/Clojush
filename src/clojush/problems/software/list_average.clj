@@ -37,9 +37,9 @@
   [[(list [1]
           [1 50 100]
           [50 50 50 50 50]
-          [100 100 100 100 100 100 100 100 100 100 100 100 100 100 100 100 100 100 100 100 100 100 100 100 100 100 100 100 100 100 100 100 100 100 100 100 100 100 100 100 100 100 100 100 100 100 100 100 100 100]
+          [100 100 100 100 100 100 100 100 100 100 100 100 100 100 100 100 100 100 100 100]
           ) 4 0]
-   [(fn [] (list-average-input (inc (rand-int 50)))) 196 2000]])
+   [(fn [] (list-average-input (inc (rand-int 20)))) 196 2000]])
 
 ;;Can make List Average test data like this:
 ;(test-and-train-data-from-domains list-average-data-domains)

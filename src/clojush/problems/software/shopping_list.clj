@@ -54,7 +54,7 @@
   (map (fn [[in1 in2]]
          (vector [in1 in2]
            (let [discount (map #(float (/ (- 100 %) 100)) in2)]
-             (vec (map #(round-to-n-decimal-places (* % %2) 2) in1 discount)))))
+             (round-to-n-decimal-places (reduce + (vec (map #(* % %2) in1 discount))) 2))))
        inputs))
 
 (defn make-shopping-list-error-function-from-cases
@@ -67,7 +67,7 @@
     ([individual data-cases print-outputs]
       (let [behavior (atom '())
             errors (doall
-                     (for [[[input1 input2 input3] correct-output] (case data-cases
+                     (for [[[input1 input2] correct-output] (case data-cases
                                                                    :train train-cases
                                                                    :test test-cases
                                                                    [])]
@@ -75,21 +75,20 @@
                                                    (->> (make-push-state)
                                                    (push-item input2 :input)
                                                    (push-item input1 :input)))
-                             result (top-item :vector_float final-state)]
-                         (when print-outputs
-                            (println (format "Correct output: %s\n| Program output: %s" (str correct-output) (str result))))
+                             result (top-item :float final-state)]
+                             (when print-outputs
+                               (let [res-str (if (float? result)
+                                               (format "%.2f" result)
+                                               (str result))]
+                                 (println (format "Correct output: %.2f | Program output: %s" (float correct-output) res-str))))
                          ; Record the behavior
                          (swap! behavior conj result)
-                         ; Error is float error rounded to 2 decimal places at each spot in the vector
-                         (if (vector? result)
-                           (+' (round-to-n-decimal-places
-                                  (apply +' (map (fn [cor res]
-                                                 (abs (- cor res)))
-                                              correct-output
-                                              result))
-                                2)
-                               (*' 1000.0 (abs (- (count correct-output) (count result))))) ; penalty of 10000 times difference in sizes of vectors
+                         ; Error is float error rounded to 2 decimal places
+                         (round-to-n-decimal-places
+                          (if (number? result)
+                            (abs (- result correct-output)) ; distance from correct integer
                             1000000.0) ; penalty for no return value
+                          2)
                            )))]
         (if (= data-cases :train)
           (assoc individual :behaviors @behavior :errors errors)

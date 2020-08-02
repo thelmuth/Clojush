@@ -107,8 +107,11 @@
                                                     data-cases)]
                        (let [final-state (run-push (:program individual)
                                                    (->> (make-push-state)
-                                                     (push-item input :input)))
-                             result (top-item :output final-state)]
+                                                        (push-item input :input)))
+                             top (top-item :output final-state)
+                             result (if (= top :no-stack-item)
+                                      0
+                                      top)]
                          (when print-outputs
                            (println (format "Correct output: %2d | Program output: %s"
                                             correct-output

@@ -100,7 +100,10 @@
                      (let [final-state (run-push (:program individual)
                                                  (->> (make-push-state)
                                                       (push-item input1 :input)))
-                           result (top-item :output final-state)]
+                           top (top-item :output final-state)
+                           result (if (= top :no-stack-item)
+                                    0.0
+                                    top)]
                        (when print-outputs
                          (let [res-str (if (float? result)
                                          (format "%19.14f" result)

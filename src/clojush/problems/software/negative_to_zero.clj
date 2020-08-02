@@ -110,7 +110,10 @@
                        (let [final-state (run-push (:program individual)
                                                    (->> (make-push-state)
                                                      (push-item input1 :input)))
-                             result (top-item :output final-state)]
+                             top (top-item :output final-state)
+                             result (if (= top :no-stack-item)
+                                      []
+                                      top)]
                          (when print-outputs
                            (println (format "| Correct output: %s\n| Program output: %s\n" (pr-str correct-output) (pr-str result))))
                          ; Record the behavior

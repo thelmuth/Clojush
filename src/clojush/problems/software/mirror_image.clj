@@ -127,8 +127,12 @@
      (let [final-state (run-push program
                                  (->> (make-push-state)
                                       (push-item input2 :input)
-                                      (push-item input1 :input)))]
-       (top-item :output final-state)))))
+                                      (push-item input1 :input)))
+           top (top-item :output final-state)
+           result (if (= top :no-stack-item)
+                    false
+                    top)]
+       result))))
 
 (defn mirror-image-errors-from-behaviors
   "Takes a list of behaviors across the list of cases and finds the error

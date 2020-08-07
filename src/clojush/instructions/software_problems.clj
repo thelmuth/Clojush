@@ -36,7 +36,7 @@
   "Returns the list of inN instructions for each problem"
   [problem]
   (case problem
-    (:small-or-large :sum-of-squares :digits :vector-average :syllables :checksum :double-letters :replace-space-with-newline :scrabble-score :last-index-of-zero :even-squares :count-odds :string-lengths-backwards :negative-to-zero) '(in1)
+    (:small-or-large :sum-of-squares :digits :vector-average :syllables :checksum :double-letters :replace-space-with-newline :scrabble-score :last-index-of-zero :even-squares :count-odds :string-lengths-backwards :negative-to-zero :collatz-numbers :wallis-pi :pig-latin) '(in1)
     (:string-differences :x-word-lines :vectors-summed :number-io :mirror-image :super-anagrams) '(in1 in2)
     (:compare-string-lengths :median :for-loop-index) '(in1 in2 in3)
     :smallest '(in1 in2 in3 in4)
@@ -69,6 +69,9 @@
    :vector-average '() ;done
    :vectors-summed '([])
    :x-word-lines '(\space \newline)
+   :collatz-numbers '(0 1)
+   :wallis-pi '() ;done
+   :pig-latin '("ay" \space \a \e \i \o \u "aeiou")
    })
 
 (defn get-instructions
@@ -78,7 +81,7 @@
   not from the given problem. To equivicate, each problem contributes 2000
   instructions, which is more than any problem has in the map above."
   [problem]
-  (assert (some #{problem} (keys problem-instruction-map))
+  #_(assert (some #{problem} (keys problem-instruction-map))
           (str "Problem " problem " isn't in problem-instruction-map."))
   (let [map-without-problem (dissoc problem-instruction-map problem)
         ins-sets (vals map-without-problem)

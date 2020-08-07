@@ -15,7 +15,8 @@
         [clojush pushstate interpreter random util globals]
         clojush.instructions.tag
         clojure.math.numeric-tower)
-    (:require [clojure.string :as string]))
+  (:require [clojure.string :as string]
+            [clojush.instructions.software-problems :as sp]))
 
 ;; Define test cases
 (defn pig-latin-input
@@ -168,6 +169,7 @@
                                                              (second pig-latin-train-and-test-cases))
    :training-cases (first pig-latin-train-and-test-cases)
    :atom-generators pig-latin-atom-generators
+   :boosted-atom-generators (sp/get-instructions :pig-latin)
    :max-points 4000
    :max-genome-size-in-initial-program 500
    :evalpush-limit 2000

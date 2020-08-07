@@ -12,8 +12,8 @@
   (:use clojush.pushgp.pushgp
         [clojush pushstate interpreter random util globals]
         clojush.instructions.tag
-        [clojure.math numeric-tower]
-        ))
+        [clojure.math numeric-tower])
+  (:require [clojush.instructions.software-problems :as sp]))
 
 ; Atom generators
 (def collatz-numbers-atom-generators
@@ -147,6 +147,7 @@
                                                                    (second collatz-numbers-train-and-test-cases))
    :training-cases (first collatz-numbers-train-and-test-cases)
    :atom-generators collatz-numbers-atom-generators
+   :boosted-atom-generators (sp/get-instructions :collatz-numbers)
    :max-points 2400
    :max-genome-size-in-initial-program 300
    :evalpush-limit 15000

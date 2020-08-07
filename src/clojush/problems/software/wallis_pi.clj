@@ -14,8 +14,8 @@
   (:use clojush.pushgp.pushgp
         [clojush pushstate interpreter random util globals]
         clojush.instructions.tag
-        [clojure.math numeric-tower]
-        ))
+        [clojure.math numeric-tower])
+  (:require [clojush.instructions.software-problems :as sp]))
 
 ; Atom generators
 (def wallis-pi-atom-generators
@@ -158,6 +158,7 @@
                                                              (second wallis-pi-train-and-test-cases))
    :training-cases (first wallis-pi-train-and-test-cases)
    :atom-generators wallis-pi-atom-generators
+   :boosted-atom-generators (sp/get-instructions :wallis-pi)
    :max-points 2400
    :max-genome-size-in-initial-program 300
    :evalpush-limit 8000

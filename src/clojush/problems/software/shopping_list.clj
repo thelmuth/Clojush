@@ -12,6 +12,7 @@
 ; Atom generators
 (def shopping-list-atom-generators
   (concat (list
+            100
             ;;; end constants
             ;;; end ERCs
             (tag-instruction-erc [:integer :boolean :exec :float :vector_float] 1000)

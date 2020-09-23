@@ -42,7 +42,12 @@
           [[1.5 2.87 3.3324 4.654 5.123 6.867 7.5324 8.534 9.4132 10.43]
            [-1.534 -2.543 -3.423 -4.13427 -5.714 -6.713 -7.4328 -8.43 -9.73 -10.752]]
           [[0.4378 0.634 0.1234 0.764 0.243] [-0.254 -0.1223 -0.19582 -0.8971 -0.8743]]) 5 0]
-   [(fn [] (vector-distance-input (inc (lrand-int 20)))) 195 2000]
+   [(fn [] (vector-distance-input 1)) 5 50] ; Size 1 inputs
+   [(fn [] (vector-distance-input 2)) 30 300] ; Size 2 inputs
+   [(fn [] (vector-distance-input 3)) 30 300] ; Size 3 inputs
+   [(fn [] (vector-distance-input 4)) 20 200] ; Size 4 inputs
+   [(fn [] (vector-distance-input 5)) 10 100] ; Size 5 inputs
+   [(fn [] (vector-distance-input (+ (lrand-int 15) 6))) 100 1050]
    ])
 
 ;;Can make Vector Distance test data like this:

@@ -421,3 +421,40 @@
                 (push-item (apply str (rest s)) :exec)
                 (push-item (top-item :exec state) :exec)
                 (push-item (first s) :char)))))))
+
+(define-registered
+  string_sort
+  ^{:stack-types [:string]}
+  (fn [state]
+    (if (not (empty? (:string state)))
+      (let [stri (stack-ref :string 0 state)]
+        (->> state
+             (pop-item :string)
+             (push-item (apply str (sort stri)) :string)))
+      state)))
+
+(define-registered
+  string_includes
+  ^{:stack-types [:string :boolean]}
+  (fn [state]
+    (if (not (empty? (rest (:string state))))
+      (let [stri (stack-ref :string 0 state)
+            substr (stack-ref :string 1 state)]
+        (->> (pop-item :string state)
+             (pop-item :string)
+             (push-item (string/includes? stri substr) :boolean)))
+      state)))
+
+(define-registered
+  string_index_of
+  ^{:stack-types [:string :integer]}
+  (fn [state]
+    (if (empty? (rest (:string state)))
+      state
+      (let [stri (stack-ref :string 0 state)
+            substr (stack-ref :string 1 state)]
+        (if (= (string/index-of stri substr) nil)
+          state
+          (->> (pop-item :string state)
+               (pop-item :string)
+               (push-item (string/index-of stri substr) :integer)))))))

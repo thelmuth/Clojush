@@ -1,6 +1,8 @@
 (ns clojush.instructions.numbers
   (:use [clojush.pushstate]
-        [clojush.util]))
+        [clojush.util]
+        [clojush.globals])
+  (:require [clojure.math.numeric-tower :as nt]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; instructions for numbers
@@ -293,3 +295,110 @@
                  :float
                  (pop-item :float state))
       state)))
+
+(defn negater
+  "Returns a function that pushes the negation of the top item."
+  [type]
+  (fn [state]
+    (if (not (empty? (type state)))
+      (push-item (keep-number-reasonable (- (stack-ref type 0 state)))
+                 type
+                 (pop-item type state))
+      state)))
+
+(define-registered integer_negate (with-meta (negater :integer) {:stack-types [:integer]}))
+(define-registered float_negate (with-meta (negater :float) {:stack-types [:float]}))
+
+(defn abser
+  "Returns a function that pushes the absolute value of the top item."
+  [type]
+  (fn [state]
+    (if (not (empty? (type state)))
+      (let [num (stack-ref type 0 state)]
+        (push-item (keep-number-reasonable (if (neg? num) (- num) num))
+                   type
+                   (pop-item type state)))
+      state)))
+
+(define-registered integer_abs (with-meta (abser :integer) {:stack-types [:integer]}))
+(define-registered float_abs (with-meta (abser :float) {:stack-types [:float]}))
+
+(defn power
+  "Returns a function that pushes the top value of the stack raised to the power of the second value"
+  [type]
+  (fn [state]
+    (if (not (empty? (rest (type state))))
+      (let [base (stack-ref type 0 state)
+            exp (stack-ref type 1 state)]
+        (push-item (keep-number-reasonable (math/expt base exp))
+                   type
+                   (pop-item type state)))
+      state)))
+
+(define-registered integer_pow (with-meta (power :integer) {:stack-types [:integer]}))
+(define-registered float_pow (with-meta (power :float) {:stack-types [:float]}))
+
+(defn squareer
+  "Returns a function that pushes the top item squared."
+  [type]
+  (fn [state]
+    (if (not (empty? (type state)))
+      (let [num (stack-ref type 0 state)]
+        (push-item (keep-number-reasonable (*' num num))
+                   type
+                   (pop-item type state)))
+      state)))
+
+(define-registered float_square (with-meta (squareer :float) {:stack-types [:float]}))
+
+(defn sqrter
+  "Returns a function that pushes the square root of the top item."
+  [type]
+  (fn [state]
+    (if (not (empty? (type state)))
+      (let [num (stack-ref type 0 state)]
+        (push-item (keep-number-reasonable (math/sqrt num))
+                   type
+                   (pop-item type state)))
+      state)))
+
+(define-registered float_sqrt (with-meta (sqrter :float) {:stack-types [:float]}))
+
+(defn loger
+  "Returns a function that pushes the log (base 10) of the top item."
+  [type]
+  (fn [state]
+    (if (not (empty? (type state)))
+      (let [num (stack-ref type 0 state)]
+        (push-item (keep-number-reasonable (Math/log10 num))
+                   type
+                   (pop-item type state)))
+      state)))
+
+(define-registered float_log (with-meta (loger :float) {:stack-types [:float]}))
+
+(defn ceilinger
+  "Returns a function that pushes the ceiling of the top item."
+  [type]
+  (fn [state]
+    (if (not (empty? (type state)))
+      (let [num (stack-ref type 0 state)]
+        (push-item (keep-number-reasonable (math/ceil num))
+                   type
+                   (pop-item type state)))
+      state)))
+
+(define-registered float_ceiling (with-meta (ceilinger :float) {:stack-types [:float]}))
+
+(defn floorer
+  "Returns a function that pushes the floor of the top item."
+  [type]
+  (fn [state]
+    (if (not (empty? (type state)))
+      (let [num (stack-ref type 0 state)]
+        (push-item (keep-number-reasonable (math/floor num))
+                   type
+                   (pop-item type state)))
+      state)))
+
+(define-registered float_floor (with-meta (floorer :float) {:stack-types [:float]}))

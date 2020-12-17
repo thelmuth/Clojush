@@ -330,7 +330,7 @@
     (if (not (empty? (rest (type state))))
       (let [base (stack-ref type 0 state)
             exp (stack-ref type 1 state)]
-        (push-item (keep-number-reasonable (math/expt base exp))
+        (push-item (keep-number-reasonable (nt/expt base exp))
                    type
                    (pop-item type state)))
       state)))
@@ -357,7 +357,7 @@
   (fn [state]
     (if (not (empty? (type state)))
       (let [num (stack-ref type 0 state)]
-        (push-item (keep-number-reasonable (math/sqrt num))
+        (push-item (keep-number-reasonable (nt/sqrt num))
                    type
                    (pop-item type state)))
       state)))
@@ -383,7 +383,7 @@
   (fn [state]
     (if (not (empty? (type state)))
       (let [num (stack-ref type 0 state)]
-        (push-item (keep-number-reasonable (math/ceil num))
+        (push-item (keep-number-reasonable (nt/ceil num))
                    type
                    (pop-item type state)))
       state)))
@@ -396,9 +396,48 @@
   (fn [state]
     (if (not (empty? (type state)))
       (let [num (stack-ref type 0 state)]
-        (push-item (keep-number-reasonable (math/floor num))
+        (push-item (keep-number-reasonable (nt/floor num))
                    type
                    (pop-item type state)))
       state)))
 
 (define-registered float_floor (with-meta (floorer :float) {:stack-types [:float]}))
+
+(defn arccoser
+  "Returns a function that pushes the arccos of the top item."
+  [type]
+  (fn [state]
+    (if (not (empty? (type state)))
+      (let [num (stack-ref type 0 state)]
+        (push-item (keep-number-reasonable (Math/acos num))
+                   type
+                   (pop-item type state)))
+      state)))
+
+(define-registered float_arccos (with-meta (arccoser :float) {:stack-types [:float]}))
+
+(defn arcsiner
+  "Returns a function that pushes the arcsin of the top item."
+  [type]
+  (fn [state]
+    (if (not (empty? (type state)))
+      (let [num (stack-ref type 0 state)]
+        (push-item (keep-number-reasonable (Math/asin num))
+                   type
+                   (pop-item type state)))
+      state)))
+
+(define-registered float_arcsin (with-meta (arcsiner :float) {:stack-types [:float]}))
+
+(defn arctaner
+  "Returns a function that pushes the arctan of the top item."
+  [type]
+  (fn [state]
+    (if (not (empty? (type state)))
+      (let [num (stack-ref type 0 state)]
+        (push-item (keep-number-reasonable (Math/atan num))
+                   type
+                   (pop-item type state)))
+      state)))
+
+(define-registered float_arctan (with-meta (arctaner :float) {:stack-types [:float]}))

@@ -60,7 +60,10 @@
 (def evaluations-count (atom 0))
 ;; Used to count the number of times GP evaluates an individual
 
-(def point-evaluations-count (atom 0))
+(def program-executions-count (atom 0))
+;; Used to count the number of times GP runs a program once
+
+(def point-evaluations-count (atom 0)) 
 ;; Used to count the number of instructions that have been executed
 
 (def timer-atom (atom 0))
@@ -81,6 +84,11 @@
 (def selection-counts (atom {}))
 ;; Used to store the number of selections for each individual, indexed by UUIDs
 
+(def preselection-counts (atom []))
+;; Used to store the numbers of individuals that survive preselection in each
+;; selection event in the current generation. Does not take into account
+;; one-individual-per-error-vector-for-lexicase.
+
 (def min-age (atom 0))
 (def max-age (atom 0))
 ;; Used for age-mediated-parent-selection
@@ -90,6 +98,8 @@
 
 (def frontier (atom []))
 ;; used for preserve-frontier
+
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; The globals below may be reset by arguments to pushgp
@@ -105,7 +115,11 @@
 ;; The maximum size of a Push program. Also, the maximum size of code that can appear on
 ;; the exec or code stacks.
 
-(def global-tag-limit (atom 10000))
+(def global-max-nested-depth (atom 200)) 
+;; The maximum depth of nested code on the code or exec stacks. Needs to be small
+;; enough to not run into StackOverflow errors, likely some value < 1000.
+
+(def global-tag-limit (atom 10000)) 
 ;; The size of the tag space
 
 (def global-epigenetic-markers (atom [:close]))

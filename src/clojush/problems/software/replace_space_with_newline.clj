@@ -97,16 +97,15 @@
   "Evaluates the program on the given list of cases.
    Returns the behaviors, a list of the outputs of the program on the inputs."
   [program cases]
-  (flatten
-   (doall
-    (for [[input output] cases]
-      (let [final-state (run-push program
-                                  (->> (make-push-state)
-                                       (push-item input :input)
-                                       (push-item "" :output)))
-            printed-result (stack-ref :output 0 final-state)
-            int-result (stack-ref :integer 0 final-state)]
-        (vector printed-result int-result))))))
+  (lazy-flatten-single-nesting
+   (for [[input output] (unchunk cases)]
+     (let [final-state (run-push program
+                                 (->> (make-push-state)
+                                      (push-item input :input)
+                                      (push-item "" :output)))
+           printed-result (stack-ref :output 0 final-state)
+           int-result (stack-ref :integer 0 final-state)]
+       (list printed-result int-result)))))
 
 (defn replace-space-with-newline-errors-from-behaviors
   "Takes a list of behaviors across the list of cases and finds the error
@@ -114,16 +113,16 @@
   [behaviors cases]
   (let [behavior-pairs (partition 2 behaviors)
         output-pairs (map second cases)]
-    (flatten
+    (lazy-flatten-single-nesting
      (map (fn [[printed-result int-result] [correct-printed-output correct-int]]
-            (vector
+            (list
              (levenshtein-distance correct-printed-output printed-result)
              (if (number? int-result)
                (abs (- int-result correct-int)) ;distance from correct integer
                1000)                  ;penalty for no return value
              ))
           behavior-pairs
-          output-pairs))))
+          (unchunk output-pairs)))))
 
 (defn replace-space-with-newline-error-function
   "The error function for Replace Space With Newline. Takes an individual as input,
@@ -134,13 +133,13 @@
    (let [cases (case data-cases
                  :train (first replace-space-with-newline-train-and-test-cases)
                  :test (second replace-space-with-newline-train-and-test-cases)
-                 [])
+                 data-cases)
          behaviors (replace-space-with-newline-evaluate-program-for-behaviors (:program individual)
-                                                                 cases)
+                                                                              cases)
          errors (replace-space-with-newline-errors-from-behaviors behaviors cases)]
-     (cond
-       (= data-cases :train) (assoc individual :behaviors behaviors :errors errors)
-       (= data-cases :test) (assoc individual :test-errors errors)))))
+     (if (= data-cases :test)
+       (assoc individual :test-errors errors)
+       (assoc individual :behaviors behaviors :errors errors)))))
 
 (defn replace-space-with-newline-initial-report
   [argmap]
@@ -185,6 +184,8 @@
 ; Define the argmap
 (def argmap
   {:error-function replace-space-with-newline-error-function
+   :training-cases (first replace-space-with-newline-train-and-test-cases)
+   :sub-training-cases '()
    :atom-generators replace-space-with-newline-atom-generators
    :max-points 3200
    :max-genome-size-in-initial-program 400

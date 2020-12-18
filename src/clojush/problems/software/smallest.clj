@@ -68,34 +68,33 @@
     ([individual data-cases] ;; data-cases should be :train or :test
      (the-actual-smallest-error-function individual data-cases false))
     ([individual data-cases print-outputs]
+
       (let [behavior (atom '())
-            errors (doall
-                     (for [[[input1 input2 input3 input4] out-int] (case data-cases
-                                                                     :train train-cases
-                                                                     :test test-cases
-                                                                     [])]
-                       (let [final-state (run-push (:program individual)
-                                                   (->> (make-push-state)
-                                                     (push-item input4 :input)
-                                                     (push-item input3 :input)
-                                                     (push-item input2 :input)
-                                                     (push-item input1 :input)
-                                                     (push-item "" :output)))
-                             printed-result (stack-ref :output 0 final-state)]
-                         (when print-outputs
-                           (println (format "Correct output: %-19s | Program output: %-19s" (str out-int) printed-result)))
-                         ; Record the behavior
-                         (swap! behavior conj printed-result)
-                         ; Error is difference of integers
-                         (if (number? (try
-                                        (Integer/parseInt printed-result)
-                                        (catch Exception e "")))
-                           (abs (- (Integer/parseInt printed-result) out-int)) ;distance from correct integer
-                           100000) ;penalty for no return value
-                           )))]
-        (if (= data-cases :train)
+            errors (for [[[input1 input2 input3 input4] out-int] (unchunk (case data-cases
+                                                                            :train train-cases
+                                                                            :test test-cases
+                                                                            data-cases))]
+                     (let [final-state (run-push (:program individual)
+                                                 (->> (make-push-state)
+                                                      (push-item input4 :input)
+                                                      (push-item input3 :input)
+                                                      (push-item input2 :input)
+                                                      (push-item input1 :input)
+                                                      (push-item "" :output)))
+                           printed-result (stack-ref :output 0 final-state)]
+                       (when print-outputs
+                         (println (format "Correct output: %-19s | Program output: %-19s" (str out-int) printed-result)))
+                                        ; Record the behavior
+                       (swap! behavior conj printed-result)
+                                        ; Each test case is either right or wrong
+                       (if (= printed-result (str out-int))
+                         0
+                         1)))]
+        
+        (if (= data-cases :test)
+          (assoc individual :test-errors errors)
           (assoc individual :behaviors @behavior :errors errors)
-          (assoc individual :test-errors errors))))))
+          )))))
 
 (defn get-smallest-train-and-test
   "Returns the train and test cases."
@@ -143,6 +142,8 @@
 (def argmap
   {:error-function (make-smallest-error-function-from-cases (first smallest-train-and-test-cases)
                                                             (second smallest-train-and-test-cases))
+   :training-cases (first smallest-train-and-test-cases)
+   :sub-training-cases '()
    :atom-generators smallest-atom-generators
    :max-points 800
    :max-genome-size-in-initial-program 100

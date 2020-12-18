@@ -136,7 +136,7 @@
                      (for [[[input1 input2] correct-output] (case data-cases
                                                               :train train-cases
                                                               :test test-cases
-                                                              [])]
+                                                              data-cases)]
                        (let [final-state (run-push (:program individual)
                                                    (->> (make-push-state)
                                                      (push-item input2 :input)
@@ -147,11 +147,13 @@
                            (println (format "Correct output: %5s | Program output: %s" correct-output (str result))))
                          ; Record the behavior
                          (swap! behavior conj result)
-                         ; Error is Levenshtein distance of printed strings
-                         (levenshtein-distance correct-output (str result)))))]
-        (if (= data-cases :train)
-          (assoc individual :behaviors @behavior :errors errors)
-          (assoc individual :test-errors errors))))))
+                         ; Error is boolean error
+                         (if (= result correct-output)
+                           0
+                           1))))]
+        (if (= data-cases :test)
+          (assoc individual :test-errors errors)
+          (assoc individual :behaviors @behavior :errors errors))))))
 
 (defn get-super-anagrams-train-and-test
   "Returns the train and test cases."
@@ -200,6 +202,7 @@
 (def argmap
   {:error-function (make-super-anagrams-error-function-from-cases (first super-anagrams-train-and-test-cases)
                                                                   (second super-anagrams-train-and-test-cases))
+   :training-cases (first super-anagrams-train-and-test-cases)
    :atom-generators super-anagrams-atom-generators
    :max-points 3200
    :max-genome-size-in-initial-program 400

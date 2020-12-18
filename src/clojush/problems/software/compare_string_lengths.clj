@@ -81,34 +81,28 @@
      (the-actual-csl-error-function individual data-cases false))
     ([individual data-cases print-outputs]
       (let [behavior (atom '())
-            errors (doall
-                     (for [[[input1 input2 input3] correct-output] (case data-cases
-                                                                     :train train-cases
-                                                                     :test test-cases
-                                                                     [])]
-                       (let [final-state (run-push (:program individual)
-                                                   (->> (make-push-state)
-                                                     (push-item input3 :input)
-                                                     (push-item input2 :input)
-                                                     (push-item input1 :input)))
-                             result (top-item :vector_boolean final-state)]
-                         (when print-outputs
-                           (println (format "Correct output: %s | Program output: %s" correct-output (str result))))
-                         ; Record the behavior
-                         (swap! behavior conj result)
-                         ; Error is boolean error at each position in the vectors, with additional penalties for incorrect size vector
-                         (if (vector? result)
-                           (+' (apply +' (map #(if (= % true) 0 1)
-                                            (map (fn [cor res]
-                                                  (= cor res))
-                                                correct-output
-                                                result)))
-                               (*' 1 (abs (- (count correct-output) (count result))))) ; penalty of 1 times difference in sizes of vectors
-                           10) ; penalty for no return value
-                           )))]
-        (if (= data-cases :train)
+            errors (for [[[input1 input2 input3] correct-output] (unchunk (case data-cases
+                                                                            :train train-cases
+                                                                            :test test-cases
+                                                                            data-cases))]
+                     (let [final-state (run-push (:program individual)
+                                                 (->> (make-push-state)
+                                                      (push-item input3 :input)
+                                                      (push-item input2 :input)
+                                                      (push-item input1 :input)))
+                           result (top-item :boolean final-state)]
+                       (when print-outputs
+                         (println (format "Correct output: %5b | Program output: %s" correct-output (str result))))
+                                        ; Record the behavior
+                       (swap! behavior conj result)
+                                        ; Error is boolean error
+                       (if (= result correct-output)
+                         0
+                         1)))]
+        (if (= data-cases :test)
+          (assoc individual :test-errors errors)
           (assoc individual :behaviors @behavior :errors errors)
-          (assoc individual :test-errors errors))))))
+          )))))
 
 (defn get-compare-string-lengths-train-and-test
   "Returns the train and test cases."
@@ -156,6 +150,8 @@
 (def argmap
   {:error-function (make-compare-string-lengths-error-function-from-cases (first compare-string-lengths-train-and-test-cases)
                                                                           (second compare-string-lengths-train-and-test-cases))
+   :training-cases (first compare-string-lengths-train-and-test-cases)
+   :sub-training-cases '()
    :atom-generators csl-atom-generators
    :max-points 1600
    :max-genome-size-in-initial-program 200

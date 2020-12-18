@@ -110,13 +110,12 @@
   "Evaluates the program on the given list of cases.
    Returns the behaviors, a list of the outputs of the program on the inputs."
   [program cases]
-  (doall
-   (for [[[input1 input2] output] cases]
-     (let [final-state (run-push program
-                                 (->> (make-push-state)
-                                      (push-item input2 :input)
-                                      (push-item input1 :input)))]
-       (top-item :vector_integer final-state)))))
+  (for [[[input1 input2] output] cases]
+    (let [final-state (run-push program
+                                (->> (make-push-state)
+                                     (push-item input2 :input)
+                                     (push-item input1 :input)))]
+      (top-item :boolean final-state))))
 
 (defn mirror-image-errors-from-behaviors
   "Takes a list of behaviors across the list of cases and finds the error
@@ -141,16 +140,16 @@
   ([individual]
    (mirror-image-error-function individual :train))
   ([individual data-cases] ;; data-cases should be :train or :test
-   (let [cases (case data-cases
-                 :train (first mirror-image-train-and-test-cases)
-                 :test (second mirror-image-train-and-test-cases)
-                 [])
+   (let [cases (unchunk (case data-cases
+                          :train (first mirror-image-train-and-test-cases)
+                          :test (second mirror-image-train-and-test-cases)
+                          data-cases))
          behaviors (mirror-image-evaluate-program-for-behaviors (:program individual)
-                                                                 cases)
+                                                                cases)
          errors (mirror-image-errors-from-behaviors behaviors cases)]
-     (cond
-       (= data-cases :train) (assoc individual :behaviors behaviors :errors errors)
-       (= data-cases :test) (assoc individual :test-errors errors)))))
+     (if (= data-cases :test)
+       (assoc individual :test-errors errors)
+       (assoc individual :behaviors behaviors :errors errors)))))
 
 (defn mirror-image-initial-report
   [argmap]
@@ -191,6 +190,8 @@
 ; Define the argmap
 (def argmap
   {:error-function mirror-image-error-function
+   :training-cases (first mirror-image-train-and-test-cases)
+   :sub-training-cases '()
    :atom-generators mirror-image-atom-generators
    :max-points 1200
    :max-genome-size-in-initial-program 150

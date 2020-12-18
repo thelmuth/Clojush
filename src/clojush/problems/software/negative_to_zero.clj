@@ -87,27 +87,27 @@
      (the-actual-negative-to-zero-error-function individual data-cases false))
     ([individual data-cases print-outputs]
       (let [behavior (atom '())
-            errors (doall
-                     (for [[input1 correct-output] (case data-cases
-                                                     :train train-cases
-                                                     :test test-cases
-                                                     [])]
-                       (let [final-state (run-push (:program individual)
-                                                   (->> (make-push-state)
-                                                     (push-item input1 :input)))
-                             result (top-item :vector_integer final-state)]
-                         (when print-outputs
-                           (println (format "| Correct output: %s\n| Program output: %s\n" (pr-str correct-output) (pr-str result))))
-                         ; Record the behavior
-                         (swap! behavior conj result)
-                         ; Error is Levenshtein distance of vectors
-                         (if (vector? result)
-                           (levenshtein-distance correct-output result)
-                           5000) ; penalty for no return value
-                         )))]
-        (if (= data-cases :train)
+            errors (for [[input1 correct-output] (unchunk (case data-cases
+                                                            :train train-cases
+                                                            :test test-cases
+                                                            data-cases))]
+                     (let [final-state (run-push (:program individual)
+                                                 (->> (make-push-state)
+                                                      (push-item input1 :input)))
+                           result (top-item :vector_integer final-state)]
+                       (when print-outputs
+                         (println (format "| Correct output: %s\n| Program output: %s\n" (pr-str correct-output) (pr-str result))))
+                                        ; Record the behavior
+                       (swap! behavior conj result)
+                                        ; Error is Levenshtein distance of vectors
+                       (if (vector? result)
+                         (levenshtein-distance correct-output result)
+                         5000) ; penalty for no return value
+                       ))]
+        (if (= data-cases :test)
+          (assoc individual :test-errors errors)
           (assoc individual :behaviors @behavior :errors errors)
-          (assoc individual :test-errors errors))))))
+          )))))
 
 (defn get-negative-to-zero-train-and-test
   "Returns the train and test cases."
@@ -155,6 +155,8 @@
 (def argmap
   {:error-function (make-negative-to-zero-error-function-from-cases (first negative-to-zero-train-and-test-cases)
                                                             (second negative-to-zero-train-and-test-cases))
+   :training-cases (first negative-to-zero-train-and-test-cases)
+   :sub-training-cases '()
    :atom-generators negative-to-zero-atom-generators
    :max-points 2000
    :max-genome-size-in-initial-program 250

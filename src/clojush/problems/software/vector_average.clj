@@ -77,32 +77,32 @@
      (the-actual-vector-average-error-function individual data-cases false))
     ([individual data-cases print-outputs]
      (let [behavior (atom '())
-           errors (doall
-                   (for [[input1 correct-output] (case data-cases
-                                                   :train train-cases
-                                                   :test test-cases
-                                                   [])]
-                     (let [final-state (run-push (:program individual)
-                                                 (->> (make-push-state)
-                                                      (push-item input1 :input)))
-                           result (top-item :float final-state)]
-                       (when print-outputs
-                         (let [res-str (if (float? result)
-                                         (format "%19.14f" result)
-                                         (str result))]
-                           (println (format "Correct output: %19.14f | Program output: %s" correct-output res-str))))
-                       ; Record the behavior
-                       (swap! behavior conj result)
-                       ; Error is float error rounded to 4 decimal places
-                       (round-to-n-decimal-places
-                        (if (number? result)
-                          (abs (- result correct-output)) ; distance from correct integer
-                          1000000.0) ; penalty for no return value
-                        4)
-                       )))]
-       (if (= data-cases :train)
+           errors (for [[input1 correct-output] (unchunk (case data-cases
+                                                           :train train-cases
+                                                           :test test-cases
+                                                           data-cases))]
+                    (let [final-state (run-push (:program individual)
+                                                (->> (make-push-state)
+                                                     (push-item input1 :input)))
+                          result (top-item :float final-state)]
+                      (when print-outputs
+                        (let [res-str (if (float? result)
+                                        (format "%19.14f" result)
+                                        (str result))]
+                          (println (format "Correct output: %19.14f | Program output: %s" correct-output res-str))))
+                                        ; Record the behavior
+                      (swap! behavior conj result)
+                                        ; Error is float error rounded to 4 decimal places
+                      (round-to-n-decimal-places
+                       (if (number? result)
+                         (abs (- result correct-output)) ; distance from correct integer
+                         1000000.0) ; penalty for no return value
+                       4)
+                      ))]
+       (if (= data-cases :test)
+         (assoc individual :test-errors errors)
          (assoc individual :behaviors @behavior :errors errors)
-         (assoc individual :test-errors errors))))))
+         )))))
 
 (defn get-vector-average-train-and-test
   "Returns the train and test cases."
@@ -150,6 +150,8 @@
 (def argmap
   {:error-function (make-vector-average-error-function-from-cases (first vector-average-train-and-test-cases)
                                                                   (second vector-average-train-and-test-cases))
+   :training-cases (first vector-average-train-and-test-cases)
+   :sub-training-cases '()
    :atom-generators vector-average-atom-generators
    :max-points 1600
    :max-genome-size-in-initial-program 200

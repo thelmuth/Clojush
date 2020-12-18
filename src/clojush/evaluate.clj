@@ -1,5 +1,5 @@
 (ns clojush.evaluate
-  (:use [clojush util pushstate random globals individual meta-errors]
+  (:use [clojush util pushstate random globals individual meta-errors interpreter simplification mod_metrics]
         clojush.pushgp.genetic-operators)
   (:require [clojure.math.numeric-tower :as math]
             [clj-random.core :as random]))
@@ -18,7 +18,7 @@
                                          (map #(nth % i) error-seqs)))
                           population-size)))))
     (printf "\nSolution rates: ")
-    (println (doall (map float @solution-rates)))))
+    (println (doall (map float @solution-rates)))))   
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; evaluate individuals
@@ -58,12 +58,12 @@
   "Returns the given individual with errors, total-errors, and weighted-errors,
    computing them if necessary."
   ([i error-function rand-gen]
-    (evaluate-individual i error-function rand-gen
-                         {:reuse-errors true
-                          :print-history false
-                          :total-error-method :sum
-                          :normalization :none
-                          :max-error 1000}))
+   (evaluate-individual i error-function rand-gen
+                        {:reuse-errors true
+                         :print-history false
+                         :total-error-method :sum
+                         :normalization :none
+                         :max-error 1000}))
   ([i error-function rand-gen
     {:keys [reuse-errors print-history total-error-method normalization max-error
             parent-selection]
@@ -75,8 +75,8 @@
                           (and reuse-errors (not (nil? (:errors i))))
                           i
                           ;;
-                          (= parent-selection :downsampled-lexicase)
-                          (error-function i (:sub-training-cases argmap))
+                         (= parent-selection :downsampled-lexicase)
+                         (error-function i (:sub-training-cases argmap))
                           ;;
                           :else
                           (error-function i))

@@ -567,6 +567,10 @@
           ;; The number of simplification steps that will happen during final report
           ;; simplifications.
 
+         :lazy-automatic-simplification false
+          ;; When true, uses lazy automatic simplification to only run the simplifying
+          ;; program one input at a time until a non-zero error is found.
+
          :problem-specific-initial-report default-problem-specific-initial-report
           ;; A function can be called to provide a problem-specific initial report, which happens
           ;; before the normal initial report is printed.
@@ -665,6 +669,16 @@
          :label nil
           ;; If set, will send this in the configuration of the run, to the
           ;; external record
+         
+         :calculate-mod-metrics false
+          ;; If true, will calculate modularity metrics (reuse and repetition) as the run proceeds.
+          ;; By default, metrics are calculated on the execution trace for a randomly chosen test case.
+
+          :simplification-steps-for-mod-metrics 0
+          ;; Number of simplification steps applied to a program before calculating mod metrics.
+          ;; 0 implies simplification won't be carried out.
+          ;; WARNING: Keep this value low as every individual in the population will be simplified for this many number of steps
+                
          )))
 
 (defn augment-for-autoconstruction

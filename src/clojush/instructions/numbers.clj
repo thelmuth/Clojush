@@ -162,7 +162,7 @@
       (try (pop-item :string
                      (push-item (keep-number-reasonable (Long/parseLong (top-item :string state)))
                                 :integer state))
-        (catch Exception e state))
+           (catch Exception e state))
       state)))
 
 (define-registered
@@ -173,7 +173,7 @@
       (try (pop-item :string
                      (push-item (keep-number-reasonable (Float/parseFloat (top-item :string state)))
                                 :float state))
-        (catch Exception e state))
+           (catch Exception e state))
       state)))
 
 (define-registered
@@ -323,6 +323,26 @@
 (define-registered integer_abs (with-meta (abser :integer) {:stack-types [:integer]}))
 (define-registered float_abs (with-meta (abser :float) {:stack-types [:float]}))
 
+(defn safe-expt
+  "Fast and safe implementation of expt that ignores very large and
+   very negative exponents. Also treats 0 and 1 bases correctly.
+   Also treats integer base and negative exponent correctly."
+  [base exp type]
+  (let [result (cond ; handle cases where this is very slow because of large exponents
+                 (zero? base) 0
+                 (= 1 base) 1
+                 (and (> exp 40)
+                      (>= base 2)) 100000000000000N
+                 (and (> exp 40)
+                      (<= base -2)) (if (even? exp) 100000000000000N -100000000000000N)
+                 (< exp -40) 0
+                 (and (= type :integer)
+                      (< exp 0)) 0
+                 :else (nt/expt base exp))]
+    (if (= type :float)
+      (float result)
+      result)))
+
 (defn power
   "Returns a function that pushes the top value of the stack raised to the power of the second value"
   [type]
@@ -330,12 +350,7 @@
     (if (not (empty? (rest (type state))))
       (let [base (stack-ref type 1 state)
             exp (stack-ref type 0 state)
-            result (cond ; handle cases where this is very slow because of large exponents
-                     (and (> exp 40)
-                          (>= base 2)) 100000000000000N
-                     (and (> exp 40)
-                          (<= base -2)) -100000000000000N
-                     :else (nt/expt base exp))]
+            result (safe-expt base exp type)]
         (push-item (keep-number-reasonable result)
                    type
                    (pop-item type (pop-item type state))))
@@ -382,7 +397,7 @@
   (fn [state]
     (if (not (empty? (type state)))
       (let [num (stack-ref type 0 state)]
-        (push-item (keep-number-reasonable (if (= base 10) 
+        (push-item (keep-number-reasonable (if (= base 10)
                                              (Math/log10 num)
                                              (log2 num)))
                    type

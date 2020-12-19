@@ -2,8 +2,7 @@
   (:use clojush.pushgp.pushgp
         [clojush pushstate interpreter random util globals]
         clojush.instructions.tag
-        clojure.math.numeric-tower
-        ))
+        clojure.math.numeric-tower))
 
 (defn int-erc-10000
   []
@@ -68,13 +67,13 @@
 ; Atom generators
 (def atom-generators
   (concat (list
-            (tag-instruction-erc [:exec :integer :boolean :float :string :char] 1000)
-            (tagged-instruction-erc 1000)
+           (tag-instruction-erc [:exec :integer :boolean :float :string :char] 1000)
+           (tagged-instruction-erc 1000)
             ;;; end tagERCs
-            'in1
-            'in2
+           'in1
+           'in2
             ;;; end input instructions
-            )
+           )
 
                     ;; Kitchen sink ERCs
           (list
@@ -92,32 +91,28 @@
            vector-vector-boolean-erc
            vector-vector-integer-erc
            vector-vector-float-erc
-           vector-vector-string-erc
-           )
+           vector-vector-string-erc)
           ;; Kitchen sink instructions
-          (registered-for-stacks [:integer :float :boolean :string :char :exec :print :code :parentheses :vector_boolean :vector_integer :vector_float :vector_string :vector_vector_integer :vector_vector_float :vector_vector_boolean :vector_vector_string])
-
-))
+          (registered-for-stacks [:integer :float :boolean :string :char :exec :print :code :parentheses :vector_boolean :vector_integer :vector_float :vector_string :vector_vector_integer :vector_vector_float :vector_vector_boolean :vector_vector_string])))
 
 (defn random-thing
   "Returns a random thing"
   []
   ((rand-nth
-     (list
-      int-erc-10000
-      float-erc-10000
-      boolean-erc
-      visible-char-erc
-      string-erc
-      vector-boolean-erc
-      vector-string-erc
-      vector-integer-erc
-      vector-float-erc
-      vector-vector-boolean-erc
-      vector-vector-integer-erc
-      vector-vector-float-erc
-      vector-vector-string-erc
-      ))))
+    (list
+     int-erc-10000
+     float-erc-10000
+     boolean-erc
+     visible-char-erc
+     string-erc
+     vector-boolean-erc
+     vector-string-erc
+     vector-integer-erc
+     vector-float-erc
+     vector-vector-boolean-erc
+     vector-vector-integer-erc
+     vector-vector-float-erc
+     vector-vector-string-erc))))
 
 (defn push-random-things
   [push-state]
@@ -130,11 +125,11 @@
                   (= [] thing) (push-item [] :vector_integer
                                           (push-item [] :vector_float
                                                      (push-item [] :vector_string
-                                                                (push-item [] :vector_boolean state
-                                                                           (push-item [[]] :vector_vector_integer state
-                                                                                (push-item [[]] :vector_vector_float state
-                                                                                    (push-item [[]] :vector_vector_string state
-                                                                                        (push-item [[]] :vector_vector_boolean state)))))))))))
+                                                                (push-item [] :vector_boolean
+                                                                           (push-item [[]] :vector_vector_integer
+                                                                                      (push-item [[]] :vector_vector_float
+                                                                                                 (push-item [[]] :vector_vector_string
+                                                                                                            (push-item [[]] :vector_vector_boolean state)))))))))))
             push-state
             things)))
 
@@ -149,8 +144,8 @@
       (let [final-state (run-push (:program individual)
                                   start-state)]
         (assoc individual
-           :errors '(2999 2999 2999)
-           :final-state final-state))
+               :errors '(2999 2999 2999)
+               :final-state final-state))
       (catch Throwable e
         (println "\nCaught exception:" (.getMessage e))
         (println "---------------------------------------")
@@ -160,8 +155,7 @@
         (println "Start state:")
         (prn start-state)
         (println "\n---------------------------------------")
-        (throw e)
-        ))))
+        (throw e)))))
 
 
 ; Define the argmap
@@ -171,8 +165,7 @@
    :max-points 4000
    :max-genome-size-in-initial-program 2000
    :evalpush-limit 5000
-   :epigenetic-markers [:close]
-   })
+   :epigenetic-markers [:close]})
 
 
 ; lein run clojush.problems.test.run-random-programs :random-individual-search true :max-program-executions 3000

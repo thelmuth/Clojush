@@ -571,7 +571,7 @@
 
 (define-registered vector_vector_integer_getrow (with-meta (nther :vector_vector_integer :vector_integer) {:stack-types [:vector_vector_integer :vector_integer :integer]}))
 (define-registered vector_vector_float_getrow (with-meta (nther :vector_vector_float :vector_float) {:stack-types [:vector_vector_float :vector_float :integer]}))
-(define-registered vector_vector_boolean_getrow (with-meta (nther :vector_vector_boolean :vcetor_boolean) {:stack-types [:vector_vector_boolean :vector_boolean :integer]}))
+(define-registered vector_vector_boolean_getrow (with-meta (nther :vector_vector_boolean :vector_boolean) {:stack-types [:vector_vector_boolean :vector_boolean :integer]}))
 (define-registered vector_vector_string_getrow (with-meta (nther :vector_vector_string :vector_string) {:stack-types [:vector_vector_string :vector_string :integer]}))
 
 (define-registered vector_vector_integer_conj (with-meta (conjer :vector_vector_integer :vector_integer) {:stack-types [:vector_vector_integer :vector_integer]}))

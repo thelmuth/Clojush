@@ -328,11 +328,17 @@
   [type]
   (fn [state]
     (if (not (empty? (rest (type state))))
-      (let [base (stack-ref type 0 state)
-            exp (stack-ref type 1 state)]
-        (push-item (keep-number-reasonable (nt/expt base exp))
+      (let [base (stack-ref type 1 state)
+            exp (stack-ref type 0 state)
+            result (cond ; handle cases where this is very slow because of large exponents
+                     (and (> exp 40)
+                          (>= base 2)) 100000000000000N
+                     (and (> exp 40)
+                          (<= base -2)) -100000000000000N
+                     :else (nt/expt base exp))]
+        (push-item (keep-number-reasonable result)
                    type
-                   (pop-item type state)))
+                   (pop-item type (pop-item type state))))
       state)))
 
 (define-registered integer_pow (with-meta (power :integer) {:stack-types [:integer]}))
@@ -364,18 +370,27 @@
 
 (define-registered float_sqrt (with-meta (sqrter :float) {:stack-types [:float]}))
 
+(defn log2
+  "Takes log_2(x)"
+  [x]
+  (/ (Math/log x)
+     (Math/log 2)))
+
 (defn loger
   "Returns a function that pushes the log (base 10) of the top item."
-  [type]
+  [type base]
   (fn [state]
     (if (not (empty? (type state)))
       (let [num (stack-ref type 0 state)]
-        (push-item (keep-number-reasonable (Math/log10 num))
+        (push-item (keep-number-reasonable (if (= base 10) 
+                                             (Math/log10 num)
+                                             (log2 num)))
                    type
                    (pop-item type state)))
       state)))
 
-(define-registered float_log (with-meta (loger :float) {:stack-types [:float]}))
+(define-registered float_log10 (with-meta (loger :float 10) {:stack-types [:float]}))
+(define-registered float_log2 (with-meta (loger :float 2) {:stack-types [:float]}))
 
 (defn ceilinger
   "Returns a function that pushes the ceiling of the top item."

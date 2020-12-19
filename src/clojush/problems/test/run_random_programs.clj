@@ -87,13 +87,9 @@
            vector-boolean-erc
            vector-string-erc
            vector-integer-erc
-           vector-float-erc
-           vector-vector-boolean-erc
-           vector-vector-integer-erc
-           vector-vector-float-erc
-           vector-vector-string-erc)
+           vector-float-erc)
           ;; Kitchen sink instructions
-          (registered-for-stacks [:integer :float :boolean :string :char :exec :print :code :parentheses :vector_boolean :vector_integer :vector_float :vector_string :vector_vector_integer :vector_vector_float :vector_vector_boolean :vector_vector_string])))
+          (registered-for-stacks [:integer :float :boolean :string :char :exec :print :code :parentheses :vector_boolean :vector_integer :vector_float :vector_string])))
 
 (defn random-thing
   "Returns a random thing"
@@ -108,11 +104,7 @@
      vector-boolean-erc
      vector-string-erc
      vector-integer-erc
-     vector-float-erc
-     vector-vector-boolean-erc
-     vector-vector-integer-erc
-     vector-vector-float-erc
-     vector-vector-string-erc))))
+     vector-float-erc))))
 
 (defn push-random-things
   [push-state]
@@ -126,10 +118,7 @@
                                           (push-item [] :vector_float
                                                      (push-item [] :vector_string
                                                                 (push-item [] :vector_boolean
-                                                                           (push-item [[]] :vector_vector_integer
-                                                                                      (push-item [[]] :vector_vector_float
-                                                                                                 (push-item [[]] :vector_vector_string
-                                                                                                            (push-item [[]] :vector_vector_boolean state)))))))))))
+                                                                           state)))))))
             push-state
             things)))
 

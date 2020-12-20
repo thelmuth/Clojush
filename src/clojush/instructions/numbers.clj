@@ -334,11 +334,11 @@
                  (and (> exp 40)
                       (>= base 2)) 100000000000000N
                  (and (> exp 40)
-                      (<= base -2)) (if (even? exp) 100000000000000N -100000000000000N)
+                      (<= base -2)) (if (zero? (mod exp 2)) 100000000000000N -100000000000000N)
                  (< exp -40) 0
                  (and (= type :integer)
                       (< exp 0)) 0
-                 :else (nt/expt base exp))]
+                 :else (keep-number-reasonable (nt/expt base exp)))]
     (if (= type :float)
       (float result)
       result)))

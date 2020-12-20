@@ -438,21 +438,21 @@
   ^{:stack-types [:string :boolean]}
   (fn [state]
     (if (not (empty? (rest (:string state))))
-      (let [stri (stack-ref :string 0 state)
-            substr (stack-ref :string 1 state)]
+      (let [stri (stack-ref :string 1 state)
+            substr (stack-ref :string 0 state)]
         (->> (pop-item :string state)
              (pop-item :string)
              (push-item (string/includes? stri substr) :boolean)))
       state)))
 
 (define-registered
-  string_index_of
+  string_indexof
   ^{:stack-types [:string :integer]}
   (fn [state]
     (if (empty? (rest (:string state)))
       state
-      (let [stri (stack-ref :string 0 state)
-            substr (stack-ref :string 1 state)]
+      (let [stri (stack-ref :string 1 state)
+            substr (stack-ref :string 0 state)]
         (if (= (string/index-of stri substr) nil)
           state
           (->> (pop-item :string state)

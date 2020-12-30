@@ -48,7 +48,13 @@
 ;; inputs is either a list or a function that, when called, will create a
 ;; random element of the set.
 (def count-odds-data-domains
-  [[(list []) 1 0] ;; Empty vector
+  [[(list []
+          [830, 294, 0, 996, 440, -744, -34, -742, -546, 620, -138, -576, -622, -958, -284, -68, 722, 750, 228, -280, -570, 290, 380, -302, 116, 16, 556, 874, -790, 112, 326, 876, 88, 620, -818, -468, -426, -542, -590, -40, 746, 166, -188, 740, -2, -526, 546, -914, 770, 880]
+          [-293, -385, -997, 281, 227, -397, -927, 791, 851, -533, -781, -617, -793, 991, -807, 305, -469, 245, 431, 557, -877, -339, 659, -419, 801, 587, 311, -663, 469, -135, -947, -351, -299, 49, 443, -579, -447, 773, -369, -833, 323, 331, 243, -929, 303, -193, -359, -205, 969, -409]
+          [484, -124, -52, -807, -916, -599, 137, -127, 2, -126, 418, -431, 721, -770, 830, 676, 560, 68, -897, 920, -917, -867, 593, 798, -577, -475, 384, -78, 331, -914, -881, -776, 496, -958, -197, -995, -914, 124, -723, -871, -838, -599, 1000, -708, -969, 567, -157, 265, -819, -601]
+          [300, 869, -220, -123, 851, -55, -86, -106, 405, 845, -852, 504, -492, -690, 109, -749, 801, 885, -402, 55, -12, -386, 973, -970, 186])
+    5 0]
+   ;[(list []) 1 0] ;; Empty vector
    [(concat (map vector (range -10 11))
             (list [-947] [-450] [303] [886])) 25 0] ;; Length 1 vectors
    [(list [0 0]
@@ -117,6 +123,10 @@
 
 (defn count-odds-initial-report
   [argmap]
+  (let [filename (str "count_odds_outputs_"
+                      (:run-uuid argmap)
+                      ".csv")]
+    (spit filename "generation;output_1;output_2;output_3;output_4;output_5\n"))
   (println "Train and test cases:")
   (doseq [[i case] (map vector (range) (first count-odds-train-and-test-cases))]
     (println (format "Train Case: %3d | Input/Output: %s" i (str case))))
@@ -124,9 +134,27 @@
     (println (format "Test Case: %3d | Input/Output: %s" i (str case))))
   (println ";;******************************"))
 
+(defn append-to-file
+  "Uses spit to append to a file specified with its name as a string, or
+   anything else that writer can take as an argument.  s is the string to
+   append."
+  [file-name s]
+  (spit file-name s :append true))
+
 (defn count-odds-report
   "Custom generational report."
-  [best population generation error-function report-simplifications]
+  [best population generation error-function report-simplifications argmap]
+  (let [filename (str "count_odds_outputs_"
+                      (:run-uuid argmap)
+                      ".csv")]
+    (doseq [ind population]
+      (append-to-file filename
+                      (apply format "%d;%s;%s;%s;%s;%s\n"
+                             generation (map (fn [output]
+                                               (if (= output :no-stack-item)
+                                                 "err"
+                                                 (str output)))
+                                             (take 5 (:behaviors ind)))))))
   (let [best-test-errors (:test-errors (error-function best :test))
         best-total-test-error (apply +' best-test-errors)]
     (println ";;******************************")

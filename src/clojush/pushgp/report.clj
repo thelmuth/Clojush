@@ -390,7 +390,8 @@
                                           population
                                           generation
                                           error-function
-                                          report-simplifications)
+                                          report-simplifications
+                                          argmap)
         best (if (= (type psr-best) clojush.individual.individual)
                psr-best
                total-error-best)

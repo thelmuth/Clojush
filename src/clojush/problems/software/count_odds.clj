@@ -84,32 +84,32 @@
   [train-cases test-cases]
   (fn the-actual-count-odds-error-function
     ([individual]
-      (the-actual-count-odds-error-function individual :train))
+     (the-actual-count-odds-error-function individual :train))
     ([individual data-cases] ;; data-cases should be :train or :test
      (the-actual-count-odds-error-function individual data-cases false))
     ([individual data-cases print-outputs]
-      (let [behavior (atom '())
-            errors (doall
-                     (for [[input1 correct-output] (case data-cases
-                                                     :train train-cases
-                                                     :test test-cases
-                                                     data-cases)]
-                       (let [final-state (run-push (:program individual)
-                                                   (->> (make-push-state)
-                                                     (push-item input1 :input)))
-                             result (top-item :integer final-state)]
-                         (when print-outputs
-                           (println (format "Correct output: %2d | Program output: %s" correct-output (str result))))
+     (let [behavior (atom '())
+           errors (doall
+                   (for [[input1 correct-output] (case data-cases
+                                                   :train train-cases
+                                                   :test test-cases
+                                                   data-cases)]
+                     (let [final-state (run-push (:program individual)
+                                                 (->> (make-push-state)
+                                                      (push-item input1 :input)))
+                           result (top-item :integer final-state)]
+                       (when print-outputs
+                         (println (format "Correct output: %2d | Program output: %s" correct-output (str result))))
                          ; Record the behavior
-                         (swap! behavior conj result)
+                       (swap! behavior conj result)
                          ; Error is integer error
-                         (if (number? result)
-                           (abs (- result correct-output)) ; distance from correct integer
-                           1000) ; penalty for no return value
-                         )))]
-        (if (= data-cases :test)
-          (assoc individual :test-errors errors)
-          (assoc individual :behaviors @behavior :errors errors))))))
+                       (if (number? result)
+                         (abs (- result correct-output)) ; distance from correct integer
+                         1000) ; penalty for no return value
+                       )))]
+       (if (= data-cases :test)
+         (assoc individual :test-errors errors)
+         (assoc individual :behaviors (reverse @behavior) :errors errors))))))
 
 (defn get-count-odds-train-and-test
   "Returns the train and test cases."

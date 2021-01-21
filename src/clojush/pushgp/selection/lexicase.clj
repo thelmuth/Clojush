@@ -26,24 +26,32 @@
   (loop [survivors pop
          cases (shuffle-cases pop argmap)
          step 1
-         individuals-remaining [[generation location parent-number 0 -1 (count survivors)]]]
+         ;individuals-remaining [[generation location parent-number 0 -1 (count survivors)
+         pool-sizes [(count survivors)]
+         ]
     (if (or (empty? cases)
             (empty? (rest survivors))
             (< (lrand) (:lexicase-slippage argmap)))
       (let [selected-ind (lrand-nth survivors)
             cases-used (- (count (:errors (first pop)))
-                          (count cases))]
+                          (count cases))
+            csv-row [(concat [generation location (:uuid selected-ind)]
+                             pool-sizes)]]
         ;; Write CSV for case usage
-        (with-open [csv-file (io/writer csv-case-usage-filename :append true)]
+        #_(with-open [csv-file (io/writer csv-case-usage-filename :append true)]
           (csv/write-csv csv-file
                          [[generation
                             ;(str (:uuid selected-ind)) ; Not needed, since rank and generation uniquely identify each individual
                             cases-used
                             (:rank-by-total-error selected-ind)]]))
         ;; Write CSV for number of individuals remaining after every step
-        (with-open [csv-file (io/writer csv-individuals-remaining :append true)]
+        ;; This is the original version for lexicase specialists paper
+        #_(with-open [csv-file (io/writer csv-individuals-remaining :append true)]
           (csv/write-csv csv-file
                          individuals-remaining))
+        ;; This version is for lexicase theory paper
+        (with-open [csv-file (io/writer csv-individuals-remaining :append true)]
+          (csv/write-csv csv-file csv-row))
         selected-ind)
       (let [min-err-for-case (apply min (map #(nth % (first cases))
                                              (map :errors survivors)))
@@ -52,10 +60,5 @@
         (recur new-survivors
                (rest cases)
                (inc step)
-               (conj individuals-remaining
-                     [generation
-                      location
-                      parent-number
-                      step
-                      (first cases)
-                      (count new-survivors)]))))))
+               (conj pool-sizes
+                     (count new-survivors)))))))

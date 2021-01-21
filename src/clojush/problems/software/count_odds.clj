@@ -65,7 +65,7 @@
           [944 77]) 6 0] ;; Length 2 vectors
    [(fn [] (count-odds-input (inc (lrand-int 50)) 1.0)) 9 100] ;; Random length, all odd
    [(fn [] (count-odds-input (inc (lrand-int 50)) 0.0)) 9 100] ;; Random length, all even
-   [(fn [] (count-odds-input (inc (lrand-int 50)) (lrand))) 150 1800] ;; Random length, random prob of odd
+   [(fn [] (count-odds-input (inc (lrand-int 50)) (lrand))) 146 1800] ;; Random length, random prob of odd
    ])
 
 ;;Can make Count Odds test data like this:
@@ -123,7 +123,7 @@
 
 (defn count-odds-initial-report
   [argmap]
-  (let [filename (str "count_odds_outputs_"
+  #_(let [filename (str "count_odds_outputs_"
                       (:run-uuid argmap)
                       ".csv")]
     (spit filename "generation;output_1;output_2;output_3;output_4;output_5\n"))
@@ -144,7 +144,7 @@
 (defn count-odds-report
   "Custom generational report."
   [best population generation error-function report-simplifications argmap]
-  (let [filename (str "count_odds_outputs_"
+  #_(let [filename (str "count_odds_outputs_"
                       (:run-uuid argmap)
                       ".csv")]
     (doseq [ind population]

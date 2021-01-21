@@ -101,7 +101,10 @@
                        (vector (concat (map name columns)
                                        (when (some #{:test-case-errors} csv-columns)
                                          (map #(str "TC" %)
-                                              (range (count (:errors (first population)))))))))))
+                                              (range (count (:errors (first population))))))
+                                       (when (some #{:behaviors} csv-columns)
+                                         (map #(str "B" %)
+                                              (range (count (:behaviors (first population)))))))))))
     (with-open [csv-file (io/writer csv-log-filename :append true)]
       (csv/write-csv
         csv-file
@@ -156,7 +159,12 @@
                            ) ; This is a map of an individual
                          columns)
                     (when (some #{:test-case-errors} csv-columns)
-                      (:errors individual))))
+                      (:errors individual))
+                    (when (some #{:behaviors} csv-columns)
+                      (map #(if (= :no-stack-item %)
+                              "err"
+                              %)
+                           (:behaviors individual)))))
           population)))))
 
 (defn edn-print
@@ -662,7 +670,7 @@
   (println "Starting PushGP run.")
   (printf "Clojush version = ")
   ;; CSV for case usage
-  (with-open [csv-file (io/writer csv-case-usage-filename :append false)]
+  #_(with-open [csv-file (io/writer csv-case-usage-filename :append false)]
     (csv/write-csv csv-file
                    [["generation"
                      ; "UUID"
@@ -673,10 +681,13 @@
     (csv/write-csv csv-file
                    [["generation"
                      "population-location"
-                     "parent-number"
-                     "lexicase-step"
-                     "case-number"
-                     "individuals-remaining"]]))
+                     ;"parent-number"
+                     ;"lexicase-step"
+                     ;"case-number"
+                     ;"individuals-remaining"
+                     "UUID-individual-selected"
+                     "S0" "S1" "S2" "etc"
+                     ]]))
   (try
     (let [version-str (apply str (butlast (re-find #"\".*\""
                                                    (first (string/split-lines

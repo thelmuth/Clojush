@@ -1,5 +1,6 @@
 (ns clojush.random
-  (:use [clojush globals translate pushstate])
+  (:use [clojush globals translate pushstate]
+        clojush.instructions.common)
   (:require [clj-random.core :as random]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -97,6 +98,10 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; random plushy genome generator
 
+; This is the different in max sizes between plushy genomes and plush genomes, which is
+; used when creating random programs.
+(def plushy-max-genome-size-modifier 1.165)
+
 (defn random-plushy-instruction
   "Returns a random Plushy instruction. :close will appear more often than
   other instructions at a rate of :plushy-close-probability"
@@ -105,7 +110,7 @@
                       plushy-close-probability
                       (/ (apply + (filter identity ; This will look up each atom generator in the instruction table and
                                                    ; get the number of parentheses it requires
-                                          (map (comp :parentheses meta @instruction-table)
+                                          (map lookup-instruction-paren-groups
                                                atom-generators)))
                          (count atom-generators)))]
     (if (< (lrand) plushy-prob)

@@ -80,11 +80,11 @@
                      (for [[input1 correct-output] (case data-cases
                                                      :train train-cases
                                                      :test test-cases
-                                                     [])]
+                                                     data-cases)]
                        (let [final-state (run-push (:program individual)
                                                    (->> (make-push-state)
-                                                     (push-item input1 :input)
-                                                     (push-item "" :output)))
+                                                        (push-item input1 :input)
+                                                        (push-item "" :output)))
                              result (stack-ref :output 0 final-state)]
                          (when print-outputs
                            (println (format "| Correct output: %s\n| Program output: %s\n" (pr-str correct-output) (pr-str result))))
@@ -92,9 +92,9 @@
                          (swap! behavior conj result)
                          ; Error is Levenshtein distance of printed strings
                          (levenshtein-distance correct-output result))))]
-        (if (= data-cases :train)
-          (assoc individual :behaviors @behavior :errors errors)
-          (assoc individual :test-errors errors))))))
+        (if (= data-cases :test)
+          (assoc individual :test-errors errors)
+          (assoc individual :behaviors @behavior :errors errors))))))
 
 (defn get-digits-train-and-test
   "Returns the train and test cases."
@@ -142,6 +142,7 @@
 (def argmap
   {:error-function (make-digits-error-function-from-cases (first digits-train-and-test-cases)
                                                           (second digits-train-and-test-cases))
+   :training-cases (first digits-train-and-test-cases)
    :atom-generators digits-atom-generators
    :max-points 1200
    :max-genome-size-in-initial-program 150

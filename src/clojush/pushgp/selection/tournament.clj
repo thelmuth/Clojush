@@ -11,7 +11,7 @@
                                 (lrand-nth pop)))
         err-fn (case total-error-method
                  :sum :total-error
-                 (:hah :rmse :ifs) :weighted-error
+                 (:hah :rmse :ifs :eliteness) :weighted-error
                  (throw (Exception. (str "Unrecognized argument for total-error-method: "
                                          total-error-method))))
         selected-ind (apply min-key err-fn tournament-set)]

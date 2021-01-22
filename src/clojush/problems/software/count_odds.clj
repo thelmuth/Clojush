@@ -143,7 +143,7 @@
 
 (defn count-odds-report
   "Custom generational report."
-  [best population generation error-function report-simplifications argmap]
+  [best population generation error-function report-simplifications]
   #_(let [filename (str "count_odds_outputs_"
                       (:run-uuid argmap)
                       ".csv")]

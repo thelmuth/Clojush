@@ -36,8 +36,9 @@
 
 (set! *print-length* nil)
 
-(def problem-map ;[multiple-inputs-bool data-domains test-case-generator]
-  {"bowling" [false clojush.problems.software.benchmarks-v2.bowling/bowling-data-domains clojush.problems.software.benchmarks-v2.bowling/bowling-test-cases]
+(def problem-map ;[multiple-inputs-bool multiple-outputs-bool data-domains test-case-generator]
+  {"bowling" [false false clojush.problems.software.benchmarks-v2.bowling/bowling-data-domains clojush.problems.software.benchmarks-v2.bowling/bowling-test-cases]
+   "mastermind" [true true clojush.problems.software.benchmarks-v2.mastermind/mastermind-data-domains clojush.problems.software.benchmarks-v2.mastermind/mastermind-test-cases]
    ; "collatz-numbers" [false clojush.problems.software.collatz-numbers/collatz-numbers-data-domains clojush.problems.software.collatz-numbers/collatz-numbers-test-cases]
    ; "compare-string-lengths" [true clojush.problems.software.compare-string-lengths/csl-data-domains clojush.problems.software.compare-string-lengths/csl-test-cases]
    ; "count-odds" [false clojush.problems.software.count-odds/count-odds-data-domains clojush.problems.software.count-odds/count-odds-test-cases]
@@ -71,7 +72,7 @@
 (defn get-io-examples
   "Given a problem, returns vector of [training examples, testing examples]."
   [problem]
-  (let [[multiple-inputs-bool data-domains test-case-generator] (get problem-map problem)]
+  (let [[_ _ data-domains test-case-generator] (get problem-map problem)]
     (map test-case-generator (test-and-train-data-from-domains data-domains))))
 
 (defn get-writeable-data
@@ -83,14 +84,13 @@
   (let [[train test] (get-io-examples problem)
         [first-input first-output] (first train)
         multiple-inputs (first (get problem-map problem))
+        multiple-outputs (second (get problem-map problem))
         number-inputs (count (if multiple-inputs
                                first-input
                                (list first-input)))
-        number-outputs (count (cond
-                                (= problem "replace-space-with-newline") first-output
-                                (= problem "even-squares") (list (first first-output))
-                                (= problem "word-stats") (list (first first-output))
-                                :else (list first-output)))
+        number-outputs (count (if multiple-outputs
+                                first-output
+                                (list first-output)))
         header [(concat (when set-column ["set"])
                          (map #(str "input" %)
                               (range 1 (inc number-inputs)))
@@ -101,22 +101,18 @@
                                   (if multiple-inputs
                                     input
                                     (list input))
-                                  (cond
-                                    (= problem "replace-space-with-newline") output
-                                    (= problem "even-squares") (list (first output))
-                                    (= problem "word-stats") (list (first output))
-                                    :else (list output))))
+                                  (if multiple-outputs
+                                    output
+                                    (list output))))
                         train)
         test-data (map (fn [[input output]]
                          (concat (when set-column ["test"])
                                  (if multiple-inputs
                                    input
                                    (list input))
-                                 (cond
-                                   (= problem "replace-space-with-newline") output
-                                   (= problem "even-squares") (list (first output))
-                                   (= problem "word-stats") (list (first output))
-                                   :else (list output))))
+                                 (if multiple-outputs
+                                   output
+                                   (list output))))
                        test)]
     (if set-column
       (concat header train-data test-data)
@@ -135,13 +131,22 @@
   "Takes given data as a vector of vectors, where each internal vector
   is a line to write in the EDN. Then, writes the EDN file."
   [data-to-write edn-filename]
-  (spit edn-filename (prn-str data-to-write)))
+  (spit edn-filename "")
+  (doseq [line data-to-write]
+    (let [keyworded-line (into {}
+                               (map (fn [[the-key the-val]]
+                                         [(keyword the-key) the-val])
+                                       line))]
+      (spit edn-filename (prn-str keyworded-line) :append true))))
 
 (defn write-data-to-json
   "Takes given data as a vector of vectors, where each internal vector
   is a line to write in the JSON. Then, writes the JSON file."
   [data-to-write json-filename]
-  (spit json-filename (json/write-str data-to-write)))
+  (spit json-filename "")
+  (doseq [line data-to-write]
+    (spit json-filename (json/write-str line) :append true)
+    (spit json-filename \newline :append true)))
 
 (defn generate-and-write-data-to-file
   "Generates train and test data for the given problem. Then, writes that data
@@ -154,19 +159,29 @@
       "json" (write-data-to-json data-to-write output-filename)
       (throw (Exception. (str "Unrecognized file type: " file-type))))))
 
+(defn make-lines-data
+  "Converts header and data into lines format for JSON Lines and EDN Lines formats.
+   See: https://jsonlines.org/"
+  [header data]
+  (map (fn [case-data]
+         (zipmap
+          (first header)
+          case-data))
+       data))
+
 (defn generate-data-for-data-sets
   "Generates data for publishing datasets.
   Note: uses train data for edge cases and test data for random data."
   [problem output-filename-prefix]
-  (let [{:keys [header edge random]} (get-writeable-data problem false)]
+  (let [{:keys [header edge random]} (get-writeable-data problem false)
+        lines-data-edge (make-lines-data header edge)
+        lines-data-random (make-lines-data header random)]
     (write-data-to-csv (concat header edge) (str output-filename-prefix "-edge.csv"))
     (write-data-to-csv (concat header random) (str output-filename-prefix "-random.csv"))
-    (write-data-to-edn (concat header edge) (str output-filename-prefix "-edge.edn"))
-    (write-data-to-edn (concat header random) (str output-filename-prefix "-random.edn"))
-    (write-data-to-json (concat header edge) (str output-filename-prefix "-edge.json"))
-    (write-data-to-json (concat header random) (str output-filename-prefix "-random.json"))))
-
-
+    (write-data-to-edn lines-data-edge (str output-filename-prefix "-edge.edn"))
+    (write-data-to-edn lines-data-random (str output-filename-prefix "-random.edn"))
+    (write-data-to-json lines-data-edge (str output-filename-prefix "-edge.json"))
+    (write-data-to-json lines-data-random (str output-filename-prefix "-random.json"))))
 
 (defn generate-data-files
   "Generates data for given problem, in a number of files specified by the argument.
@@ -208,4 +223,18 @@
   [problem number-of-files file-type path]
   (generate-data-files problem number-of-files file-type path))
 
-(-generate_data_files "bowling" 1 "json" "/Users/peter/Desktop/generated-data/")
+(comment
+  "Note: This is the way we did it for generating data in 2019, and has
+   been updated to use the JSON Lines file format, among other things.
+   Calling generate-data-for-data-sets is the way to do it.
+   The number for train in the data domains in the problem file is used as
+   the edge cases, and the number of test is used for random cases."
+
+  (let [namespace
+        "bowling"
+        ;"mastermind"
+        ]
+    (generate-data-for-data-sets namespace (str "generate-data-test/" namespace)))
+
+  )
+ 

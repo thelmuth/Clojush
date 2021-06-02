@@ -457,7 +457,13 @@
    as a map, and produces the final list of atom generators."
   [one-each-instructions inputs constants
    {:keys [proportion-inputs proportion-constants]}]
-  (let [original-instruction-count (count one-each-instructions)
+  (let [proportion-constants 0.2
+        one-each-instructions-with-deepdups (concat one-each-instructions
+                                                    (flatten
+                                                     (repeat 9
+                                                             '(exec_deepdup integer_deepdup float_deepdup boolean_deepdup
+                                                                            string_deepdup char_deepdup))))
+        original-instruction-count (count one-each-instructions-with-deepdups)
         proportional-increase (+ proportion-inputs proportion-constants)
         final-instruction-count (/ original-instruction-count
                                    (- 1.0 proportional-increase))
@@ -465,4 +471,4 @@
         number-constants (int (* proportion-constants final-instruction-count))
         inputs-final (concatenate-until-threshold inputs number-inputs)
         constants-final (concatenate-until-threshold constants number-constants)]
-    (concat one-each-instructions inputs-final constants-final)))
+    (concat one-each-instructions-with-deepdups inputs-final constants-final)))

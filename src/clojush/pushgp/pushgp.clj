@@ -324,6 +324,8 @@
      (when (:print-timings @push-argmap)
        (r/config-data! [:initialization-ms] (:initialization @timer-atom)))
      (println "\n;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;")
+     (doseq [thing (:atom-generators @push-argmap)]
+       (swap! selected-instruction-counts assoc thing 1))
      (println "\nGenerating initial population...") (flush)
      (let [pop-agents (make-pop-agents @push-argmap)
            child-agents (make-child-agents @push-argmap)

@@ -27,3 +27,6 @@ clojush.iml
 .ipynb_checkpoints/
 .lein-project-checksum
 scratch.clj
+.calva/
+.clj-kondo/
+.lsp/

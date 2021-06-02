@@ -462,7 +462,8 @@
                                                     (flatten
                                                      (repeat 9
                                                              '(exec_deepdup integer_deepdup float_deepdup boolean_deepdup
-                                                                            string_deepdup char_deepdup))))
+                                                                            string_deepdup char_deepdup vector_integer_deepdup
+                                                                            vector_float_deepdup vector_boolean_deepdup vector_string_deepdup))))
         original-instruction-count (count one-each-instructions-with-deepdups)
         proportional-increase (+ proportion-inputs proportion-constants)
         final-instruction-count (/ original-instruction-count

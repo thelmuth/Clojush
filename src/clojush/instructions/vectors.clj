@@ -70,6 +70,11 @@
 (define-registered vector_boolean_empty (with-meta (emptyer :vector_boolean) {:stack-types [:vector_boolean :boolean]}))
 (define-registered vector_string_empty (with-meta (emptyer :vector_string) {:stack-types [:vector_string :boolean]}))
 
+(define-registered vector_integer_deepdup (with-meta (deepduper :vector_integer) {:stack-types [:vector_integer :integer]}))
+(define-registered vector_float_deepdup (with-meta (deepduper :vector_float) {:stack-types [:vector_float :integer]}))
+(define-registered vector_boolean_deepdup (with-meta (deepduper :vector_boolean) {:stack-types [:vector_boolean :integer]}))
+(define-registered vector_string_deepdup (with-meta (deepduper :vector_string) {:stack-types [:vector_string :integer]}))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; common instructions for vectors
 

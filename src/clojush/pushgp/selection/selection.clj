@@ -15,6 +15,7 @@
         preselected (preselect pop-with-meta-and-batch-errors argmap)
         selected (case parent-selection
                    :tournament (tournament-selection preselected argmap)
+                   :down-sampled-tournament (tournament-selection preselected argmap)
                    :lexicase (lexicase-selection preselected argmap)
                    :downsampled-lexicase (lexicase-selection preselected argmap) ;; just uses lexicase; downsampling happens earlier
                    :epsilon-lexicase (case epsilon-lexicase-version

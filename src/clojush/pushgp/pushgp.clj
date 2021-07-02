@@ -168,6 +168,10 @@
       (reset! timer-atom (System/currentTimeMillis))
       (swap! timing-map assoc step (+ current-time-for-step (- @timer-atom start-time))))))
 
+(comment
+  (some #{:haaa :hi :hello} #{:hello :hi})
+  )
+
 (defn process-generation
   "Processes the generation, returning [new novelty archive, return val],
    where new novelty archive will be nil if we are done."
@@ -181,7 +185,7 @@
   (timer @push-argmap :reproduction)
   (println "Computing errors... ")
   ; select cases if using downsampled lexicase
-  (when (= (:parent-selection @push-argmap) :downsampled-lexicase)
+  (when (some #{(:parent-selection @push-argmap)} #{:downsampled-lexicase :down-sampled-tournament})
     (swap! push-argmap assoc :sub-training-cases
            (down-sample @push-argmap))
     (println "Cases for this generation:" (pr-str (:sub-training-cases @push-argmap))))

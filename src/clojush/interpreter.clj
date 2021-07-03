@@ -78,7 +78,7 @@
              (swap! saved-state-sequence #(conj % s)))
            (recur (inc iteration) s time-limit))
          (let [exec-top (top-item :exec s)
-               s (pop-item :exec s)]
+               s (actually-pop-item :exec s)]
            (let [s (let [exec-result (if (seq? exec-top)
                                        (assoc s :exec (concat exec-top (:exec s)))
                                        (if (:calculate-mod-metrics state) ; additional operations only when calculating mod metrics
@@ -127,6 +127,6 @@
          (reset! saved-state-sequence [s]))
        (let [s (eval-push s print-steps trace save-state-sequence)]
          (if @global-top-level-pop-code
-           (pop-item :code s)
+           (actually-pop-item :code s)
            s))))))
 

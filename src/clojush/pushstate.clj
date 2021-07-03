@@ -91,6 +91,14 @@
 
 (defn pop-item
   "Returns a copy of the state with the specified stack popped. This is a utility,
+   not for use as an instruction in Push programs.
+   HACKED: Now doesn't pop, for experimentation sake."
+  [type state]
+  state
+  #_(update state type rest))
+
+(defn actually-pop-item
+  "Returns a copy of the state with the specified stack popped. This is a utility,
    not for use as an instruction in Push programs."
   [type state]
   (update state type rest))
@@ -111,7 +119,7 @@
         new-state
         (recur (rest old-return)
                (if (:popper (first old-return))
-                 (pop-item (:type (first old-return))
+                 (actually-pop-item (:type (first old-return))
                            new-state)
                  (push-item (:item (first old-return)) 
                             (:type (first old-return)) 
